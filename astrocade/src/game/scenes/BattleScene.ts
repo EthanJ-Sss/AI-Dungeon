@@ -2381,6 +2381,24 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * 处理单位死亡
+   */
+  private handleUnitDeath(unit: BattleUnit) {
+    if (!unit.isAlive) return; // 防止重复处理
+    
+    unit.isAlive = false;
+    const container = this.allUnits.get(unit.character.id);
+    
+    if (container && container.active) {
+      this.showDeathAnimation(container);
+      this.allUnits.delete(unit.character.id);
+    }
+    
+    // 检查战斗是否结束
+    this.checkBattleEnd();
+  }
+
   // 显示死亡动画
   private showDeathAnimation(container: Phaser.GameObjects.Container) {
     // 淡出动画
