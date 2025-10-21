@@ -302,6 +302,18 @@ export default class BattleScene extends Phaser.Scene {
     }
     
     console.log(`\n================================\n`);
+    
+    // 延迟检查角色容器状态（战斗开始0.5秒后）
+    this.time.delayedCall(500, () => {
+      console.log(`\n🔍 [容器检查] 战斗开始0.5秒后，检查所有角色容器状态:`);
+      this.allUnits.forEach((container, characterId) => {
+        const unit = (container as any).battleUnit as BattleUnit;
+        if (unit) {
+          console.log(`   ${unit.team === 'player' ? '🛡️' : '⚔️'} ${unit.character.name}: 存活=${unit.isAlive}, HP=${unit.currentHp.toFixed(0)}, 容器active=${container.active}, 可见=${container.visible}, alpha=${container.alpha}`);
+        }
+      });
+      console.log(`   总计: ${this.allUnits.size} 个容器\n`);
+    });
   }
 
   private createBattleUnit(character: Character, gridPos: Position, team: 'player' | 'enemy'): BattleUnit {
@@ -384,6 +396,8 @@ export default class BattleScene extends Phaser.Scene {
     (container as any).hpText = hpText;
     (container as any).lastAttackTime = 0;
     (container as any).attackCooldown = character.attackType === 'melee' ? 1000 : 1500;
+
+    console.log(`✅ [角色创建] ${team === 'player' ? '🛡️' : '⚔️'} ${character.name} 生成在网格(${globalRow}, ${globalCol}) 世界坐标(${worldX.toFixed(0)}, ${worldY.toFixed(0)}) HP:${character.hp}`);
 
     return unit;
   }
@@ -807,24 +821,15 @@ export default class BattleScene extends Phaser.Scene {
     // 获取准备好的技能
     const readySkills = SkillManager.getReadySkills(unit.skillInstances);
     
-    // 调试日志：显示所有技能状态
-    unit.skillInstances.forEach(skill => {
-      console.log(`[技能状态] ${unit.character.name} - ${skill.config.name}: CD=${skill.currentCD.toFixed(1)}秒, 准备=${skill.isReady}`);
-    });
-    
     if (readySkills.length === 0) {
-      console.log(`[tryUseSkill] ${unit.character.name} 没有准备好的技能 (总共${unit.skillInstances.length}个技能)`);
       return false;
     }
 
-    console.log(`[tryUseSkill] ${unit.character.name} 有 ${readySkills.length} 个技能准备好`);
-
     // 尝试按顺序释放第一个可用技能
     for (const skill of readySkills) {
-      console.log(`[tryUseSkill] 尝试释放技能: ${skill.config.name}`);
       const success = this.executeSkill(skill, unit, targets, container);
       if (success) {
-        console.log(`✅ [技能释放成功] ${unit.character.name} 使用了 ${skill.config.name}`);
+        console.log(`✅ [技能释放] ${unit.team === 'player' ? '🛡️' : '⚔️'} ${unit.character.name} 使用了 ${skill.config.name}`);
         SkillManager.useSkill(skill, this.time.now);
         return true;
       }
@@ -2368,8 +2373,6 @@ export default class BattleScene extends Phaser.Scene {
       repeat: 2,
     });
 
-    // 4. 播放音效提示（控制台日志）
-    console.log(`[技能释放] ${skillName}`);
   }
 
   // 旧方法保留备用
@@ -2422,11 +2425,16 @@ export default class BattleScene extends Phaser.Scene {
     // 🔴 死亡日志
     const teamEmoji = unit.team === 'player' ? '🛡️' : '⚔️';
     const causeText = cause ? ` (${cause})` : '';
-    console.log(`💀 [角色死亡] ${teamEmoji} ${unit.character.name} 已阵亡${causeText}`);
+    console.log(`💀 [角色死亡] ${teamEmoji} ${unit.character.name} 已阵亡${causeText} 当前HP:${unit.currentHp.toFixed(1)} 位置:(${unit.position.x.toFixed(0)}, ${unit.position.y.toFixed(0)})`);
     
     if (container && container.active) {
+      console.log(`   └─ 容器有效，开始死亡动画并从Map中移除`);
       this.showDeathAnimation(container);
       this.allUnits.delete(unit.character.id);
+    } else if (container) {
+      console.log(`   └─ ⚠️ 警告：容器已失效！`);
+    } else {
+      console.log(`   └─ ⚠️ 警告：找不到容器！`);
     }
     
     // 检查战斗是否结束
