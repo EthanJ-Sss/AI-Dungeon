@@ -44,7 +44,7 @@
     "moveSpeed": 2.2,
     "attackType": "melee",
     "role": "warrior",
-    "skills": ["v_skill_001"],
+    "skills": ["v_skill_002"],
     "passiveSkills": ["v_passive_001"]
   },
   {
@@ -140,8 +140,44 @@
     "moveSpeed": 2.5,
     "attackType": "ranged",
     "role": "healer",
-    "skills": ["v_skill_013"],
+    "skills": ["v_skill_014"],
     "passiveSkills": ["v_passive_001"]
+  },
+  {
+    "id": 113,
+    "name": "冰霜射手",
+    "element": "ice",
+    "hp": 160,
+    "damage": 20,
+    "moveSpeed": 2.3,
+    "attackType": "ranged",
+    "role": "archer",
+    "skills": ["v_skill_006"],
+    "passiveSkills": ["v_passive_004", "v_passive_005"]
+  },
+  {
+    "id": 114,
+    "name": "寒冰法师",
+    "element": "ice",
+    "hp": 180,
+    "damage": 28,
+    "moveSpeed": 2.0,
+    "attackType": "ranged",
+    "role": "archer",
+    "skills": ["v_skill_008"],
+    "passiveSkills": ["v_passive_004", "v_passive_005"]
+  },
+  {
+    "id": 115,
+    "name": "极寒守卫",
+    "element": "ice",
+    "hp": 250,
+    "damage": 15,
+    "moveSpeed": 2.0,
+    "attackType": "melee",
+    "role": "warrior",
+    "skills": ["v_skill_007"],
+    "passiveSkills": ["v_passive_004"]
   },
   {
     "id": 999,
