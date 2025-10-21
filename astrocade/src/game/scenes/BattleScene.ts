@@ -282,7 +282,7 @@ export default class BattleScene extends Phaser.Scene {
           passiveSkills: presetChar.passiveSkills || [], // ✅ 添加被动技能
         };
         
-        console.log(`[BattleScene] 生成敌人: ${enemyChar.name}, 职业: ${enemyChar.role}, 技能: ${enemyChar.skills.join(', ')}`);
+        console.log(`[BattleScene] 生成敌人: ${enemyChar.name}, 职业: ${enemyChar.role}, 技能: ${enemyChar.skills?.join(', ') || '无'}`);
         
         const unit = this.createBattleUnit(enemyChar, enemy.position, 'enemy');
         this.enemyUnits.push(unit);
@@ -303,33 +303,46 @@ export default class BattleScene extends Phaser.Scene {
     // 创建角色容器
     const container = this.add.container(worldX, worldY);
 
-    // 创建角色圆形
-    const color = team === 'player' ? 0x4488ff : 0xff4444;
-    const circle = this.add.circle(0, 0, 25, color);
-    container.add(circle);
+    // 使用方框背景（和布阵界面一致）
+    const boxColor = team === 'player' ? 0x4488ff : 0xff4444;
+    const boxBg = this.add.rectangle(0, 0, this.gridSize - 8, this.gridSize - 8, boxColor, 0.3);
+    const boxBorder = this.add.rectangle(0, 0, this.gridSize - 8, this.gridSize - 8)
+      .setStrokeStyle(2, boxColor, 1)
+      .setFillStyle(0x000000, 0);
+    container.add(boxBg);
+    container.add(boxBorder);
 
-    // 添加角色名称和元素图标
+    // 添加职业emoji图标
+    const roleEmoji = this.getRoleEmoji(character.role);
+    const roleIcon = this.add.text(0, -8, roleEmoji, {
+      fontSize: '24px',
+    }).setOrigin(0.5);
+    container.add(roleIcon);
+
+    // 添加元素图标（小号，显示在旁边）
     const elementIcon = this.getElementIcon(character.element);
-    const nameWithElement = elementIcon ? `${elementIcon} ${character.name}` : character.name;
-    const nameText = this.add.text(0, -45, nameWithElement, {
-      fontSize: '12px',
+    if (elementIcon) {
+      const elementText = this.add.text(12, -8, elementIcon, {
+        fontSize: '12px',
+      }).setOrigin(0.5);
+      container.add(elementText);
+    }
+
+    // 添加角色名称（简短版本）
+    const shortName = character.name.slice(0, 4);
+    const nameText = this.add.text(0, 8, shortName, {
+      fontSize: '10px',
       color: '#ffffff',
+      fontStyle: 'bold',
     }).setOrigin(0.5);
     container.add(nameText);
 
-    // 添加血条背景
-    const hpBarBg = this.add.rectangle(0, 35, 50, 6, 0x333333);
-    container.add(hpBarBg);
-
-    // 添加血条
-    const hpBar = this.add.rectangle(-25, 35, 50, 6, 0x00ff00).setOrigin(0, 0.5);
-    container.add(hpBar);
-
-    // 添加HP文字
-    const hpText = this.add.text(0, 45, `${character.hp}/${character.maxHp}`, {
+    // 添加HP文字（显示在底部）
+    const hpText = this.add.text(0, 20, `${character.hp}`, {
       fontSize: '10px',
-      color: '#ffffff',
-    }).setOrigin(0.5, 0);
+      color: '#00ff00',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
     container.add(hpText);
 
     // 创建技能实例
@@ -361,7 +374,6 @@ export default class BattleScene extends Phaser.Scene {
 
     // 存储数据到容器
     (container as any).battleUnit = unit;
-    (container as any).hpBar = hpBar;
     (container as any).hpText = hpText;
     (container as any).lastAttackTime = 0;
     (container as any).attackCooldown = character.attackType === 'melee' ? 1000 : 1500;
@@ -467,8 +479,17 @@ export default class BattleScene extends Phaser.Scene {
 
     // 应用移动速度乘数
     const effectiveSpeed = speed * this.moveSpeedMultiplier;
-    attacker.x += Math.cos(angle) * effectiveSpeed * 0.1;
-    attacker.y += Math.sin(angle) * effectiveSpeed * 0.1;
+    const newX = attacker.x + Math.cos(angle) * effectiveSpeed * 0.1;
+    const newY = attacker.y + Math.sin(angle) * effectiveSpeed * 0.1;
+
+    // 边界限制：确保角色不会移出网格
+    const minX = this.gridOffsetX + this.gridSize / 2;
+    const maxX = this.gridOffsetX + (this.gridCols - 1) * this.gridSize + this.gridSize / 2;
+    const minY = this.gridOffsetY + this.gridSize / 2;
+    const maxY = this.gridOffsetY + (this.gridRows - 1) * this.gridSize + this.gridSize / 2;
+
+    attacker.x = Phaser.Math.Clamp(newX, minX, maxX);
+    attacker.y = Phaser.Math.Clamp(newY, minY, maxY);
   }
 
   private tryAttack(
@@ -2469,26 +2490,23 @@ export default class BattleScene extends Phaser.Scene {
     const container = this.allUnits.get(unit.character.id);
     if (!container || !container.active) return;
 
-    // 查找血条元素（血条是第4个子元素）
-    const hpBar = container.getAt(3) as Phaser.GameObjects.Rectangle;
-    const hpText = container.getAt(4) as Phaser.GameObjects.Text;
+    // 从容器引用中获取HP文字
+    const hpText = (container as any).hpText as Phaser.GameObjects.Text;
     
-    if (hpBar && hpText) {
-      // 更新血条长度
+    if (hpText) {
+      // 更新HP文字和颜色
+      const currentHp = Math.ceil(unit.currentHp);
+      hpText.setText(`${currentHp}`);
+      
+      // 根据血量百分比更新颜色
       const hpPercent = unit.currentHp / unit.character.maxHp;
-      hpBar.width = 50 * hpPercent;
-      
-      // 更新血条颜色
       if (hpPercent > 0.6) {
-        hpBar.fillColor = 0x00ff00; // 绿色
+        hpText.setColor('#00ff00'); // 绿色
       } else if (hpPercent > 0.3) {
-        hpBar.fillColor = 0xffaa00; // 橙色
+        hpText.setColor('#ffaa00'); // 橙色
       } else {
-        hpBar.fillColor = 0xff0000; // 红色
+        hpText.setColor('#ff0000'); // 红色
       }
-      
-      // 更新HP文字
-      hpText.setText(`${Math.ceil(unit.currentHp)}/${unit.character.maxHp}`);
     }
   }
 
@@ -2636,14 +2654,15 @@ export default class BattleScene extends Phaser.Scene {
    */
   private initializeLavaBlocks() {
     this.lavaBlocks.forEach((block) => {
-      const x = this.gridOffsetX + block.col * this.gridSize;
-      const y = this.gridOffsetY + block.row * this.gridSize;
+      // 岩浆标记位置（格子中心）
+      const x = this.gridOffsetX + block.col * this.gridSize + this.gridSize / 2;
+      const y = this.gridOffsetY + block.row * this.gridSize + this.gridSize / 2;
 
       // 创建岩浆地块标记（橙红色）
       const marker = this.add.rectangle(
         x, y, 
-        this.gridSize - 4, 
-        this.gridSize - 4, 
+        this.gridSize - 8, 
+        this.gridSize - 8, 
         0xff4500, // 橙红色
         0.3
       );
@@ -2651,6 +2670,8 @@ export default class BattleScene extends Phaser.Scene {
 
       const key = `${block.row}-${block.col}`;
       this.lavaMarkers.set(key, marker);
+      
+      console.log(`[LavaInit] 初始化岩浆地块: 行${block.row}, 列${block.col}, 坐标(${x.toFixed(0)}, ${y.toFixed(0)})`);
     });
   }
 
@@ -2718,13 +2739,16 @@ export default class BattleScene extends Phaser.Scene {
   private triggerLavaEruption(row: number, col: number) {
     if (this.battleEnded) return;
 
-    const x = this.gridOffsetX + col * this.gridSize;
-    const y = this.gridOffsetY + row * this.gridSize;
+    // 喷发特效位置（格子中心）
+    const x = this.gridOffsetX + col * this.gridSize + this.gridSize / 2;
+    const y = this.gridOffsetY + row * this.gridSize + this.gridSize / 2;
 
     // 喷发特效
     const eruption = this.add.text(x, y, '💥', {
       fontSize: '48px',
     }).setOrigin(0.5);
+
+    console.log(`[LavaEruption] 岩浆喷发位置: 行${row}, 列${col}, 坐标(${x.toFixed(0)}, ${y.toFixed(0)})`);
 
     this.tweens.add({
       targets: eruption,
@@ -2747,7 +2771,10 @@ export default class BattleScene extends Phaser.Scene {
       const unitGridX = Math.round((container.x - this.gridOffsetX) / this.gridSize);
       const unitGridY = Math.round((container.y - this.gridOffsetY) / this.gridSize);
 
+      console.log(`[LavaEruption] 检查 ${unit.character.name}: 位置(${container.x.toFixed(0)}, ${container.y.toFixed(0)}), 网格(${unitGridX}, ${unitGridY}), 岩浆网格(${col}, ${row})`);
+
       if (unitGridX === col && unitGridY === row) {
+        console.log(`[LavaEruption] 💥 ${unit.character.name} 被岩浆击中！`);
         // 计算岩浆伤害（考虑大地系抗性）
         const finalDamage = calculateLavaDamage(this.lavaDamage, unit.character.element);
 
@@ -2800,6 +2827,18 @@ export default class BattleScene extends Phaser.Scene {
   /**
    * 获取元素图标
    */
+  private getRoleEmoji(role: string): string {
+    const roleEmojis: Record<string, string> = {
+      warrior: '⚔️',
+      mage: '🔮',
+      archer: '🏹',
+      tank: '🛡️',
+      healer: '✨',
+    };
+    
+    return roleEmojis[role] || '⚔️';
+  }
+
   private getElementIcon(element?: string): string {
     if (!element) return '';
     
