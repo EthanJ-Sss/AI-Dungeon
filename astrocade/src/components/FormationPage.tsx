@@ -9,11 +9,23 @@ import volcanoCharactersData from '../config/volcanoCharacters.json';
 
 const ItemType = 'CHARACTER';
 
-// 岩浆地块位置（战场中央）
+// 战场配置：5行×11列
+const BATTLEFIELD_ROWS = 5;
+const BATTLEFIELD_COLS = 11;
+
+// 玩家可放置区域：列 0-2
+const PLAYER_COLS = [0, 1, 2];
+
+// 敌方区域：列 8-10
+const ENEMY_COLS = [8, 9, 10];
+
+// 岩浆地块位置（与BattleScene完全一致）
 const LAVA_BLOCKS = [
-  { row: 0, col: 0 }, // 中央上
-  { row: 1, col: 0 }, // 中央中
-  { row: 2, col: 0 }, // 中央下
+  { row: 2, col: 4 },  // 战场中央
+  { row: 1, col: 2 },  // 玩家左上
+  { row: 3, col: 2 },  // 玩家左下
+  { row: 1, col: 8 },  // 敌方右上
+  { row: 3, col: 8 },  // 敌方右下
 ];
 
 // 检查是否是岩浆地块
@@ -21,60 +33,69 @@ const isLavaBlock = (row: number, col: number): boolean => {
   return LAVA_BLOCKS.some(block => block.row === row && block.col === col);
 };
 
+// 检查是否是玩家可放置区域
+const isPlayerZone = (col: number): boolean => {
+  return PLAYER_COLS.includes(col);
+};
+
+// 检查是否是敌方区域
+const isEnemyZone = (col: number): boolean => {
+  return ENEMY_COLS.includes(col);
+};
+
 interface GridCellProps {
-  position: Position;
+  row: number;
+  col: number;
   character: Character | null;
-  onDrop: (char: Character, pos: Position) => void;
-  onRemove: (pos: Position) => void;
-  isEnemy?: boolean;
-  isLavaZone?: boolean;
+  onDrop: (char: Character, row: number, col: number) => void;
+  onRemove: (row: number, col: number) => void;
 }
 
-function GridCell({ position, character, onDrop, onRemove, isEnemy = false, isLavaZone = false }: GridCellProps) {
+function GridCell({ row, col, character, onDrop, onRemove }: GridCellProps) {
+  const isPlayer = isPlayerZone(col);
+  const isEnemy = isEnemyZone(col);
+  const isLava = isLavaBlock(row, col);
+  const isNeutral = !isPlayer && !isEnemy;
+
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemType,
     drop: (item: { character: Character }) => {
-      if (!isEnemy && !isLavaZone && !character) {
-        onDrop(item.character, position);
+      if (isPlayer && !character) {
+        onDrop(item.character, row, col);
       }
     },
-    canDrop: () => !isEnemy && !isLavaZone && !character,
+    canDrop: () => isPlayer && !character,
     collect: (monitor) => ({
       isOver: monitor.isOver(),
     }),
-  }), [character, isEnemy, isLavaZone, onDrop, position]);
+  }), [character, isPlayer, onDrop, row, col]);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemType,
     item: character ? { character } : null,
-    canDrag: () => !isEnemy && !isLavaZone && !!character,
+    canDrag: () => isPlayer && !!character,
     end: (item, monitor) => {
-      if (monitor.didDrop() && !isEnemy && !isLavaZone) {
-        onRemove(position);
+      if (monitor.didDrop() && isPlayer) {
+        onRemove(row, col);
       }
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  }), [character, isEnemy, isLavaZone, onRemove, position]);
+  }), [character, isPlayer, onRemove, row, col]);
 
-  // 组合 drag 和 drop refs
   const attachRef = (el: HTMLDivElement | null) => {
-    if (!isEnemy && !isLavaZone && el) {
+    if (isPlayer && el) {
       drop(el);
     }
   };
 
   const attachDragRef = (el: HTMLDivElement | null) => {
-    if (!isEnemy && !isLavaZone && el && character) {
+    if (isPlayer && el && character) {
       drag(el);
     }
   };
 
-  // 检查是否是岩浆地块
-  const isLava = isLavaZone && isLavaBlock(position.y, position.x);
-
-  // 获取元素图标
   const getElementIcon = (element?: string) => {
     const icons: Record<string, string> = {
       fire: '🔥',
@@ -86,49 +107,70 @@ function GridCell({ position, character, onDrop, onRemove, isEnemy = false, isLa
     return element ? icons[element] || '' : '';
   };
 
+  // 获取格子边框颜色和背景
+  const getCellStyle = () => {
+    if (isLava) {
+      return 'border-orange-500 bg-orange-900/60 border-2 animate-pulse';
+    }
+    if (isPlayer) {
+      return 'border-blue-400 bg-blue-900/30';
+    }
+    if (isEnemy) {
+      return 'border-red-400 bg-red-900/30';
+    }
+    return 'border-gray-600 bg-gray-800/20';
+  };
+
   return (
     <div
       ref={attachRef}
       className={`
-        relative w-16 h-16 border-2 rounded-lg flex items-center justify-center
-        transition-all duration-200
-        ${isEnemy ? 'border-red-500 bg-red-900/30' : ''}
-        ${!isEnemy && !isLavaZone ? 'border-blue-500 bg-blue-900/30' : ''}
-        ${isLavaZone && isLava ? 'border-orange-600 bg-orange-900/60 border-4 animate-pulse' : ''}
-        ${isLavaZone && !isLava ? 'border-gray-600 bg-gray-800/40' : ''}
-        ${isOver && !isEnemy && !isLavaZone && 'bg-blue-500/50 scale-105'}
-        ${!character && !isEnemy && !isLavaZone && 'hover:bg-blue-500/30 cursor-pointer'}
+        relative w-14 h-14 border flex items-center justify-center
+        transition-all duration-200 ${getCellStyle()}
+        ${isOver && isPlayer && 'bg-blue-500/50 scale-105'}
+        ${!character && isPlayer && 'hover:bg-blue-500/30 cursor-pointer'}
       `}
-      title={isLava ? '⚠️ 岩浆地块：每10秒喷发一次，造成80点伤害！' : ''}
+      title={
+        isLava ? '⚠️ 岩浆地块：每10秒喷发，造成80点伤害！' :
+        isPlayer ? '我方可放置区域' :
+        isEnemy ? '敌方区域' :
+        '中立区域'
+      }
     >
-      {/* 岩浆警告标记 */}
+      {/* 岩浆标记 */}
       {isLava && (
-        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center pointer-events-none">
-          <div className="text-3xl opacity-70">🌋</div>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+          <div className="text-2xl opacity-70">🌋</div>
+        </div>
+      )}
+
+      {/* 区域标识（仅在空格子显示） */}
+      {!character && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+          {isPlayer && <div className="text-xs text-blue-300">🛡️</div>}
+          {isEnemy && <div className="text-xs text-red-300">⚔️</div>}
         </div>
       )}
       
+      {/* 角色 */}
       {character && (
         <div
           ref={attachDragRef}
-          onClick={() => !isEnemy && !isLavaZone && onRemove(position)}
+          onClick={() => isPlayer && onRemove(row, col)}
           className={`
             w-full h-full flex flex-col items-center justify-center text-white text-xs p-1 relative z-10
-            ${!isEnemy && !isLavaZone && 'cursor-move hover:scale-110'}
+            ${isPlayer && 'cursor-move hover:scale-110'}
             ${isDragging && 'opacity-50'}
           `}
         >
-          <div className="flex items-center gap-1 mb-1">
-            <div className="text-xl">{getRoleEmoji(character.role)}</div>
+          <div className="flex items-center gap-0.5">
+            <div className="text-lg">{getRoleEmoji(character.role)}</div>
             {(character as any).element && (
-              <div className="text-xs">{getElementIcon((character as any).element)}</div>
+              <div className="text-[10px]">{getElementIcon((character as any).element)}</div>
             )}
           </div>
-          <div className="text-[9px] text-center leading-tight truncate w-full font-semibold">
-            {character.name}
-          </div>
-          <div className="text-[8px] text-slate-400">
-            {character.hp}HP
+          <div className="text-[8px] text-center leading-tight truncate w-full font-semibold">
+            {character.name.slice(0, 4)}
           </div>
         </div>
       )}
@@ -181,7 +223,6 @@ function CharacterCard({ character, isPlaced }: CharacterCardProps) {
           )}
         </div>
         <div className="text-white text-xs font-semibold truncate">{character.name}</div>
-        <div className="text-slate-400 text-[10px]">{getRoleName(character.role)}</div>
         <div className="text-slate-400 text-[10px]">{character.hp}HP</div>
       </div>
     </div>
@@ -195,8 +236,11 @@ function FormationPageContent() {
   const setLevel = useGameStore((state) => state.setLevel);
   const setFormation = useGameStore((state) => state.setFormation);
 
-  const [playerGrid, setPlayerGrid] = useState<(Character | null)[][]>(() =>
-    Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => null))
+  // 使用完整的战场网格：5行×11列
+  const [battlefield, setBattlefield] = useState<(Character | null)[][]>(() =>
+    Array.from({ length: BATTLEFIELD_ROWS }, () => 
+      Array.from({ length: BATTLEFIELD_COLS }, () => null)
+    )
   );
 
   // 使用当前选中的关卡（如果没有，则使用第一关）
@@ -205,18 +249,8 @@ function FormationPageContent() {
   console.log(`[FormationPage] 当前关卡: ID=${level.id}, 名称=${level.name}`);
   
   // 加载敌方阵型
-  const enemyGrid: (Character | null)[][] = Array.from({ length: 3 }, () => 
-    Array.from({ length: 3 }, () => null)
-  );
-  
   level.enemies.forEach((enemy) => {
-    // 先在火山角色中查找
-    let preset = volcanoCharactersData.find((c) => c.id === enemy.characterId);
-    
-    // 如果没找到，再在普通角色中查找
-    if (!preset) {
-      preset = null; // characters.json 暂时不加载，因为火山关卡使用火山角色
-    }
+    const preset = volcanoCharactersData.find((c) => c.id === enemy.characterId);
     
     if (preset) {
       const enemyChar: Character = {
@@ -230,42 +264,53 @@ function FormationPageContent() {
         role: preset.role,
         ...(preset.element && { element: preset.element }),
       } as any;
-      enemyGrid[enemy.position.y][enemy.position.x] = enemyChar;
+      
+      // 敌方位置映射：x(0-2) -> col(8-10), y(0-2) -> row(1-3)
+      const col = 8 + enemy.position.x;
+      const row = 1 + enemy.position.y;
+      
+      setBattlefield(prev => {
+        const newGrid = prev.map(r => [...r]);
+        newGrid[row][col] = enemyChar;
+        return newGrid;
+      });
     }
   });
 
-  const handleDrop = useCallback((char: Character, pos: Position) => {
-    setPlayerGrid(prevGrid => {
-      const newGrid = prevGrid.map(row => [...row]);
+  const handleDrop = useCallback((char: Character, row: number, col: number) => {
+    setBattlefield(prevGrid => {
+      const newGrid = prevGrid.map(r => [...r]);
       
       // 如果角色已经在网格中，先移除
-      for (let y = 0; y < 3; y++) {
-        for (let x = 0; x < 3; x++) {
-          if (newGrid[y][x]?.id === char.id) {
-            newGrid[y][x] = null;
+      for (let r = 0; r < BATTLEFIELD_ROWS; r++) {
+        for (let c = 0; c < BATTLEFIELD_COLS; c++) {
+          if (newGrid[r][c]?.id === char.id) {
+            newGrid[r][c] = null;
           }
         }
       }
       
       // 放置到新位置
-      newGrid[pos.y][pos.x] = char;
+      newGrid[row][col] = char;
       return newGrid;
     });
   }, []);
 
-  const handleRemove = useCallback((pos: Position) => {
-    setPlayerGrid(prevGrid => {
-      const newGrid = prevGrid.map(row => [...row]);
-      newGrid[pos.y][pos.x] = null;
+  const handleRemove = useCallback((row: number, col: number) => {
+    setBattlefield(prevGrid => {
+      const newGrid = prevGrid.map(r => [...r]);
+      newGrid[row][col] = null;
       return newGrid;
     });
   }, []);
 
   const getPlacedCharacterIds = () => {
     const ids = new Set<string>();
-    playerGrid.forEach(row => {
+    battlefield.forEach(row => {
       row.forEach(cell => {
-        if (cell) ids.add(cell.id);
+        if (cell && !cell.id.startsWith('enemy_')) {
+          ids.add(cell.id);
+        }
       });
     });
     return ids;
@@ -278,16 +323,21 @@ function FormationPageContent() {
       return;
     }
 
-    // 保存阵型数据
+    // 保存阵型数据（转换回3×3坐标系统）
     const formation: Formation[] = [];
-    playerGrid.forEach((row, y) => {
-      row.forEach((cell, x) => {
-        if (cell) {
-          formation.push({
-            playerId: cell.id,
-            characterId: cell.id,
-            position: { x, y },
-          });
+    battlefield.forEach((row, r) => {
+      row.forEach((cell, c) => {
+        if (cell && isPlayerZone(c) && !cell.id.startsWith('enemy_')) {
+          // 映射：col(0-2) -> x(0-2), row(1-3) -> y(0-2)
+          const x = c;
+          const y = r - 1;
+          if (y >= 0 && y <= 2) {
+            formation.push({
+              playerId: cell.id,
+              characterId: cell.id,
+              position: { x, y },
+            });
+          }
         }
       });
     });
@@ -303,102 +353,90 @@ function FormationPageContent() {
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-white text-center mb-2">⚔️ 战场布阵 ⚔️</h1>
-        <p className="text-slate-400 text-center mb-6">{level.name} - {level.difficulty}</p>
+        <p className="text-slate-400 text-center mb-4">{level.name} - {level.difficulty}</p>
 
-        {/* 完整战场布局 */}
-        <div className="bg-slate-800/50 rounded-xl p-6 border-2 border-slate-700 mb-6">
-          <div className="flex items-center justify-center gap-4">
-            {/* 我方区域 */}
-            <div className="flex flex-col items-center">
-              <div className="text-blue-400 font-bold mb-2 text-sm flex items-center gap-2">
-                <span>🛡️</span>
-                <span>我方阵地</span>
-              </div>
-              <div className="flex flex-col gap-1 bg-blue-900/20 p-3 rounded-lg border-2 border-blue-500">
-                {playerGrid.map((row, y) => (
-                  <div key={y} className="flex gap-1">
-                    {row.map((cell, x) => (
-                      <GridCell
-                        key={`player-${x}-${y}`}
-                        position={{ x, y }}
-                        character={cell}
-                        onDrop={handleDrop}
-                        onRemove={handleRemove}
-                        isEnemy={false}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-              <div className="text-slate-500 text-xs mt-2 text-center">
-                拖拽角色到格子<br/>或点击移除
-              </div>
+        {/* 战场布局 */}
+        <div className="bg-slate-800/50 rounded-xl p-4 border-2 border-slate-700 mb-4">
+          {/* 列标识 */}
+          <div className="flex justify-center mb-2">
+            <div className="flex gap-0">
+              {Array.from({ length: BATTLEFIELD_COLS }).map((_, col) => (
+                <div key={col} className="w-14 text-center text-xs text-slate-500 font-mono">
+                  {col}
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* 中间火山区域 */}
-            {level.scene === 'volcano' && (
-              <div className="flex flex-col items-center">
-                <div className="text-orange-400 font-bold mb-2 text-sm flex items-center gap-2">
-                  <span>🌋</span>
-                  <span>火山地带</span>
+          {/* 战场网格 */}
+          <div className="flex flex-col items-center gap-0">
+            {battlefield.map((row, rowIndex) => (
+              <div key={rowIndex} className="flex gap-0">
+                {/* 行标识 */}
+                <div className="w-8 flex items-center justify-center text-xs text-slate-500 font-mono">
+                  {rowIndex}
                 </div>
-                <div className="flex flex-col gap-1 bg-orange-900/20 p-3 rounded-lg border-2 border-orange-600">
-                  {Array.from({ length: 3 }).map((_, y) => (
-                    <div key={y} className="flex gap-1">
-                      <GridCell
-                        key={`lava-0-${y}`}
-                        position={{ x: 0, y }}
-                        character={null}
-                        onDrop={() => {}}
-                        onRemove={() => {}}
-                        isLavaZone={true}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="text-orange-400 text-xs mt-2 text-center font-semibold">
-                  ⚠️ 危险区域<br/>岩浆喷发
-                </div>
-              </div>
-            )}
 
-            {/* 敌方区域 */}
-            <div className="flex flex-col items-center">
-              <div className="text-red-400 font-bold mb-2 text-sm flex items-center gap-2">
-                <span>⚔️</span>
-                <span>敌方阵地</span>
-              </div>
-              <div className="flex flex-col gap-1 bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
-                {enemyGrid.map((row, y) => (
-                  <div key={y} className="flex gap-1">
-                    {row.map((cell, x) => (
-                      <GridCell
-                        key={`enemy-${x}-${y}`}
-                        position={{ x, y }}
-                        character={cell}
-                        onDrop={() => {}}
-                        onRemove={() => {}}
-                        isEnemy={true}
-                      />
-                    ))}
-                  </div>
+                {/* 格子 */}
+                {row.map((cell, colIndex) => (
+                  <GridCell
+                    key={`${rowIndex}-${colIndex}`}
+                    row={rowIndex}
+                    col={colIndex}
+                    character={cell}
+                    onDrop={handleDrop}
+                    onRemove={handleRemove}
+                  />
                 ))}
+
+                {/* 行标识 */}
+                <div className="w-8 flex items-center justify-center text-xs text-slate-500 font-mono">
+                  {rowIndex}
+                </div>
               </div>
-              <div className="text-slate-500 text-xs mt-2 text-center">
-                敌方预设<br/>阵容
-              </div>
+            ))}
+          </div>
+
+          {/* 列标识 */}
+          <div className="flex justify-center mt-2">
+            <div className="flex gap-0">
+              {Array.from({ length: BATTLEFIELD_COLS }).map((_, col) => (
+                <div key={col} className="w-14 text-center text-xs text-slate-500 font-mono">
+                  {col}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 图例 */}
+          <div className="flex justify-center gap-4 mt-4 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 border-2 border-blue-400 bg-blue-900/30 rounded"></div>
+              <span className="text-slate-300">🛡️ 我方区域 (列0-2)</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 border border-gray-600 bg-gray-800/20 rounded"></div>
+              <span className="text-slate-300">中立区域</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 border-2 border-orange-500 bg-orange-900/60 rounded"></div>
+              <span className="text-slate-300">🌋 岩浆地块</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 border-2 border-red-400 bg-red-900/30 rounded"></div>
+              <span className="text-slate-300">⚔️ 敌方区域 (列8-10)</span>
             </div>
           </div>
         </div>
 
         {/* 下方两列：可用角色 + 关卡信息 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           {/* 可用角色 */}
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-            <h2 className="text-xl font-bold text-white mb-3 text-center">
+            <h2 className="text-lg font-bold text-white mb-3 text-center">
               📦 可用角色 ({playerCharacters.length})
             </h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-60 overflow-y-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto">
               {playerCharacters.map((char) => (
                 <CharacterCard
                   key={char.id}
@@ -408,66 +446,64 @@ function FormationPageContent() {
               ))}
             </div>
             {playerCharacters.length === 0 && (
-              <p className="text-slate-400 text-center py-8">暂无可用角色<br/>请先招募角色</p>
+              <p className="text-slate-400 text-center py-8 text-sm">暂无可用角色<br/>请先招募角色</p>
             )}
           </div>
 
-          {/* 关卡信息与火山机制说明 */}
+          {/* 关卡信息 */}
           <div className="bg-slate-800/50 rounded-xl p-4 border border-orange-500">
-            <h3 className="text-xl font-bold text-orange-400 mb-3 text-center flex items-center justify-center gap-2">
-              <span className="text-2xl">🌋</span>
+            <h3 className="text-lg font-bold text-orange-400 mb-3 text-center flex items-center justify-center gap-2">
+              <span className="text-xl">🌋</span>
               <span>关卡机制</span>
             </h3>
-            <div className="space-y-3 text-sm">
-              {/* 关卡基本信息 */}
-              <div className="bg-slate-700/50 rounded-lg p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-300">关卡名称：</span>
-                  <span className="text-white font-bold">{level.name}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-300">难度：</span>
-                  <span className={`font-bold ${
-                    level.difficulty === 'Boss' ? 'text-purple-400' :
-                    level.difficulty === '极难' ? 'text-red-400' :
-                    level.difficulty === '困难' ? 'text-orange-400' :
-                    level.difficulty === '中等' ? 'text-yellow-400' :
-                    'text-green-400'
-                  }`}>{level.difficulty}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-300">战斗时长：</span>
-                  <span className="text-blue-400 font-bold">{level.duration || 30}秒</span>
+            <div className="space-y-2 text-sm">
+              {/* 基本信息 */}
+              <div className="bg-slate-700/50 rounded-lg p-2">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">难度：</span>
+                    <span className={`font-bold ${
+                      level.difficulty === 'Boss' ? 'text-purple-400' :
+                      level.difficulty === '极难' ? 'text-red-400' :
+                      level.difficulty === '困难' ? 'text-orange-400' :
+                      level.difficulty === '中等' ? 'text-yellow-400' :
+                      'text-green-400'
+                    }`}>{level.difficulty}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">时长：</span>
+                    <span className="text-blue-400 font-bold">{level.duration || 30}秒</span>
+                  </div>
                 </div>
               </div>
 
               {/* 火山机制 */}
               {level.scene === 'volcano' && (
                 <>
-                  <div className="flex items-start gap-2 bg-red-900/30 rounded-lg p-2">
-                    <span className="text-xl">🔥</span>
-                    <div className="flex-1">
-                      <p className="font-semibold text-orange-300">环境燃烧</p>
-                      <p className="text-xs text-slate-300">
-                        持续燃烧：<span className="text-red-400 font-bold">{level.burnDamage || 0}点/秒</span>
-                      </p>
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        🔥火系免疫 • ❄️冰系-70% • 🪨大地系全额
-                      </p>
+                  <div className="bg-red-900/30 rounded-lg p-2 text-xs">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">🔥</span>
+                      <span className="font-semibold text-orange-300">环境燃烧</span>
+                    </div>
+                    <div className="text-slate-300 ml-7">
+                      持续伤害：<span className="text-red-400 font-bold">{level.burnDamage || 0}点/秒</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 ml-7 mt-1">
+                      🔥火系免疫 • ❄️冰系-70% • 🪨大地全额
                     </div>
                   </div>
                   
                   {level.id >= 3 && (
-                    <div className="flex items-start gap-2 bg-orange-900/30 rounded-lg p-2">
-                      <span className="text-xl">🌋</span>
-                      <div className="flex-1">
-                        <p className="font-semibold text-orange-300">岩浆喷发</p>
-                        <p className="text-xs text-slate-300">
-                          喷发伤害：<span className="text-red-400 font-bold">80点</span> (每10秒)
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          ⚠️喷发前1.5秒警告 • 🪨大地系-40%
-                        </p>
+                    <div className="bg-orange-900/30 rounded-lg p-2 text-xs">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">🌋</span>
+                        <span className="font-semibold text-orange-300">岩浆喷发</span>
+                      </div>
+                      <div className="text-slate-300 ml-7">
+                        喷发伤害：<span className="text-red-400 font-bold">80点</span> (每10秒)
+                      </div>
+                      <div className="text-[10px] text-slate-400 ml-7 mt-1">
+                        ⚠️提前1.5秒警告 • 🪨大地-40%
                       </div>
                     </div>
                   )}
@@ -475,10 +511,7 @@ function FormationPageContent() {
                   <div className="bg-blue-900/30 rounded-lg p-2">
                     <p className="text-xs text-blue-200 flex items-start gap-1">
                       <span>💡</span>
-                      <span>
-                        <span className="font-semibold">策略：</span>
-                        携带❄️冰系角色抵抗燃烧，避开🌋岩浆地块，带✨治疗确保生存！
-                      </span>
+                      <span>带❄️冰系抵抗燃烧，避开🌋岩浆，带✨治疗保生存！</span>
                     </p>
                   </div>
                 </>
@@ -491,13 +524,13 @@ function FormationPageContent() {
         <div className="flex gap-4 justify-center">
           <button
             onClick={() => setScene('home')}
-            className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition shadow-lg"
+            className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition shadow-lg text-sm"
           >
             ← 返回主页
           </button>
           <button
             onClick={handleStartBattle}
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition shadow-lg"
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition shadow-lg text-sm"
           >
             ⚔️ 开始战斗
           </button>
@@ -513,16 +546,6 @@ export default function FormationPage() {
       <FormationPageContent />
     </DndProvider>
   );
-}
-
-function getRoleName(role: string): string {
-  const roleMap: Record<string, string> = {
-    warrior: '战士',
-    archer: '弓手',
-    assassin: '刺客',
-    healer: '治疗',
-  };
-  return roleMap[role] || role;
 }
 
 function getRoleEmoji(role: string): string {
