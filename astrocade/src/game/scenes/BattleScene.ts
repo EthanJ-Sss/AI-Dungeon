@@ -974,13 +974,7 @@ export default class BattleScene extends Phaser.Scene {
     this.showSkillCast(casterContainer, config.name, 0x00ff00);
 
     // 更新血条
-    const hpBar = (casterContainer as any).hpBar as Phaser.GameObjects.Rectangle;
-    const hpText = (casterContainer as any).hpText as Phaser.GameObjects.Text;
-    
-    const hpPercentage = caster.currentHp / caster.character.maxHp;
-    hpBar.width = 50 * hpPercentage;
-    hpBar.setFillStyle(hpPercentage > 0.5 ? 0x00ff00 : hpPercentage > 0.2 ? 0xffaa00 : 0xff0000);
-    hpText.setText(`${Math.ceil(caster.currentHp)}/${caster.character.maxHp}`);
+    this.updateHealthBar(caster);
 
     // 回血特效
     const healEffect = this.add.circle(casterContainer.x, casterContainer.y, 30, 0x00ff00, 0.3);
@@ -1362,6 +1356,9 @@ export default class BattleScene extends Phaser.Scene {
 
     this.showSkillCast(casterContainer, config.name, 0x00ff00);
 
+    // 更新血条
+    this.updateHealthBar(caster);
+
     // 治疗特效
     const healEffect = this.add.circle(casterContainer.x, casterContainer.y, 40, 0x00ff00, 0.5);
     
@@ -1619,6 +1616,9 @@ export default class BattleScene extends Phaser.Scene {
         const healAmount = Math.ceil(ally.character.maxHp * (healPercent / 100));
         ally.currentHp = Math.min(ally.character.maxHp, ally.currentHp + healAmount);
         healedCount++;
+
+        // 更新血条
+        this.updateHealthBar(ally);
 
         // 治疗特效
         const healEffect = this.add.circle(allyContainer.x, allyContainer.y, 30, 0x00ff00, 0.5);
@@ -2119,6 +2119,9 @@ export default class BattleScene extends Phaser.Scene {
         const healAmount = ally.character.maxHp * (healPercent / 100);
         ally.currentHp = Math.min(ally.character.maxHp, ally.currentHp + healAmount);
 
+        // 更新血条
+        this.updateHealthBar(ally);
+
         // 显示治疗数字
         const healText = this.add.text(allyContainer.x, allyContainer.y - 30, `+${Math.ceil(healAmount)}💚`, {
           fontSize: '18px',
@@ -2195,6 +2198,9 @@ export default class BattleScene extends Phaser.Scene {
         const healPercent = config.heal || 15;
         const healAmount = ally.character.maxHp * (healPercent / 100);
         ally.currentHp = Math.min(ally.character.maxHp, ally.currentHp + healAmount);
+
+        // 更新血条
+        this.updateHealthBar(ally);
 
         // 显示治疗数字
         const healText = this.add.text(allyContainer.x, allyContainer.y - 30, `+${Math.ceil(healAmount)}💚`, {
