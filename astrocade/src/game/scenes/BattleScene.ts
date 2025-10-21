@@ -250,9 +250,12 @@ export default class BattleScene extends Phaser.Scene {
     console.log(`📍 关卡: ${currentLevel?.name || '未知'}`);
     console.log(`⏱️ 时长: ${this.battleTimer}秒`);
     console.log(`\n🛡️ 我方阵容:`);
+    console.log(`   [调试] playerFormation长度: ${gameState.playerFormation.length}`);
+    console.log(`   [调试] playerState.characters长度: ${playerState.characters.length}`);
 
     // 生成玩家单位
-    gameState.playerFormation.forEach((formation) => {
+    gameState.playerFormation.forEach((formation, index) => {
+      console.log(`   [调试] 阵型${index}: characterId=${formation.characterId}, position=(${formation.position.x}, ${formation.position.y})`);
       const character = playerState.characters.find(c => c.id === formation.characterId);
       if (character) {
         const elementIcon = this.getElementIcon(character.element);
@@ -260,6 +263,9 @@ export default class BattleScene extends Phaser.Scene {
         console.log(`   ${roleEmoji}${elementIcon} ${character.name} (HP: ${character.hp})`);
         const unit = this.createBattleUnit(character, formation.position, 'player');
         this.playerUnits.push(unit);
+      } else {
+        console.warn(`   ⚠️ [角色丢失] 找不到角色ID: ${formation.characterId}`);
+        console.warn(`   [调试] 可用角色IDs: ${playerState.characters.map(c => c.id).join(', ')}`);
       }
     });
 
