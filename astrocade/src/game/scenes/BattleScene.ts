@@ -16,17 +16,17 @@ export default class BattleScene extends Phaser.Scene {
   private timerText?: Phaser.GameObjects.Text;
   private battleEnded: boolean = false;
   
-  // 棋盘配置：7行×9列
-  private gridSize = 70;
-  private gridRows = 7;
-  private gridCols = 9;
-  private gridOffsetX = 200;
+  // 棋盘配置：5行×11列（与布阵界面完全一致）
+  private gridSize = 56;
+  private gridRows = 5;
+  private gridCols = 11;
+  private gridOffsetX = 120;
   private gridOffsetY = 130;
   
-  // 我方区域（左侧）：列2-4，行3-5（3×3）
-  private playerArea = { rowStart: 3, rowEnd: 5, colStart: 2, colEnd: 4 };
-  // 敌方区域（右侧）：列6-8，行3-5（3×3）
-  private enemyArea = { rowStart: 3, rowEnd: 5, colStart: 6, colEnd: 8 };
+  // 我方区域（左侧）：列0-2，行1-3（3×3）
+  private playerArea = { rowStart: 1, rowEnd: 3, colStart: 0, colEnd: 2 };
+  // 敌方区域（右侧）：列8-10，行1-3（3×3）
+  private enemyArea = { rowStart: 1, rowEnd: 3, colStart: 8, colEnd: 10 };
   
   // 移动速度提升
   private moveSpeedMultiplier = 5;
@@ -97,7 +97,7 @@ export default class BattleScene extends Phaser.Scene {
         padding: { x: 8, y: 4 },
       });
 
-      this.add.text(50, 100, `🌋 岩浆: 50伤害/10秒`, {
+      this.add.text(50, 100, `🌋 岩浆: 80伤害/10秒`, {
         fontSize: '18px',
         color: '#ff9900',
         backgroundColor: '#000000',
@@ -175,7 +175,7 @@ export default class BattleScene extends Phaser.Scene {
   private drawBattleGrid() {
     const graphics = this.add.graphics();
     
-    // 绘制完整的7×9棋盘（灰色，细线）
+    // 绘制完整的5×11棋盘（灰色，细线）与布阵界面完全一致
     graphics.lineStyle(1, 0x666666, 0.3);
     for (let row = 0; row < this.gridRows; row++) {
       for (let col = 0; col < this.gridCols; col++) {
@@ -185,37 +185,57 @@ export default class BattleScene extends Phaser.Scene {
       }
     }
 
-    // 高亮我方区域（蓝色背景）
+    // 添加列坐标标签（上方）
+    for (let col = 0; col < this.gridCols; col++) {
+      const x = this.gridOffsetX + col * this.gridSize + this.gridSize / 2;
+      const y = this.gridOffsetY - 15;
+      this.add.text(x, y, `${col}`, {
+        fontSize: '14px',
+        color: '#888888',
+      }).setOrigin(0.5);
+    }
+
+    // 添加行坐标标签（左侧）
+    for (let row = 0; row < this.gridRows; row++) {
+      const x = this.gridOffsetX - 20;
+      const y = this.gridOffsetY + row * this.gridSize + this.gridSize / 2;
+      this.add.text(x, y, `${row}`, {
+        fontSize: '14px',
+        color: '#888888',
+      }).setOrigin(0.5);
+    }
+
+    // 高亮我方区域（蓝色背景）- 列0-2，行1-3
     const playerX = this.gridOffsetX + this.playerArea.colStart * this.gridSize;
     const playerY = this.gridOffsetY + this.playerArea.rowStart * this.gridSize;
     const playerWidth = (this.playerArea.colEnd - this.playerArea.colStart + 1) * this.gridSize;
     const playerHeight = (this.playerArea.rowEnd - this.playerArea.rowStart + 1) * this.gridSize;
     
-    graphics.fillStyle(0x4488ff, 0.1);
+    graphics.fillStyle(0x4488ff, 0.15);
     graphics.fillRect(playerX, playerY, playerWidth, playerHeight);
-    graphics.lineStyle(3, 0x4488ff, 0.8);
+    graphics.lineStyle(2, 0x4488ff, 0.8);
     graphics.strokeRect(playerX, playerY, playerWidth, playerHeight);
 
-    // 高亮敌方区域（红色背景）
+    // 高亮敌方区域（红色背景）- 列8-10，行1-3
     const enemyX = this.gridOffsetX + this.enemyArea.colStart * this.gridSize;
     const enemyY = this.gridOffsetY + this.enemyArea.rowStart * this.gridSize;
     const enemyWidth = (this.enemyArea.colEnd - this.enemyArea.colStart + 1) * this.gridSize;
     const enemyHeight = (this.enemyArea.rowEnd - this.enemyArea.rowStart + 1) * this.gridSize;
     
-    graphics.fillStyle(0xff4444, 0.1);
+    graphics.fillStyle(0xff4444, 0.15);
     graphics.fillRect(enemyX, enemyY, enemyWidth, enemyHeight);
-    graphics.lineStyle(3, 0xff4444, 0.8);
+    graphics.lineStyle(2, 0xff4444, 0.8);
     graphics.strokeRect(enemyX, enemyY, enemyWidth, enemyHeight);
 
     // 添加阵营标签
-    this.add.text(playerX + playerWidth / 2, playerY - 25, '我方区域', {
-      fontSize: '20px',
+    this.add.text(playerX + playerWidth / 2, playerY - 25, '🛡️ 我方', {
+      fontSize: '16px',
       color: '#4488ff',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.add.text(enemyX + enemyWidth / 2, enemyY - 25, '敌方区域', {
-      fontSize: '20px',
+    this.add.text(enemyX + enemyWidth / 2, enemyY - 25, '⚔️ 敌方', {
+      fontSize: '16px',
       color: '#ff4444',
       fontStyle: 'bold',
     }).setOrigin(0.5);
