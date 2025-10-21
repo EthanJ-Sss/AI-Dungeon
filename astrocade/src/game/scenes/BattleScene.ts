@@ -244,16 +244,26 @@ export default class BattleScene extends Phaser.Scene {
   private generateBattleUnits() {
     const gameState = useGameStore.getState();
     const playerState = usePlayerStore.getState();
+    const currentLevel = gameState.currentLevel;
+
+    console.log(`\n⚔️ ========== 战斗开始 ==========`);
+    console.log(`📍 关卡: ${currentLevel?.name || '未知'}`);
+    console.log(`⏱️ 时长: ${this.battleTimer}秒`);
+    console.log(`\n🛡️ 我方阵容:`);
 
     // 生成玩家单位
     gameState.playerFormation.forEach((formation) => {
       const character = playerState.characters.find(c => c.id === formation.characterId);
       if (character) {
-        console.log(`[BattleScene] 生成我方角色: ${character.name}, 技能: ${character.skills?.join(', ') || '无'}`);
+        const elementIcon = this.getElementIcon(character.element);
+        const roleEmoji = this.getRoleEmoji(character.role);
+        console.log(`   ${roleEmoji}${elementIcon} ${character.name} (HP: ${character.hp})`);
         const unit = this.createBattleUnit(character, formation.position, 'player');
         this.playerUnits.push(unit);
       }
     });
+
+    console.log(`\n⚔️ 敌方阵容:`);
 
     // 生成敌方单位
     if (gameState.currentLevel) {
@@ -282,12 +292,16 @@ export default class BattleScene extends Phaser.Scene {
           passiveSkills: presetChar.passiveSkills || [], // ✅ 添加被动技能
         };
         
-        console.log(`[BattleScene] 生成敌人: ${enemyChar.name}, 职业: ${enemyChar.role}, 技能: ${enemyChar.skills?.join(', ') || '无'}`);
+        const elementIcon = this.getElementIcon(enemyChar.element);
+        const roleEmoji = this.getRoleEmoji(enemyChar.role);
+        console.log(`   ${roleEmoji}${elementIcon} ${presetChar.name} (HP: ${enemyChar.hp})`);
         
         const unit = this.createBattleUnit(enemyChar, enemy.position, 'enemy');
         this.enemyUnits.push(unit);
       });
     }
+    
+    console.log(`\n================================\n`);
   }
 
   private createBattleUnit(character: Character, gridPos: Position, team: 'player' | 'enemy'): BattleUnit {
@@ -349,13 +363,6 @@ export default class BattleScene extends Phaser.Scene {
     const skillInstances: SkillInstance[] = character.skills 
       ? SkillManager.createSkillInstances(character.skills)
       : [];
-
-    console.log(`[createBattleUnit] ${character.name} (${team}) 创建完成，技能数量: ${skillInstances.length}`);
-    if (skillInstances.length > 0) {
-      skillInstances.forEach(s => {
-        console.log(`  - ${s.config.name} (CD: ${s.config.cd}秒, 当前状态: ${s.isReady ? '准备好' : 'CD中'})`);
-      });
-    }
 
     // 创建战斗单位数据
     const unit: BattleUnit = {
@@ -594,22 +601,8 @@ export default class BattleScene extends Phaser.Scene {
 
     // 检查死亡
     if (target.currentHp <= 0 && target.isAlive) {
-      target.isAlive = false;
-      
-      // 从allUnits中移除
-      this.allUnits.delete(target.character.id);
-      
-      this.tweens.add({
-        targets: targetContainer,
-        alpha: 0,
-        scaleX: 0,
-        scaleY: 0,
-        duration: 500,
-        onComplete: () => {
-          targetContainer.destroy();
-          this.checkBattleEnd();
-        },
-      });
+      const attackerName = attacker ? attacker.character.name : '未知';
+      this.handleUnitDeath(target, `被${attackerName}击杀`);
     }
   }
 
@@ -636,8 +629,12 @@ export default class BattleScene extends Phaser.Scene {
     const alivePlayers = this.playerUnits.filter(u => u.isAlive).length;
 
     if (aliveEnemies === 0) {
+      console.log(`\n🎉 ========== 战斗胜利 ==========`);
+      console.log(`   我方存活: ${alivePlayers}人，敌方存活: 0人`);
       this.endBattle('win');
     } else if (alivePlayers === 0) {
+      console.log(`\n💔 ========== 战斗失败 ==========`);
+      console.log(`   我方存活: 0人，敌方存活: ${aliveEnemies}人`);
       this.endBattle('lose');
     }
   }
@@ -804,7 +801,6 @@ export default class BattleScene extends Phaser.Scene {
 
   private tryUseSkill(unit: BattleUnit, targets: BattleUnit[], container: Phaser.GameObjects.Container) {
     if (!unit.skillInstances || unit.skillInstances.length === 0) {
-      console.log(`[tryUseSkill] ${unit.character.name} 没有技能实例`);
       return false;
     }
 
@@ -831,8 +827,6 @@ export default class BattleScene extends Phaser.Scene {
         console.log(`✅ [技能释放成功] ${unit.character.name} 使用了 ${skill.config.name}`);
         SkillManager.useSkill(skill, this.time.now);
         return true;
-      } else {
-        console.log(`❌ [技能释放失败] ${unit.character.name} 的 ${skill.config.name} 释放条件不满足`);
       }
     }
 
@@ -2419,11 +2413,16 @@ export default class BattleScene extends Phaser.Scene {
   /**
    * 处理单位死亡
    */
-  private handleUnitDeath(unit: BattleUnit) {
+  private handleUnitDeath(unit: BattleUnit, cause?: string) {
     if (!unit.isAlive) return; // 防止重复处理
     
     unit.isAlive = false;
     const container = this.allUnits.get(unit.character.id);
+    
+    // 🔴 死亡日志
+    const teamEmoji = unit.team === 'player' ? '🛡️' : '⚔️';
+    const causeText = cause ? ` (${cause})` : '';
+    console.log(`💀 [角色死亡] ${teamEmoji} ${unit.character.name} 已阵亡${causeText}`);
     
     if (container && container.active) {
       this.showDeathAnimation(container);
@@ -2618,7 +2617,7 @@ export default class BattleScene extends Phaser.Scene {
 
       // 检查是否死亡
       if (unit.currentHp <= 0) {
-        this.handleUnitDeath(unit);
+        this.handleUnitDeath(unit, '燃烧效果');
       }
     });
   }
@@ -2664,9 +2663,9 @@ export default class BattleScene extends Phaser.Scene {
 
       const key = `${block.row}-${block.col}`;
       this.lavaMarkers.set(key, marker);
-      
-      console.log(`[LavaInit] 初始化岩浆地块: 行${block.row}, 列${block.col}, 坐标(${x.toFixed(0)}, ${y.toFixed(0)})`);
     });
+    
+    console.log(`🌋 [岩浆系统] 初始化完成，共${this.lavaBlocks.length}个地块`);
   }
 
   /**
@@ -2742,7 +2741,7 @@ export default class BattleScene extends Phaser.Scene {
       fontSize: '48px',
     }).setOrigin(0.5);
 
-    console.log(`[LavaEruption] 岩浆喷发位置: 行${row}, 列${col}, 坐标(${x.toFixed(0)}, ${y.toFixed(0)})`);
+    console.log(`🌋 [岩浆喷发] 位置: (${row}, ${col})`);
 
     this.tweens.add({
       targets: eruption,
@@ -2765,10 +2764,8 @@ export default class BattleScene extends Phaser.Scene {
       const unitGridX = Math.round((container.x - this.gridOffsetX) / this.gridSize);
       const unitGridY = Math.round((container.y - this.gridOffsetY) / this.gridSize);
 
-      console.log(`[LavaEruption] 检查 ${unit.character.name}: 位置(${container.x.toFixed(0)}, ${container.y.toFixed(0)}), 网格(${unitGridX}, ${unitGridY}), 岩浆网格(${col}, ${row})`);
-
       if (unitGridX === col && unitGridY === row) {
-        console.log(`[LavaEruption] 💥 ${unit.character.name} 被岩浆击中！`);
+        console.log(`   ├─ 💥 ${unit.character.name} 被岩浆击中！`);
         // 计算岩浆伤害（考虑大地系抗性）
         const finalDamage = calculateLavaDamage(this.lavaDamage, unit.character.element);
 
@@ -2797,10 +2794,8 @@ export default class BattleScene extends Phaser.Scene {
 
         // 检查是否死亡
         if (unit.currentHp <= 0) {
-          this.handleUnitDeath(unit);
+          this.handleUnitDeath(unit, '岩浆喷发');
         }
-
-        console.log(`[BattleScene] 岩浆喷发！${unit.character.name} 受到 ${finalDamage} 点伤害`);
       }
     });
   }
