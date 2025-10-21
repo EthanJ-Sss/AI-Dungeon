@@ -57,8 +57,8 @@ export default class BattleScene extends Phaser.Scene {
     
     // 检测是否为Boss关卡
     const currentLevel = useGameStore.getState().currentLevel;
-    const isBossLevel = currentLevel?.id === 10;
-    this.battleTimer = isBossLevel ? 60 : 30; // Boss战时间延长到60秒
+    const isBossLevel = currentLevel?.id === 5; // 火山关卡的Boss是第5关
+    this.battleTimer = isBossLevel ? 60 : (currentLevel?.duration || 30); // 使用关卡配置的时长
     
     console.log(`[BattleScene] 关卡ID: ${currentLevel?.id}, 是否为Boss战: ${isBossLevel}, 战斗时长: ${this.battleTimer}秒`);
     
@@ -68,11 +68,14 @@ export default class BattleScene extends Phaser.Scene {
     // 初始化BUFF管理器
     BuffManager.init();
     
-    // 添加背景
-    this.add.rectangle(600, 350, 1200, 700, 0x1a1a2e);
+    // 添加背景（火山场景为深红色）
+    const isVolcano = currentLevel?.scene === 'volcano';
+    const bgColor = isVolcano ? 0x3d1a1a : 0x1a1a2e;
+    this.add.rectangle(600, 350, 1200, 700, bgColor);
     
     // 添加标题
-    this.add.text(600, 30, '战斗场景', {
+    const levelName = currentLevel?.name || '战斗场景';
+    this.add.text(600, 30, levelName, {
       fontSize: '32px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -83,6 +86,24 @@ export default class BattleScene extends Phaser.Scene {
       fontSize: '24px',
       color: '#ffcc00',
     }).setOrigin(0.5);
+
+    // 添加环境信息显示（火山关卡）
+    if (isVolcano && currentLevel?.burnDamage && currentLevel.burnDamage > 0) {
+      this.add.text(50, 70, `🔥 燃烧: ${currentLevel.burnDamage}/秒`, {
+        fontSize: '20px',
+        color: '#ff6600',
+        fontStyle: 'bold',
+        backgroundColor: '#000000',
+        padding: { x: 8, y: 4 },
+      });
+
+      this.add.text(50, 100, `🌋 岩浆: 50伤害/10秒`, {
+        fontSize: '18px',
+        color: '#ff9900',
+        backgroundColor: '#000000',
+        padding: { x: 8, y: 4 },
+      });
+    }
 
     // 绘制战场网格
     this.drawBattleGrid();
@@ -267,8 +288,10 @@ export default class BattleScene extends Phaser.Scene {
     const circle = this.add.circle(0, 0, 25, color);
     container.add(circle);
 
-    // 添加角色名称
-    const nameText = this.add.text(0, -45, character.name, {
+    // 添加角色名称和元素图标
+    const elementIcon = this.getElementIcon(character.element);
+    const nameWithElement = elementIcon ? `${elementIcon} ${character.name}` : character.name;
+    const nameText = this.add.text(0, -45, nameWithElement, {
       fontSize: '12px',
       color: '#ffffff',
     }).setOrigin(0.5);
@@ -2489,6 +2512,23 @@ export default class BattleScene extends Phaser.Scene {
       .on('pointerdown', () => {
         useGameStore.getState().setScene('formation');
       });
+  }
+
+  /**
+   * 获取元素图标
+   */
+  private getElementIcon(element?: string): string {
+    if (!element) return '';
+    
+    const elementIcons: Record<string, string> = {
+      fire: '🔥',
+      ice: '❄️',
+      earth: '🪨',
+      water: '💧',
+      neutral: '⚪',
+    };
+    
+    return elementIcons[element] || '';
   }
 }
 
