@@ -249,6 +249,57 @@
     "eruptionInterval": 2,
     "eruptionDamage": 50,
     "description": "在战场中央额外召唤一个临时岩浆地块，持续10秒，每2秒喷发一次（伤害50点）"
+  },
+  {
+    "id": "v_skill_002",
+    "name": "烈焰冲击",
+    "element": "fire",
+    "type": "dash_damage",
+    "cd": 6,
+    "range": 0,
+    "targetType": "self",
+    "dashDistance": 200,
+    "damage": 60,
+    "description": "向前冲刺200距离，撞击路径上的敌人造成60点伤害"
+  },
+  {
+    "id": "v_skill_007",
+    "name": "冰霜护盾",
+    "element": "ice",
+    "type": "buff",
+    "cd": 10,
+    "range": 0,
+    "targetType": "self",
+    "buffId": "buff_shield",
+    "shieldValue": 150,
+    "duration": 5,
+    "description": "为自己创造冰霜护盾，吸收150点伤害，持续5秒"
+  },
+  {
+    "id": "v_skill_008",
+    "name": "冰封打击",
+    "element": "ice",
+    "type": "damage",
+    "cd": 7,
+    "range": 250,
+    "targetType": "enemy",
+    "damage": 120,
+    "stunDuration": 1,
+    "description": "对单个敌人造成120点冰霜伤害并冻结1秒。对火系敌人额外+30%伤害"
+  },
+  {
+    "id": "v_skill_014",
+    "name": "生命之泉",
+    "element": "neutral",
+    "type": "area_heal",
+    "cd": 12,
+    "range": 0,
+    "targetType": "area",
+    "areaRadius": 250,
+    "heal": 15,
+    "hotDuration": 5,
+    "hotHeal": 3,
+    "description": "在自身周围创造生命之泉，立即治疗250范围内所有友军15%生命，并在5秒内每秒额外回复3%生命"
   }
 ]
 

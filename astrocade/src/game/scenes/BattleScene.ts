@@ -826,12 +826,20 @@ export default class BattleScene extends Phaser.Scene {
       // 火山技能
       case 'v_skill_001': // 火球爆裂
         return this.castVolcanoFireball(caster, targets, casterContainer, config);
+      case 'v_skill_002': // 烈焰冲击
+        return this.castFlameDash(caster, targets, casterContainer, config);
       case 'v_skill_006': // 寒冰箭
         return this.castIceArrow(caster, targets, casterContainer, config);
+      case 'v_skill_007': // 冰霜护盾
+        return this.castIceShield(caster, casterContainer, config);
+      case 'v_skill_008': // 冰封打击
+        return this.castIceStrike(caster, targets, casterContainer, config);
       case 'v_skill_010': // 岩石护甲
         return this.castRockArmor(caster, casterContainer, config);
       case 'v_skill_013': // 圣光庇护
         return this.castHolyProtection(caster, targets, casterContainer, config);
+      case 'v_skill_014': // 生命之泉
+        return this.castLifeFountain(caster, targets, casterContainer, config);
       // Boss技能
       case 'boss_skill_01': // 炎魔之怒
         return this.castBossRage(caster, targets, casterContainer, config);
@@ -1777,6 +1785,68 @@ export default class BattleScene extends Phaser.Scene {
     return true;
   }
 
+  // v_skill_002: 烈焰冲击（火系冲刺）
+  private castFlameDash(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff6600);
+
+    // 计算冲刺目标点
+    const dashDistance = config.dashDistance || 200;
+    const angle = Phaser.Math.Angle.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+    const targetX = casterContainer.x + Math.cos(angle) * dashDistance;
+    const targetY = casterContainer.y + Math.sin(angle) * dashDistance;
+
+    // 火焰尾迹特效
+    const trail = this.add.graphics();
+    trail.lineStyle(10, 0xff4500, 0.6);
+    trail.lineBetween(casterContainer.x, casterContainer.y, targetX, targetY);
+
+    // 冲刺动画
+    this.tweens.add({
+      targets: casterContainer,
+      x: targetX,
+      y: targetY,
+      duration: 300,
+      onUpdate: () => {
+        // 检查路径上的敌人
+        targets.forEach((enemy) => {
+          if (!enemy.isAlive) return;
+          const enemyContainer = this.allUnits.get(enemy.character.id);
+          if (!enemyContainer || !enemyContainer.active) return;
+
+          const distance = Phaser.Math.Distance.Between(
+            casterContainer.x, casterContainer.y,
+            enemyContainer.x, enemyContainer.y
+          );
+
+          if (distance < 50) {
+            const damage = config.damage || 60;
+            const finalDamage = calculateElementalDamage(damage, caster.character.element, enemy.character.element);
+            this.dealDamage(enemy, finalDamage, enemyContainer);
+          }
+        });
+      },
+      onComplete: () => {
+        trail.destroy();
+      },
+    });
+
+    return true;
+  }
+
   // v_skill_006: 寒冰箭（冰系减速）
   private castIceArrow(
     caster: BattleUnit,
@@ -1840,6 +1910,97 @@ export default class BattleScene extends Phaser.Scene {
         });
 
         iceArrow.destroy();
+      },
+    });
+
+    return true;
+  }
+
+  // v_skill_007: 冰霜护盾（冰系防御）
+  private castIceShield(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    this.showSkillCast(casterContainer, config.name, 0x87ceeb);
+
+    // 添加护盾 buff
+    const buffId = config.buffId || 'buff_shield';
+    BuffManager.addBuff(caster, buffId, this.time.now);
+    this.updateBuffIcons(caster);
+
+    // 冰霜护盾特效
+    const shield = this.add.circle(casterContainer.x, casterContainer.y, 45, 0x87ceeb, 0.3);
+    this.tweens.add({
+      targets: shield,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      alpha: 0.1,
+      duration: 500,
+      yoyo: true,
+      repeat: 4,
+      onComplete: () => shield.destroy(),
+    });
+
+    return true;
+  }
+
+  // v_skill_008: 冰封打击（冰系高伤害+控制）
+  private castIceStrike(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x00bfff);
+
+    // 创建冰锥
+    const iceShard = this.add.triangle(
+      casterContainer.x, casterContainer.y,
+      0, -10, -8, 10, 8, 10, 0x00bfff
+    );
+
+    this.tweens.add({
+      targets: iceShard,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 200,
+      onComplete: () => {
+        if (!target.isAlive || !targetContainer.active) {
+          iceShard.destroy();
+          return;
+        }
+
+        // 造成伤害（考虑元素克制）
+        const baseDamage = config.damage || 120;
+        const finalDamage = calculateElementalDamage(baseDamage, caster.character.element, target.character.element);
+        this.dealDamage(target, finalDamage, targetContainer);
+
+        // 冰封特效
+        const freeze = this.add.circle(targetContainer.x, targetContainer.y, 40, 0x00bfff, 0.7);
+        this.tweens.add({
+          targets: freeze,
+          alpha: 0,
+          scaleX: 1.5,
+          scaleY: 1.5,
+          duration: 1000,
+          onComplete: () => freeze.destroy(),
+        });
+
+        iceShard.destroy();
       },
     });
 
@@ -1930,6 +2091,72 @@ export default class BattleScene extends Phaser.Scene {
           alpha: 0,
           duration: 800,
           onComplete: () => holyLight.destroy(),
+        });
+
+        // 更新HP条
+        this.updateHPBar(ally);
+        healedCount++;
+      }
+    });
+
+    return healedCount > 0;
+  }
+
+  // v_skill_014: 生命之泉（持续治疗）
+  private castLifeFountain(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    // 找到范围内的友军
+    const allies = targets.filter((unit) => unit.team === caster.team && unit.isAlive);
+    if (allies.length === 0) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x00ff88);
+
+    const areaRadius = config.areaRadius || 250;
+    let healedCount = 0;
+
+    // 生命之泉特效
+    const fountain = this.add.circle(casterContainer.x, casterContainer.y, areaRadius, 0x00ff88, 0.2);
+    this.tweens.add({
+      targets: fountain,
+      alpha: { from: 0.3, to: 0.1 },
+      duration: 5000,
+      yoyo: true,
+      repeat: 2,
+      onComplete: () => fountain.destroy(),
+    });
+
+    allies.forEach((ally) => {
+      const allyContainer = this.allUnits.get(ally.character.id);
+      if (!allyContainer || !allyContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        allyContainer.x, allyContainer.y
+      );
+
+      if (distance <= areaRadius) {
+        // 立即治疗
+        const healPercent = config.heal || 15;
+        const healAmount = ally.character.maxHp * (healPercent / 100);
+        ally.currentHp = Math.min(ally.character.maxHp, ally.currentHp + healAmount);
+
+        // 显示治疗数字
+        const healText = this.add.text(allyContainer.x, allyContainer.y - 30, `+${Math.ceil(healAmount)}💚`, {
+          fontSize: '18px',
+          color: '#00ff88',
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: healText,
+          y: healText.y - 30,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => healText.destroy(),
         });
 
         // 更新HP条
