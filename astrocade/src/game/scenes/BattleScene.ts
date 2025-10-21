@@ -3,6 +3,7 @@ import { useGameStore } from '../../store/gameStore';
 import { usePlayerStore } from '../../store/playerStore';
 import { SkillManager } from '../SkillManager';
 import { BuffManager } from '../BuffManager';
+import { calculateBurnDamage, calculateLavaDamage } from '../ElementManager';
 import type { Character, BattleUnit, Position, SkillInstance, DebuffInstance, PresetCharacter } from '../../types';
 import charactersData from '../../config/characters.json';
 
@@ -28,6 +29,19 @@ export default class BattleScene extends Phaser.Scene {
   
   // 移动速度提升
   private moveSpeedMultiplier = 5;
+
+  // 岩浆地块配置（固定5个地块）
+  private lavaBlocks = [
+    { row: 2, col: 4, offsetTime: 0 },    // 战场中央
+    { row: 1, col: 2, offsetTime: 2000 }, // 玩家左上
+    { row: 3, col: 2, offsetTime: 4000 }, // 玩家左下
+    { row: 1, col: 8, offsetTime: 6000 }, // 敌方右上
+    { row: 3, col: 8, offsetTime: 8000 }, // 敌方右下
+  ];
+  private lavaInterval = 10000; // 喷发间隔（10秒）
+  private lavaWarningTime = 1500; // 警告时间（1.5秒）
+  private lavaDamage = 50; // 岩浆伤害
+  private lavaMarkers: Map<string, Phaser.GameObjects.Rectangle> = new Map();
 
   constructor() {
     super({ key: 'BattleScene' });
@@ -72,6 +86,9 @@ export default class BattleScene extends Phaser.Scene {
     // 绘制战场网格
     this.drawBattleGrid();
 
+    // 初始化岩浆地块标记
+    this.initializeLavaBlocks();
+
     // 生成战斗单位
     this.generateBattleUnits();
 
@@ -85,6 +102,17 @@ export default class BattleScene extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
+
+    // 启动燃烧系统（每秒触发）
+    this.time.addEvent({
+      delay: 1000,
+      callback: this.applyBurnDamage,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 启动岩浆喷发系统
+    this.startLavaEruptions();
 
     // 启动AI系统（每100ms更新一次）
     this.time.addEvent({
@@ -1845,6 +1873,242 @@ export default class BattleScene extends Phaser.Scene {
     });
 
     container.add(buffContainer);
+  }
+
+  /**
+   * 应用燃烧伤害（火山关卡环境效果）
+   */
+  private applyBurnDamage() {
+    // 战斗已结束，停止燃烧
+    if (this.battleEnded) return;
+
+    const currentLevel = useGameStore.getState().currentLevel;
+    
+    // 检查是否有燃烧伤害配置
+    if (!currentLevel || !currentLevel.burnDamage || currentLevel.burnDamage <= 0) {
+      return;
+    }
+
+    const baseBurnDamage = currentLevel.burnDamage;
+    const allUnits = [...this.playerUnits, ...this.enemyUnits];
+
+    allUnits.forEach((unit) => {
+      if (!unit.isAlive) return;
+
+      // 计算考虑元素抗性后的燃烧伤害
+      const finalBurnDamage = calculateBurnDamage(baseBurnDamage, unit.character.element);
+
+      // 如果伤害为0（火系免疫），跳过
+      if (finalBurnDamage === 0) return;
+
+      // 应用伤害
+      unit.currentHp = Math.max(0, unit.currentHp - finalBurnDamage);
+
+      // 显示燃烧伤害数字（橙色）
+      const container = this.allUnits.get(unit.character.id);
+      if (container) {
+        const damageText = this.add.text(0, -50, `-${finalBurnDamage}🔥`, {
+          fontSize: '18px',
+          color: '#ff6600', // 橙色
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        container.add(damageText);
+
+        // 燃烧伤害数字向上飘动并消失
+        this.tweens.add({
+          targets: damageText,
+          y: -80,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => damageText.destroy(),
+        });
+
+        // 添加燃烧粒子特效
+        this.showBurnEffect(container);
+      }
+
+      // 更新HP条
+      this.updateHPBar(unit);
+
+      // 检查是否死亡
+      if (unit.currentHp <= 0) {
+        this.handleUnitDeath(unit);
+      }
+    });
+  }
+
+  /**
+   * 显示燃烧特效
+   */
+  private showBurnEffect(container: Phaser.GameObjects.Container) {
+    const flame = this.add.text(0, -30, '🔥', {
+      fontSize: '16px',
+    }).setOrigin(0.5);
+
+    container.add(flame);
+
+    // 火焰向上飘动并消失
+    this.tweens.add({
+      targets: flame,
+      y: -50,
+      alpha: 0,
+      duration: 800,
+      onComplete: () => flame.destroy(),
+    });
+  }
+
+  /**
+   * 初始化岩浆地块标记
+   */
+  private initializeLavaBlocks() {
+    this.lavaBlocks.forEach((block) => {
+      const x = this.gridOffsetX + block.col * this.gridSize;
+      const y = this.gridOffsetY + block.row * this.gridSize;
+
+      // 创建岩浆地块标记（橙红色）
+      const marker = this.add.rectangle(
+        x, y, 
+        this.gridSize - 4, 
+        this.gridSize - 4, 
+        0xff4500, // 橙红色
+        0.3
+      );
+      marker.setDepth(-1); // 放在最底层
+
+      const key = `${block.row}-${block.col}`;
+      this.lavaMarkers.set(key, marker);
+    });
+  }
+
+  /**
+   * 启动岩浆喷发系统
+   */
+  private startLavaEruptions() {
+    this.lavaBlocks.forEach((block) => {
+      // 每个地块独立计时，带有初始延迟
+      this.time.addEvent({
+        delay: block.offsetTime,
+        callback: () => {
+          // 启动周期性喷发
+          this.time.addEvent({
+            delay: this.lavaInterval,
+            callback: () => this.scheduleLavaEruption(block.row, block.col),
+            callbackScope: this,
+            loop: true,
+          });
+          // 立即触发第一次
+          this.scheduleLavaEruption(block.row, block.col);
+        },
+        callbackScope: this,
+      });
+    });
+  }
+
+  /**
+   * 安排岩浆喷发（先警告，再喷发）
+   */
+  private scheduleLavaEruption(row: number, col: number) {
+    if (this.battleEnded) return;
+
+    // 先显示警告
+    this.showLavaWarning(row, col);
+
+    // 延迟后触发喷发
+    this.time.delayedCall(this.lavaWarningTime, () => {
+      this.triggerLavaEruption(row, col);
+    });
+  }
+
+  /**
+   * 显示岩浆警告特效
+   */
+  private showLavaWarning(row: number, col: number) {
+    const key = `${row}-${col}`;
+    const marker = this.lavaMarkers.get(key);
+    if (!marker) return;
+
+    // 警告期间闪烁红色
+    this.tweens.add({
+      targets: marker,
+      alpha: { from: 0.8, to: 0.3 },
+      fillColor: { from: 0xff0000, to: 0xff4500 }, // 红色闪烁
+      duration: 300,
+      repeat: Math.floor(this.lavaWarningTime / 600) - 1,
+      yoyo: true,
+    });
+  }
+
+  /**
+   * 触发岩浆喷发
+   */
+  private triggerLavaEruption(row: number, col: number) {
+    if (this.battleEnded) return;
+
+    const x = this.gridOffsetX + col * this.gridSize;
+    const y = this.gridOffsetY + row * this.gridSize;
+
+    // 喷发特效
+    const eruption = this.add.text(x, y, '💥', {
+      fontSize: '48px',
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: eruption,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => eruption.destroy(),
+    });
+
+    // 对该地块上的所有单位造成伤害
+    const allUnits = [...this.playerUnits, ...this.enemyUnits];
+    allUnits.forEach((unit) => {
+      if (!unit.isAlive) return;
+
+      const container = this.allUnits.get(unit.character.id);
+      if (!container) return;
+
+      // 检查单位是否在岩浆地块上
+      const unitGridX = Math.round((container.x - this.gridOffsetX) / this.gridSize);
+      const unitGridY = Math.round((container.y - this.gridOffsetY) / this.gridSize);
+
+      if (unitGridX === col && unitGridY === row) {
+        // 计算岩浆伤害（考虑大地系抗性）
+        const finalDamage = calculateLavaDamage(this.lavaDamage, unit.character.element);
+
+        // 应用伤害
+        unit.currentHp = Math.max(0, unit.currentHp - finalDamage);
+
+        // 显示伤害数字（红色）
+        const damageText = this.add.text(0, -50, `-${finalDamage}💥`, {
+          fontSize: '20px',
+          color: '#ff0000', // 红色
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        container.add(damageText);
+
+        this.tweens.add({
+          targets: damageText,
+          y: -80,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => damageText.destroy(),
+        });
+
+        // 更新HP条
+        this.updateHPBar(unit);
+
+        // 检查是否死亡
+        if (unit.currentHp <= 0) {
+          this.handleUnitDeath(unit);
+        }
+
+        console.log(`[BattleScene] 岩浆喷发！${unit.character.name} 受到 ${finalDamage} 点伤害`);
+      }
+    });
   }
 
   private addBackButton() {

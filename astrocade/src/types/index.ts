@@ -6,6 +6,9 @@ export type AttackType = 'melee' | 'ranged';
 /** 职业类型 */
 export type RoleType = 'warrior' | 'archer' | 'assassin' | 'healer';
 
+/** 元素类型 */
+export type ElementType = 'fire' | 'ice' | 'earth' | 'water' | 'neutral';
+
 /** 阵营类型 */
 export type TeamType = 'player' | 'enemy';
 
@@ -25,6 +28,7 @@ export interface Character {
   moveSpeed: number;
   attackType: AttackType;
   role: RoleType;
+  element?: ElementType; // 元素属性
   skillId?: number; // 旧版单技能（兼容）
   skills?: string[]; // 新版技能ID列表（最多3个）
   passiveSkills?: string[]; // 被动技能ID列表
@@ -104,6 +108,8 @@ export interface LevelConfig {
     position: Position;
   }>;
   envEffect?: string;
+  burnDamage?: number; // 火山关卡燃烧伤害（每秒）
+  duration?: number; // 战斗时长（秒）
 }
 
 /** 预设角色配置 */
@@ -115,6 +121,7 @@ export interface PresetCharacter {
   attackType: AttackType;
   moveSpeed: number;
   role: RoleType;
+  element?: ElementType; // 元素属性
   skillId?: number;
   skills?: string[]; // ✅ 添加：技能ID列表
   passiveSkills?: string[]; // 被动技能ID列表
