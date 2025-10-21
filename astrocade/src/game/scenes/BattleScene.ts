@@ -1,0 +1,1863 @@
+import Phaser from 'phaser';
+import { useGameStore } from '../../store/gameStore';
+import { usePlayerStore } from '../../store/playerStore';
+import { SkillManager } from '../SkillManager';
+import { BuffManager } from '../BuffManager';
+import type { Character, BattleUnit, Position, SkillInstance, DebuffInstance, PresetCharacter } from '../../types';
+import charactersData from '../../config/characters.json';
+
+export default class BattleScene extends Phaser.Scene {
+  private playerUnits: BattleUnit[] = [];
+  private enemyUnits: BattleUnit[] = [];
+  private allUnits: Map<string, Phaser.GameObjects.Container> = new Map();
+  private battleTimer: number = 30;
+  private timerText?: Phaser.GameObjects.Text;
+  private battleEnded: boolean = false;
+  
+  // 棋盘配置：7行×9列
+  private gridSize = 70;
+  private gridRows = 7;
+  private gridCols = 9;
+  private gridOffsetX = 200;
+  private gridOffsetY = 130;
+  
+  // 我方区域（左侧）：列2-4，行3-5（3×3）
+  private playerArea = { rowStart: 3, rowEnd: 5, colStart: 2, colEnd: 4 };
+  // 敌方区域（右侧）：列6-8，行3-5（3×3）
+  private enemyArea = { rowStart: 3, rowEnd: 5, colStart: 6, colEnd: 8 };
+  
+  // 移动速度提升
+  private moveSpeedMultiplier = 5;
+
+  constructor() {
+    super({ key: 'BattleScene' });
+  }
+
+  create() {
+    // 重置战斗状态
+    this.battleEnded = false;
+    this.playerUnits = [];
+    this.enemyUnits = [];
+    this.allUnits.clear();
+    
+    // 检测是否为Boss关卡
+    const currentLevel = useGameStore.getState().currentLevel;
+    const isBossLevel = currentLevel?.id === 10;
+    this.battleTimer = isBossLevel ? 60 : 30; // Boss战时间延长到60秒
+    
+    console.log(`[BattleScene] 关卡ID: ${currentLevel?.id}, 是否为Boss战: ${isBossLevel}, 战斗时长: ${this.battleTimer}秒`);
+    
+    // 初始化技能管理器
+    SkillManager.initialize();
+    
+    // 初始化BUFF管理器
+    BuffManager.init();
+    
+    // 添加背景
+    this.add.rectangle(600, 350, 1200, 700, 0x1a1a2e);
+    
+    // 添加标题
+    this.add.text(600, 30, '战斗场景', {
+      fontSize: '32px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    // 添加计时器
+    this.timerText = this.add.text(600, 70, `时间: ${this.battleTimer}s`, {
+      fontSize: '24px',
+      color: '#ffcc00',
+    }).setOrigin(0.5);
+
+    // 绘制战场网格
+    this.drawBattleGrid();
+
+    // 生成战斗单位
+    this.generateBattleUnits();
+
+    // 应用环境BUFF
+    this.applyEnvironmentalBuffs();
+
+    // 启动计时器
+    this.time.addEvent({
+      delay: 1000,
+      callback: this.updateTimer,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 启动AI系统（每100ms更新一次）
+    this.time.addEvent({
+      delay: 100,
+      callback: this.updateAI,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 启动技能CD更新（每100ms更新一次）
+    this.time.addEvent({
+      delay: 100,
+      callback: this.updateSkillCD,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 启动Debuff更新（每100ms更新一次）
+    this.time.addEvent({
+      delay: 100,
+      callback: this.updateDebuffs,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 启动BUFF更新（每100ms更新一次）
+    this.time.addEvent({
+      delay: 100,
+      callback: this.updateBuffs,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 添加返回按钮
+    this.addBackButton();
+  }
+
+  private drawBattleGrid() {
+    const graphics = this.add.graphics();
+    
+    // 绘制完整的7×9棋盘（灰色，细线）
+    graphics.lineStyle(1, 0x666666, 0.3);
+    for (let row = 0; row < this.gridRows; row++) {
+      for (let col = 0; col < this.gridCols; col++) {
+        const posX = this.gridOffsetX + col * this.gridSize;
+        const posY = this.gridOffsetY + row * this.gridSize;
+        graphics.strokeRect(posX, posY, this.gridSize, this.gridSize);
+      }
+    }
+
+    // 高亮我方区域（蓝色背景）
+    const playerX = this.gridOffsetX + this.playerArea.colStart * this.gridSize;
+    const playerY = this.gridOffsetY + this.playerArea.rowStart * this.gridSize;
+    const playerWidth = (this.playerArea.colEnd - this.playerArea.colStart + 1) * this.gridSize;
+    const playerHeight = (this.playerArea.rowEnd - this.playerArea.rowStart + 1) * this.gridSize;
+    
+    graphics.fillStyle(0x4488ff, 0.1);
+    graphics.fillRect(playerX, playerY, playerWidth, playerHeight);
+    graphics.lineStyle(3, 0x4488ff, 0.8);
+    graphics.strokeRect(playerX, playerY, playerWidth, playerHeight);
+
+    // 高亮敌方区域（红色背景）
+    const enemyX = this.gridOffsetX + this.enemyArea.colStart * this.gridSize;
+    const enemyY = this.gridOffsetY + this.enemyArea.rowStart * this.gridSize;
+    const enemyWidth = (this.enemyArea.colEnd - this.enemyArea.colStart + 1) * this.gridSize;
+    const enemyHeight = (this.enemyArea.rowEnd - this.enemyArea.rowStart + 1) * this.gridSize;
+    
+    graphics.fillStyle(0xff4444, 0.1);
+    graphics.fillRect(enemyX, enemyY, enemyWidth, enemyHeight);
+    graphics.lineStyle(3, 0xff4444, 0.8);
+    graphics.strokeRect(enemyX, enemyY, enemyWidth, enemyHeight);
+
+    // 添加阵营标签
+    this.add.text(playerX + playerWidth / 2, playerY - 25, '我方区域', {
+      fontSize: '20px',
+      color: '#4488ff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    this.add.text(enemyX + enemyWidth / 2, enemyY - 25, '敌方区域', {
+      fontSize: '20px',
+      color: '#ff4444',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+  }
+
+  private generateBattleUnits() {
+    const gameState = useGameStore.getState();
+    const playerState = usePlayerStore.getState();
+
+    // 生成玩家单位
+    gameState.playerFormation.forEach((formation) => {
+      const character = playerState.characters.find(c => c.id === formation.characterId);
+      if (character) {
+        console.log(`[BattleScene] 生成我方角色: ${character.name}, 技能: ${character.skills?.join(', ') || '无'}`);
+        const unit = this.createBattleUnit(character, formation.position, 'player');
+        this.playerUnits.push(unit);
+      }
+    });
+
+    // 生成敌方单位
+    if (gameState.currentLevel) {
+      gameState.currentLevel.enemies.forEach((enemy, index) => {
+        // ✅ 修复：从配置文件读取敌人角色数据
+        const presetChar = charactersData.find(c => c.id === enemy.characterId) as PresetCharacter;
+        
+        if (!presetChar) {
+          console.warn(`[BattleScene] 找不到角色配置 ID: ${enemy.characterId}`);
+          return;
+        }
+
+        // 创建敌人角色（使用配置的技能）
+        const enemyChar: Character = {
+          id: `enemy_${enemy.characterId}_${Date.now()}_${index}`,
+          name: `敌方-${presetChar.name}`,
+          hp: presetChar.hp,
+          maxHp: presetChar.hp,
+          damage: presetChar.damage,
+          moveSpeed: presetChar.moveSpeed,
+          attackType: presetChar.attackType,
+          role: presetChar.role,
+          skills: presetChar.skills || [], // ✅ 使用配置中的技能
+        };
+        
+        console.log(`[BattleScene] 生成敌人: ${enemyChar.name}, 职业: ${enemyChar.role}, 技能: ${enemyChar.skills.join(', ')}`);
+        
+        const unit = this.createBattleUnit(enemyChar, enemy.position, 'enemy');
+        this.enemyUnits.push(unit);
+      });
+    }
+  }
+
+  private createBattleUnit(character: Character, gridPos: Position, team: 'player' | 'enemy'): BattleUnit {
+    // 将本地网格坐标(0-2)转换为全局棋盘坐标
+    const area = team === 'player' ? this.playerArea : this.enemyArea;
+    const globalCol = area.colStart + gridPos.x;
+    const globalRow = area.rowStart + gridPos.y;
+    
+    // 计算世界坐标（像素位置）
+    const worldX = this.gridOffsetX + globalCol * this.gridSize + this.gridSize / 2;
+    const worldY = this.gridOffsetY + globalRow * this.gridSize + this.gridSize / 2;
+
+    // 创建角色容器
+    const container = this.add.container(worldX, worldY);
+
+    // 创建角色圆形
+    const color = team === 'player' ? 0x4488ff : 0xff4444;
+    const circle = this.add.circle(0, 0, 25, color);
+    container.add(circle);
+
+    // 添加角色名称
+    const nameText = this.add.text(0, -45, character.name, {
+      fontSize: '12px',
+      color: '#ffffff',
+    }).setOrigin(0.5);
+    container.add(nameText);
+
+    // 添加血条背景
+    const hpBarBg = this.add.rectangle(0, 35, 50, 6, 0x333333);
+    container.add(hpBarBg);
+
+    // 添加血条
+    const hpBar = this.add.rectangle(-25, 35, 50, 6, 0x00ff00).setOrigin(0, 0.5);
+    container.add(hpBar);
+
+    // 添加HP文字
+    const hpText = this.add.text(0, 45, `${character.hp}/${character.maxHp}`, {
+      fontSize: '10px',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0);
+    container.add(hpText);
+
+    // 创建技能实例
+    const skillInstances: SkillInstance[] = character.skills 
+      ? SkillManager.createSkillInstances(character.skills)
+      : [];
+
+    console.log(`[createBattleUnit] ${character.name} (${team}) 创建完成，技能数量: ${skillInstances.length}`);
+    if (skillInstances.length > 0) {
+      skillInstances.forEach(s => {
+        console.log(`  - ${s.config.name} (CD: ${s.config.cd}秒, 当前状态: ${s.isReady ? '准备好' : 'CD中'})`);
+      });
+    }
+
+    // 创建战斗单位数据
+    const unit: BattleUnit = {
+      character: { ...character },
+      position: { x: worldX, y: worldY },
+      team,
+      isAlive: true,
+      currentHp: character.hp,
+      skills: [],
+      skillInstances,
+      debuffs: [],
+    };
+
+    // 保存容器引用
+    this.allUnits.set(character.id, container);
+
+    // 存储数据到容器
+    (container as any).battleUnit = unit;
+    (container as any).hpBar = hpBar;
+    (container as any).hpText = hpText;
+    (container as any).lastAttackTime = 0;
+    (container as any).attackCooldown = character.attackType === 'melee' ? 1000 : 1500;
+
+    return unit;
+  }
+
+  private updateAI() {
+    // 如果战斗已结束，停止AI更新
+    if (this.battleEnded) return;
+    
+    // 更新所有存活单位的AI
+    [...this.playerUnits, ...this.enemyUnits].forEach((unit) => {
+      if (!unit.isAlive) return;
+
+      const container = this.allUnits.get(unit.character.id);
+      if (!container || !container.active) return;
+
+      // 获取目标（最近的敌人）
+      const targets = unit.team === 'player' ? this.enemyUnits : this.playerUnits;
+      const aliveTargets = targets.filter(t => t.isAlive);
+      
+      if (aliveTargets.length === 0) {
+        this.checkBattleEnd();
+        return;
+      }
+
+      // 优先尝试释放技能（每秒最多尝试一次，减少日志刷屏）
+      const now = this.time.now;
+      const lastTrySkillTime = (unit as any).lastTrySkillTime || 0;
+      if (now - lastTrySkillTime >= 1000) { // 每秒尝试一次
+        (unit as any).lastTrySkillTime = now;
+        const skillUsed = this.tryUseSkill(unit, aliveTargets, container);
+        if (skillUsed) return; // 如果释放了技能，本次AI循环结束
+      }
+
+      // 检查是否被嘲讽，如果是则强制攻击嘲讽来源
+      let closestTarget = this.getTauntTarget(unit);
+      if (!closestTarget) {
+        closestTarget = this.findClosestTarget(unit, aliveTargets);
+      }
+      if (!closestTarget) return;
+
+      const targetContainer = this.allUnits.get(closestTarget.character.id);
+      if (!targetContainer || !targetContainer.active) return;
+
+      // 计算距离
+      const distance = Phaser.Math.Distance.Between(
+        container.x, container.y,
+        targetContainer.x, targetContainer.y
+      );
+
+      // 攻击范围（近战80，远程200）
+      const attackRange = unit.character.attackType === 'melee' ? 80 : 200;
+
+      if (distance <= attackRange) {
+        // 在攻击范围内，尝试攻击
+        this.tryAttack(unit, closestTarget, container, targetContainer);
+      } else {
+        // 不在范围内，移动靠近（应用减速效果）
+        const effectiveSpeed = this.getEffectiveMoveSpeed(unit);
+        this.moveTowards(container, targetContainer, effectiveSpeed);
+      }
+    });
+  }
+
+  private findClosestTarget(unit: BattleUnit, targets: BattleUnit[]): BattleUnit | null {
+    const container = this.allUnits.get(unit.character.id);
+    if (!container || !container.active) return null;
+
+    let closest: BattleUnit | null = null;
+    let minDistance = Infinity;
+
+    targets.forEach((target) => {
+      if (!target.isAlive) return;
+      
+      const targetContainer = this.allUnits.get(target.character.id);
+      if (!targetContainer || !targetContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        container.x, container.y,
+        targetContainer.x, targetContainer.y
+      );
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = target;
+      }
+    });
+
+    return closest;
+  }
+
+  private moveTowards(
+    attacker: Phaser.GameObjects.Container,
+    target: Phaser.GameObjects.Container,
+    speed: number
+  ) {
+    const angle = Phaser.Math.Angle.Between(
+      attacker.x, attacker.y,
+      target.x, target.y
+    );
+
+    // 应用移动速度乘数
+    const effectiveSpeed = speed * this.moveSpeedMultiplier;
+    attacker.x += Math.cos(angle) * effectiveSpeed * 0.1;
+    attacker.y += Math.sin(angle) * effectiveSpeed * 0.1;
+  }
+
+  private tryAttack(
+    attacker: BattleUnit,
+    target: BattleUnit,
+    attackerContainer: Phaser.GameObjects.Container,
+    targetContainer: Phaser.GameObjects.Container
+  ) {
+    const currentTime = this.time.now;
+    const lastAttackTime = (attackerContainer as any).lastAttackTime || 0;
+    const cooldown = (attackerContainer as any).attackCooldown || 1000;
+
+    if (currentTime - lastAttackTime < cooldown) return;
+
+    // 记录攻击时间
+    (attackerContainer as any).lastAttackTime = currentTime;
+
+    // 普攻触发技能CD-1秒
+    if (attacker.skillInstances) {
+      SkillManager.onAttack(attacker.skillInstances);
+    }
+
+    // 攻击动画
+    this.tweens.add({
+      targets: attackerContainer,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      duration: 100,
+      yoyo: true,
+    });
+
+    // 如果是远程攻击，发射子弹
+    if (attacker.character.attackType === 'ranged') {
+      this.fireProjectile(attackerContainer, targetContainer, () => {
+        this.dealDamage(target, attacker.character.damage, targetContainer, attacker);
+      });
+    } else {
+      // 近战直接造成伤害
+      this.dealDamage(target, attacker.character.damage, targetContainer, attacker);
+    }
+  }
+
+  private fireProjectile(
+    from: Phaser.GameObjects.Container,
+    to: Phaser.GameObjects.Container,
+    onHit: () => void
+  ) {
+    const projectile = this.add.circle(from.x, from.y, 5, 0xffff00);
+    
+    this.tweens.add({
+      targets: projectile,
+      x: to.x,
+      y: to.y,
+      duration: 300,
+      onComplete: () => {
+        projectile.destroy();
+        onHit();
+      },
+    });
+  }
+
+  private dealDamage(
+    target: BattleUnit,
+    damage: number,
+    targetContainer: Phaser.GameObjects.Container,
+    attacker?: BattleUnit
+  ) {
+    // 扣除血量
+    target.currentHp = Math.max(0, target.currentHp - damage);
+
+    // 受击触发技能CD-0.5秒
+    if (target.skillInstances) {
+      SkillManager.onHit(target.skillInstances);
+    }
+
+    // 更新血条
+    const hpBar = (targetContainer as any).hpBar as Phaser.GameObjects.Rectangle;
+    const hpText = (targetContainer as any).hpText as Phaser.GameObjects.Text;
+    
+    const hpPercentage = target.currentHp / target.character.maxHp;
+    hpBar.width = 50 * hpPercentage;
+    hpBar.setFillStyle(hpPercentage > 0.5 ? 0x00ff00 : hpPercentage > 0.2 ? 0xffaa00 : 0xff0000);
+    hpText.setText(`${Math.ceil(target.currentHp)}/${target.character.maxHp}`);
+
+    // 受击闪烁
+    this.tweens.add({
+      targets: targetContainer,
+      alpha: 0.5,
+      duration: 100,
+      yoyo: true,
+      repeat: 1,
+    });
+
+    // 显示伤害数字
+    const damageText = this.add.text(targetContainer.x, targetContainer.y - 30, `-${damage}`, {
+      fontSize: '16px',
+      color: '#ff0000',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: damageText,
+      y: damageText.y - 30,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => damageText.destroy(),
+    });
+
+    // 检查死亡
+    if (target.currentHp <= 0 && target.isAlive) {
+      target.isAlive = false;
+      
+      // 从allUnits中移除
+      this.allUnits.delete(target.character.id);
+      
+      this.tweens.add({
+        targets: targetContainer,
+        alpha: 0,
+        scaleX: 0,
+        scaleY: 0,
+        duration: 500,
+        onComplete: () => {
+          targetContainer.destroy();
+          this.checkBattleEnd();
+        },
+      });
+    }
+  }
+
+  private updateTimer() {
+    this.battleTimer--;
+    if (this.timerText) {
+      this.timerText.setText(`时间: ${this.battleTimer}s`);
+      
+      if (this.battleTimer <= 10) {
+        this.timerText.setColor('#ff0000');
+      }
+    }
+
+    if (this.battleTimer <= 0) {
+      this.endBattle('lose');
+    }
+  }
+
+  private checkBattleEnd() {
+    // 避免重复检查
+    if (this.battleEnded) return;
+    
+    const aliveEnemies = this.enemyUnits.filter(u => u.isAlive).length;
+    const alivePlayers = this.playerUnits.filter(u => u.isAlive).length;
+
+    if (aliveEnemies === 0) {
+      this.endBattle('win');
+    } else if (alivePlayers === 0) {
+      this.endBattle('lose');
+    }
+  }
+
+  private endBattle(result: 'win' | 'lose') {
+    // 标记战斗已结束
+    if (this.battleEnded) return;
+    this.battleEnded = true;
+    
+    // 停止所有事件
+    this.time.removeAllEvents();
+
+    // 如果胜利，保存被击败的敌人数据（用于俘虏选择）并给予经验值
+    if (result === 'win') {
+      const defeatedEnemies = this.enemyUnits.map(unit => unit.character);
+      useGameStore.getState().setDefeatedEnemies(defeatedEnemies);
+      console.log(`[BattleScene] 战斗胜利，击败了 ${defeatedEnemies.length} 个敌人`);
+
+      // 战斗统计计数
+      useGameStore.getState().incrementStat('battleCount');
+
+      // 给予所有参战角色经验值
+      const currentLevel = useGameStore.getState().currentLevel;
+      const baseExp = 50;
+      let expMultiplier = 1;
+
+      // 根据关卡难度调整经验倍率
+      if (currentLevel?.difficulty === '简单') {
+        expMultiplier = 1;
+      } else if (currentLevel?.difficulty === '中等') {
+        expMultiplier = 1.5;
+      } else if (currentLevel?.difficulty === '困难') {
+        expMultiplier = 2;
+      } else if (currentLevel?.difficulty === '极难') {
+        expMultiplier = 2.5;
+      } else if (currentLevel?.difficulty === 'Boss') {
+        expMultiplier = 3; // Boss战给予3倍经验
+      }
+
+      const finalExp = Math.floor(baseExp * expMultiplier);
+      console.log(`[BattleScene] 关卡难度: ${currentLevel?.difficulty}, 经验倍率: ${expMultiplier}, 最终经验: ${finalExp}`);
+
+      this.playerUnits.forEach((unit) => {
+        usePlayerStore.getState().gainExp(unit.character.id, finalExp);
+      });
+
+      // 检测是否击败了Boss（第10关）
+      if (currentLevel?.id === 10) {
+        console.log('[BattleScene] 恭喜！击败了最终Boss！');
+        // 延迟跳转到胜利界面
+        this.time.delayedCall(3000, () => {
+          useGameStore.getState().setScene('victory');
+        });
+        return; // 不显示常规战斗结果，直接返回
+      }
+    }
+
+    // 显示结果
+    const resultText = result === 'win' ? '胜利！' : '失败！';
+    const color = result === 'win' ? '#00ff00' : '#ff0000';
+
+    const bg = this.add.rectangle(600, 350, 400, 200, 0x000000, 0.8);
+    const text = this.add.text(600, 330, resultText, {
+      fontSize: '48px',
+      color: color,
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    const backButton = this.add.text(600, 400, result === 'win' ? '选择俘虏' : '返回主页', {
+      fontSize: '24px',
+      color: '#ffffff',
+      backgroundColor: result === 'win' ? '#ff8800' : '#4488ff',
+      padding: { x: 20, y: 10 },
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        useGameStore.getState().setBattleResult(result);
+        useGameStore.getState().setScene('home');
+      });
+
+    // 触发游戏结束事件
+    this.game.events.emit('battle-end', result);
+  }
+
+  private updateSkillCD() {
+    if (this.battleEnded) return;
+
+    // 更新所有单位的技能CD
+    [...this.playerUnits, ...this.enemyUnits].forEach((unit) => {
+      if (!unit.isAlive || !unit.skillInstances) return;
+      
+      // 每100ms = 0.1秒
+      SkillManager.updateSkillCD(unit.skillInstances, 0.1);
+    });
+  }
+
+  private updateDebuffs() {
+    if (this.battleEnded) return;
+
+    // 更新所有单位的Debuff
+    [...this.playerUnits, ...this.enemyUnits].forEach((unit) => {
+      if (!unit.isAlive || !unit.debuffs) return;
+      
+      // 更新Debuff持续时间
+      unit.debuffs = unit.debuffs.filter((debuff) => {
+        debuff.duration -= 0.1; // 100ms = 0.1秒
+        return debuff.duration > 0;
+      });
+    });
+  }
+
+  /**
+   * 更新所有单位的BUFF
+   */
+  private updateBuffs() {
+    if (this.battleEnded) return;
+
+    const currentTime = this.time.now;
+    const deltaSeconds = 0.1; // 100ms = 0.1秒
+
+    [...this.playerUnits, ...this.enemyUnits].forEach((unit) => {
+      if (!unit.isAlive) return;
+      
+      // 更新BUFF
+      BuffManager.updateBuffs(unit, currentTime, deltaSeconds);
+      
+      // 更新BUFF图标显示
+      this.updateBuffIcons(unit);
+
+      // 检查单位是否被BUFF击杀
+      if (unit.currentHp <= 0 && unit.isAlive) {
+        unit.isAlive = false;
+        const container = this.allUnits.get(unit.character.id);
+        if (container && container.active) {
+          this.showDeathAnimation(container);
+          this.allUnits.delete(unit.character.id);
+        }
+        this.checkBattleEnd();
+      } else {
+        // 更新血条
+        this.updateHealthBar(unit);
+      }
+    });
+  }
+
+  private tryUseSkill(unit: BattleUnit, targets: BattleUnit[], container: Phaser.GameObjects.Container) {
+    if (!unit.skillInstances || unit.skillInstances.length === 0) {
+      console.log(`[tryUseSkill] ${unit.character.name} 没有技能实例`);
+      return false;
+    }
+
+    // 获取准备好的技能
+    const readySkills = SkillManager.getReadySkills(unit.skillInstances);
+    
+    // 调试日志：显示所有技能状态
+    unit.skillInstances.forEach(skill => {
+      console.log(`[技能状态] ${unit.character.name} - ${skill.config.name}: CD=${skill.currentCD.toFixed(1)}秒, 准备=${skill.isReady}`);
+    });
+    
+    if (readySkills.length === 0) {
+      console.log(`[tryUseSkill] ${unit.character.name} 没有准备好的技能 (总共${unit.skillInstances.length}个技能)`);
+      return false;
+    }
+
+    console.log(`[tryUseSkill] ${unit.character.name} 有 ${readySkills.length} 个技能准备好`);
+
+    // 尝试按顺序释放第一个可用技能
+    for (const skill of readySkills) {
+      console.log(`[tryUseSkill] 尝试释放技能: ${skill.config.name}`);
+      const success = this.executeSkill(skill, unit, targets, container);
+      if (success) {
+        console.log(`✅ [技能释放成功] ${unit.character.name} 使用了 ${skill.config.name}`);
+        SkillManager.useSkill(skill, this.time.now);
+        return true;
+      } else {
+        console.log(`❌ [技能释放失败] ${unit.character.name} 的 ${skill.config.name} 释放条件不满足`);
+      }
+    }
+
+    return false;
+  }
+
+  private executeSkill(
+    skill: SkillInstance,
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container
+  ): boolean {
+    const config = skill.config;
+
+    switch (config.id) {
+      case 'skill_001': // 火球术
+        return this.castFireball(caster, targets, casterContainer, config);
+      case 'skill_002': // 紧急回血
+        return this.castHeal(caster, casterContainer, config);
+      case 'skill_003': // 快速闪现
+        return this.castBlink(caster, casterContainer, config);
+      case 'skill_004': // 减速射击
+        return this.castSlowShot(caster, targets, casterContainer, config);
+      case 'skill_005': // 嘲讽吸引
+        return this.castTaunt(caster, targets, casterContainer, config);
+      case 'skill_006': // 雷电劈击
+        return this.castThunderStrike(caster, targets, casterContainer, config);
+      case 'skill_007': // 道具投掷
+        return this.castBomb(caster, targets, casterContainer, config);
+      case 'skill_008': // 自愈脉冲
+        return this.castSelfHeal(caster, casterContainer, config);
+      case 'skill_009': // 冲刺撞击
+        return this.castDash(caster, targets, casterContainer, config);
+      case 'skill_010': // 能量扫射
+        return this.castEnergySweep(caster, targets, casterContainer, config);
+      case 'skill_011': // 冰冻定身
+        return this.castFreeze(caster, targets, casterContainer, config);
+      case 'skill_012': // 范围回血
+        return this.castAreaHeal(caster, targets, casterContainer, config);
+      case 'skill_013': // 加速冲锋
+        return this.castSpeedBuff(caster, casterContainer, config);
+      case 'skill_014': // 毒刺射击
+        return this.castPoisonShot(caster, targets, casterContainer, config);
+      default:
+        console.warn(`[BattleScene] 未实现的技能: ${config.id}`);
+        return false;
+    }
+  }
+
+  // skill_001: 火球术
+  private castFireball(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    // 创建火球特效
+    const fireball = this.add.circle(casterContainer.x, casterContainer.y, 8, 0xff4400);
+    
+    // 增强技能释放提示
+    this.showSkillCast(casterContainer, config.name, 0xff4400);
+    
+    this.tweens.add({
+      targets: fireball,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 500,
+      onComplete: () => {
+        fireball.destroy();
+        
+        // 检查目标是否仍然存活和有效
+        if (!target.isAlive || !targetContainer.active) return;
+        
+        this.dealDamage(target, config.damage || 50, targetContainer);
+        
+        // 火球爆炸特效
+        const explosion = this.add.circle(targetContainer.x, targetContainer.y, 20, 0xff8800, 0.6);
+        this.tweens.add({
+          targets: explosion,
+          scaleX: 2,
+          scaleY: 2,
+          alpha: 0,
+          duration: 300,
+          onComplete: () => explosion.destroy(),
+        });
+      },
+    });
+
+    return true;
+  }
+
+  // skill_002: 紧急回血
+  private castHeal(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    // 如果血量已满，不释放
+    if (caster.currentHp >= caster.character.maxHp) return false;
+
+    const healAmount = caster.character.maxHp * ((config.heal || 20) / 100);
+    caster.currentHp = Math.min(caster.character.maxHp, caster.currentHp + healAmount);
+
+    // 增强技能释放提示
+    this.showSkillCast(casterContainer, config.name, 0x00ff00);
+
+    // 更新血条
+    const hpBar = (casterContainer as any).hpBar as Phaser.GameObjects.Rectangle;
+    const hpText = (casterContainer as any).hpText as Phaser.GameObjects.Text;
+    
+    const hpPercentage = caster.currentHp / caster.character.maxHp;
+    hpBar.width = 50 * hpPercentage;
+    hpBar.setFillStyle(hpPercentage > 0.5 ? 0x00ff00 : hpPercentage > 0.2 ? 0xffaa00 : 0xff0000);
+    hpText.setText(`${Math.ceil(caster.currentHp)}/${caster.character.maxHp}`);
+
+    // 回血特效
+    const healEffect = this.add.circle(casterContainer.x, casterContainer.y, 30, 0x00ff00, 0.3);
+    this.tweens.add({
+      targets: healEffect,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => healEffect.destroy(),
+    });
+
+    // 显示回血数字
+    const healText = this.add.text(casterContainer.x, casterContainer.y - 30, `+${Math.ceil(healAmount)}`, {
+      fontSize: '16px',
+      color: '#00ff00',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: healText,
+      y: healText.y - 30,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => healText.destroy(),
+    });
+
+    return true;
+  }
+
+  // skill_003: 快速闪现
+  private castBlink(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const distance = config.teleportDistance || 200;
+    
+    // 计算向前瞬移的位置（向右移动，因为敌人在右侧）
+    const direction = caster.team === 'player' ? 1 : -1;
+    const newX = casterContainer.x + distance * direction;
+    const newY = casterContainer.y;
+
+    // 边界检查
+    if (newX < 100 || newX > 1100) return false;
+
+    // 增强技能释放提示
+    this.showSkillCast(casterContainer, config.name, 0x4488ff);
+
+    // 闪现特效（消失）
+    this.tweens.add({
+      targets: casterContainer,
+      alpha: 0,
+      duration: 100,
+      onComplete: () => {
+        // 检查施法者是否仍然存活
+        if (!caster.isAlive || !casterContainer.active) return;
+
+        // 瞬移
+        casterContainer.x = newX;
+        casterContainer.y = newY;
+        caster.position.x = newX;
+        caster.position.y = newY;
+
+        // 闪现特效（出现）
+        const blinkEffect = this.add.circle(newX, newY, 40, 0x4488ff, 0.5);
+        this.tweens.add({
+          targets: blinkEffect,
+          scaleX: 0,
+          scaleY: 0,
+          alpha: 0,
+          duration: 400,
+          onComplete: () => blinkEffect.destroy(),
+        });
+
+        // 恢复可见
+        this.tweens.add({
+          targets: casterContainer,
+          alpha: 1,
+          duration: 100,
+        });
+      },
+    });
+
+    return true;
+  }
+
+  // skill_004: 减速射击
+  private castSlowShot(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    // 增强技能释放提示
+    this.showSkillCast(casterContainer, config.name, 0x0088ff);
+
+    // 创建减速箭矢（蓝色）
+    const arrow = this.add.circle(casterContainer.x, casterContainer.y, 6, 0x0088ff);
+    
+    this.tweens.add({
+      targets: arrow,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 400,
+      onComplete: () => {
+        arrow.destroy();
+        
+        // 检查目标是否仍然存活和有效
+        if (!target.isAlive || !targetContainer.active) return;
+        
+        // 造成伤害
+        this.dealDamage(target, config.damage || 20, targetContainer);
+        
+        // 添加减速Debuff
+        if (!target.debuffs) target.debuffs = [];
+        target.debuffs.push({
+          type: 'slow',
+          value: config.debuffValue || 30,
+          duration: config.debuffDuration || 2,
+        });
+
+        // 减速特效（冰冻效果）
+        const slowEffect = this.add.circle(targetContainer.x, targetContainer.y, 25, 0x0088ff, 0.4);
+        this.tweens.add({
+          targets: slowEffect,
+          alpha: 0,
+          duration: 2000,
+          onComplete: () => slowEffect.destroy(),
+        });
+      },
+    });
+
+    return true;
+  }
+
+  // skill_005: 嘲讽吸引
+  private castTaunt(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const radius = config.areaRadius || 150;
+    let taunted = 0;
+
+    // 增强技能释放提示
+    this.showSkillCast(casterContainer, config.name, 0xff0000);
+
+    // 查找范围内的所有敌人
+    targets.forEach((target) => {
+      if (!target.isAlive) return;
+      
+      const targetContainer = this.allUnits.get(target.character.id);
+      if (!targetContainer || !targetContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        targetContainer.x, targetContainer.y
+      );
+
+      if (distance <= radius) {
+        // 添加嘲讽Debuff
+        if (!target.debuffs) target.debuffs = [];
+        target.debuffs.push({
+          type: 'taunt',
+          value: 0,
+          duration: config.debuffDuration || 1,
+          source: caster.character.id,
+        });
+
+        taunted++;
+
+        // 嘲讽特效（红色感叹号）
+        const tauntMark = this.add.text(targetContainer.x, targetContainer.y - 50, '!', {
+          fontSize: '24px',
+          color: '#ff0000',
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: tauntMark,
+          y: tauntMark.y - 20,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => tauntMark.destroy(),
+        });
+      }
+    });
+
+    if (taunted === 0) return false;
+
+    // 嘲讽范围特效
+    const tauntArea = this.add.circle(casterContainer.x, casterContainer.y, radius, 0xff0000, 0.2);
+    this.tweens.add({
+      targets: tauntArea,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => tauntArea.destroy(),
+    });
+
+    return true;
+  }
+
+  // skill_006: 雷电劈击（范围伤害）
+  private castThunderStrike(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const radius = config.areaRadius || 200;
+    let hitCount = 0;
+
+    this.showSkillCast(casterContainer, config.name, 0xffff00);
+
+    // 雷电特效
+    const lightning = this.add.circle(casterContainer.x, casterContainer.y, radius, 0xffff00, 0.3);
+    
+    // 查找范围内的所有敌人
+    targets.forEach((target) => {
+      if (!target.isAlive) return;
+      
+      const targetContainer = this.allUnits.get(target.character.id);
+      if (!targetContainer || !targetContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        targetContainer.x, targetContainer.y
+      );
+
+      if (distance <= radius) {
+        // 造成伤害
+        const damage = config.damage || 30;
+        target.currentHp = Math.max(0, target.currentHp - damage);
+        hitCount++;
+
+        // 雷电特效
+        const bolt = this.add.rectangle(targetContainer.x, targetContainer.y - 100, 5, 100, 0xffff00);
+        this.tweens.add({
+          targets: bolt,
+          alpha: 0,
+          duration: 200,
+          onComplete: () => bolt.destroy(),
+        });
+
+        // 伤害数字
+        this.showDamageNumber(targetContainer, damage);
+
+        // 检查死亡
+        if (target.currentHp <= 0 && target.isAlive) {
+          target.isAlive = false;
+          this.showDeathAnimation(targetContainer);
+          this.allUnits.delete(target.character.id);
+        }
+      }
+    });
+
+    this.tweens.add({
+      targets: lightning,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => lightning.destroy(),
+    });
+
+    return hitCount > 0;
+  }
+
+  // skill_007: 道具投掷（范围伤害）
+  private castBomb(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff6600);
+
+    // 创建炸弹
+    const bomb = this.add.circle(casterContainer.x, casterContainer.y, 10, 0x333333);
+    
+    this.tweens.add({
+      targets: bomb,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 500,
+      onComplete: () => {
+        if (!targetContainer.active) {
+          bomb.destroy();
+          return;
+        }
+
+        // 爆炸效果
+        const explosion = this.add.circle(targetContainer.x, targetContainer.y, config.areaRadius || 150, 0xff6600, 0.6);
+        let hitCount = 0;
+
+        // 范围伤害
+        targets.forEach((t) => {
+          if (!t.isAlive) return;
+          
+          const tc = this.allUnits.get(t.character.id);
+          if (!tc || !tc.active) return;
+
+          const dist = Phaser.Math.Distance.Between(
+            targetContainer.x, targetContainer.y,
+            tc.x, tc.y
+          );
+
+          if (dist <= (config.areaRadius || 150)) {
+            const damage = config.damage || 40;
+            t.currentHp = Math.max(0, t.currentHp - damage);
+            hitCount++;
+
+            this.showDamageNumber(tc, damage);
+
+            if (t.currentHp <= 0 && t.isAlive) {
+              t.isAlive = false;
+              this.showDeathAnimation(tc);
+              this.allUnits.delete(t.character.id);
+            }
+          }
+        });
+
+        this.tweens.add({
+          targets: explosion,
+          scaleX: 1.5,
+          scaleY: 1.5,
+          alpha: 0,
+          duration: 400,
+          onComplete: () => explosion.destroy(),
+        });
+
+        bomb.destroy();
+      },
+    });
+
+    return true;
+  }
+
+  // skill_008: 自愈脉冲（治疗）
+  private castSelfHeal(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const healPercent = config.heal || 30;
+    const healAmount = Math.ceil(caster.character.maxHp * (healPercent / 100));
+    
+    caster.currentHp = Math.min(caster.character.maxHp, caster.currentHp + healAmount);
+
+    this.showSkillCast(casterContainer, config.name, 0x00ff00);
+
+    // 治疗特效
+    const healEffect = this.add.circle(casterContainer.x, casterContainer.y, 40, 0x00ff00, 0.5);
+    
+    // 治疗数字
+    const healText = this.add.text(casterContainer.x, casterContainer.y - 50, `+${healAmount}`, {
+      fontSize: '20px',
+      color: '#00ff00',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: healEffect,
+      scaleX: 2,
+      scaleY: 2,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => healEffect.destroy(),
+    });
+
+    this.tweens.add({
+      targets: healText,
+      y: healText.y - 30,
+      alpha: 0,
+      duration: 800,
+      onComplete: () => healText.destroy(),
+    });
+
+    return true;
+  }
+
+  // skill_009: 冲刺撞击（冲刺）
+  private castDash(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const dashDistance = config.dashDistance || 200;
+    
+    // 计算冲刺方向（朝向最近的敌人）
+    const target = this.findClosestTarget(caster, targets);
+    let targetX = casterContainer.x;
+    let targetY = casterContainer.y;
+
+    if (target) {
+      const targetContainer = this.allUnits.get(target.character.id);
+      if (targetContainer && targetContainer.active) {
+        const angle = Phaser.Math.Angle.Between(
+          casterContainer.x, casterContainer.y,
+          targetContainer.x, targetContainer.y
+        );
+        targetX = casterContainer.x + Math.cos(angle) * dashDistance;
+        targetY = casterContainer.y + Math.sin(angle) * dashDistance;
+      }
+    } else {
+      // 没有敌人，向前冲刺
+      targetX = casterContainer.x + (caster.team === 'player' ? dashDistance : -dashDistance);
+    }
+
+    this.showSkillCast(casterContainer, config.name, 0x00ffff);
+
+    // 冲刺特效
+    const dashTrail = this.add.rectangle(casterContainer.x, casterContainer.y, 20, 20, 0x00ffff, 0.5);
+    
+    this.tweens.add({
+      targets: casterContainer,
+      x: targetX,
+      y: targetY,
+      duration: 300,
+      onUpdate: () => {
+        // 检查碰撞
+        targets.forEach((t) => {
+          if (!t.isAlive) return;
+          
+          const tc = this.allUnits.get(t.character.id);
+          if (!tc || !tc.active) return;
+
+          const dist = Phaser.Math.Distance.Between(
+            casterContainer.x, casterContainer.y,
+            tc.x, tc.y
+          );
+
+          if (dist < 50) {
+            const damage = config.damage || 35;
+            t.currentHp = Math.max(0, t.currentHp - damage);
+
+            this.showDamageNumber(tc, damage);
+
+            if (t.currentHp <= 0 && t.isAlive) {
+              t.isAlive = false;
+              this.showDeathAnimation(tc);
+              this.allUnits.delete(t.character.id);
+            }
+          }
+        });
+      },
+      onComplete: () => {
+        dashTrail.destroy();
+        this.checkBattleEnd();
+      },
+    });
+
+    return true;
+  }
+
+  // skill_010: 能量扫射（扇形伤害）
+  private castEnergySweep(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const range = config.range || 200;
+    const coneAngle = config.coneAngle || 60;
+    let hitCount = 0;
+
+    this.showSkillCast(casterContainer, config.name, 0xff00ff);
+
+    // 扇形特效
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xff00ff, 0.3);
+    graphics.beginPath();
+    graphics.moveTo(casterContainer.x, casterContainer.y);
+    
+    const startAngle = caster.team === 'player' ? -coneAngle/2 : 180 - coneAngle/2;
+    const endAngle = caster.team === 'player' ? coneAngle/2 : 180 + coneAngle/2;
+    
+    graphics.arc(casterContainer.x, casterContainer.y, range, 
+      Phaser.Math.DegToRad(startAngle), 
+      Phaser.Math.DegToRad(endAngle), 
+      false
+    );
+    graphics.closePath();
+    graphics.fillPath();
+
+    // 检测扇形范围内的敌人
+    const casterAngle = caster.team === 'player' ? 0 : 180;
+    
+    targets.forEach((target) => {
+      if (!target.isAlive) return;
+      
+      const targetContainer = this.allUnits.get(target.character.id);
+      if (!targetContainer || !targetContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        targetContainer.x, targetContainer.y
+      );
+
+      if (distance <= range) {
+        const angleToTarget = Phaser.Math.RadToDeg(
+          Phaser.Math.Angle.Between(
+            casterContainer.x, casterContainer.y,
+            targetContainer.x, targetContainer.y
+          )
+        );
+        
+        let angleDiff = Math.abs(angleToTarget - casterAngle);
+        if (angleDiff > 180) angleDiff = 360 - angleDiff;
+        
+        if (angleDiff <= coneAngle / 2) {
+          const damage = config.damage || 25;
+          target.currentHp = Math.max(0, target.currentHp - damage);
+          hitCount++;
+
+          this.showDamageNumber(targetContainer, damage);
+
+          if (target.currentHp <= 0 && target.isAlive) {
+            target.isAlive = false;
+            this.showDeathAnimation(targetContainer);
+            this.allUnits.delete(target.character.id);
+          }
+        }
+      }
+    });
+
+    this.tweens.add({
+      targets: graphics,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => graphics.destroy(),
+    });
+
+    return hitCount > 0;
+  }
+
+  // skill_011: 冰冻定身（控制）
+  private castFreeze(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x00ffff);
+
+    // 添加眩晕BUFF
+    BuffManager.addBuff(target, 'buff_stun', this.time.now);
+
+    // 冰冻特效
+    const freezeEffect = this.add.circle(targetContainer.x, targetContainer.y, 40, 0x00ffff, 0.5);
+    
+    this.tweens.add({
+      targets: freezeEffect,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      alpha: 0,
+      duration: 1500,
+      onComplete: () => freezeEffect.destroy(),
+    });
+
+    return true;
+  }
+
+  // skill_012: 范围回血（范围治疗）
+  private castAreaHeal(
+    caster: BattleUnit,
+    allies: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const radius = config.areaRadius || 200;
+    const healPercent = config.heal || 15;
+    let healedCount = 0;
+
+    this.showSkillCast(casterContainer, config.name, 0x00ff00);
+
+    // 获取友军
+    const friendlyUnits = caster.team === 'player' ? this.playerUnits : this.enemyUnits;
+
+    friendlyUnits.forEach((ally) => {
+      if (!ally.isAlive) return;
+      
+      const allyContainer = this.allUnits.get(ally.character.id);
+      if (!allyContainer || !allyContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        allyContainer.x, allyContainer.y
+      );
+
+      if (distance <= radius) {
+        const healAmount = Math.ceil(ally.character.maxHp * (healPercent / 100));
+        ally.currentHp = Math.min(ally.character.maxHp, ally.currentHp + healAmount);
+        healedCount++;
+
+        // 治疗特效
+        const healEffect = this.add.circle(allyContainer.x, allyContainer.y, 30, 0x00ff00, 0.5);
+        const healText = this.add.text(allyContainer.x, allyContainer.y - 40, `+${healAmount}`, {
+          fontSize: '18px',
+          color: '#00ff00',
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: healEffect,
+          scaleX: 1.5,
+          scaleY: 1.5,
+          alpha: 0,
+          duration: 600,
+          onComplete: () => healEffect.destroy(),
+        });
+
+        this.tweens.add({
+          targets: healText,
+          y: healText.y - 20,
+          alpha: 0,
+          duration: 700,
+          onComplete: () => healText.destroy(),
+        });
+      }
+    });
+
+    // 范围特效
+    const healArea = this.add.circle(casterContainer.x, casterContainer.y, radius, 0x00ff00, 0.2);
+    this.tweens.add({
+      targets: healArea,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => healArea.destroy(),
+    });
+
+    return healedCount > 0;
+  }
+
+  // skill_013: 加速冲锋（BUFF）
+  private castSpeedBuff(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    this.showSkillCast(casterContainer, config.name, 0xffff00);
+
+    // 添加加速BUFF
+    const buffId = config.buffId || 'buff_speed';
+    BuffManager.addBuff(caster, buffId, this.time.now);
+
+    // 加速特效
+    const speedEffect = this.add.circle(casterContainer.x, casterContainer.y, 50, 0xffff00, 0.4);
+    
+    this.tweens.add({
+      targets: speedEffect,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => speedEffect.destroy(),
+    });
+
+    return true;
+  }
+
+  // skill_014: 毒刺射击（Debuff）
+  private castPoisonShot(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x00ff00);
+
+    // 创建毒箭
+    const arrow = this.add.circle(casterContainer.x, casterContainer.y, 6, 0x00ff00);
+    
+    this.tweens.add({
+      targets: arrow,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 300,
+      onComplete: () => {
+        if (!target.isAlive || !targetContainer.active) {
+          arrow.destroy();
+          return;
+        }
+
+        // 造成伤害
+        const damage = config.damage || 15;
+        target.currentHp = Math.max(0, target.currentHp - damage);
+
+        this.showDamageNumber(targetContainer, damage);
+
+        // 添加中毒BUFF
+        const buffId = config.buffId || 'buff_poison';
+        BuffManager.addBuff(target, buffId, this.time.now);
+
+        // 中毒特效
+        const poisonEffect = this.add.circle(targetContainer.x, targetContainer.y, 30, 0x00ff00, 0.3);
+        this.tweens.add({
+          targets: poisonEffect,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => poisonEffect.destroy(),
+        });
+
+        // 检查死亡
+        if (target.currentHp <= 0 && target.isAlive) {
+          target.isAlive = false;
+          this.showDeathAnimation(targetContainer);
+          this.allUnits.delete(target.character.id);
+        }
+
+        arrow.destroy();
+      },
+    });
+
+    return true;
+  }
+
+  // 增强的技能释放提示（更明显）
+  private showSkillCast(container: Phaser.GameObjects.Container, skillName: string, color: number) {
+    // 1. 角色发光效果
+    const glow = this.add.circle(container.x, container.y, 50, color, 0.4);
+    this.tweens.add({
+      targets: glow,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => glow.destroy(),
+    });
+
+    // 2. 技能名称（大号、彩色）
+    const skillText = this.add.text(container.x, container.y - 70, `★ ${skillName} ★`, {
+      fontSize: '20px',
+      color: '#ffff00',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 4,
+        fill: true
+      }
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: skillText,
+      y: skillText.y - 30,
+      alpha: 0,
+      duration: 1200,
+      ease: 'Power2',
+      onComplete: () => skillText.destroy(),
+    });
+
+    // 3. 震动效果
+    this.tweens.add({
+      targets: container,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 100,
+      yoyo: true,
+      repeat: 2,
+    });
+
+    // 4. 播放音效提示（控制台日志）
+    console.log(`[技能释放] ${skillName}`);
+  }
+
+  // 旧方法保留备用
+  private showSkillName(container: Phaser.GameObjects.Container, skillName: string) {
+    const skillText = this.add.text(container.x, container.y - 60, skillName, {
+      fontSize: '14px',
+      color: '#ffff00',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: skillText,
+      y: skillText.y - 20,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => skillText.destroy(),
+    });
+  }
+
+  // 显示伤害数字
+  private showDamageNumber(container: Phaser.GameObjects.Container, damage: number) {
+    const damageText = this.add.text(container.x, container.y - 30, `-${Math.ceil(damage)}`, {
+      fontSize: '20px',
+      color: '#ff0000',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: damageText,
+      y: damageText.y - 30,
+      alpha: 0,
+      duration: 800,
+      onComplete: () => damageText.destroy(),
+    });
+  }
+
+  // 显示死亡动画
+  private showDeathAnimation(container: Phaser.GameObjects.Container) {
+    // 淡出动画
+    this.tweens.add({
+      targets: container,
+      alpha: 0,
+      scaleX: 0.5,
+      scaleY: 0.5,
+      duration: 500,
+      onComplete: () => {
+        container.destroy();
+      },
+    });
+  }
+
+  private getEffectiveMoveSpeed(unit: BattleUnit): number {
+    // 先使用 BuffManager 获取考虑BUFF的速度
+    let speed = BuffManager.getEffectiveMoveSpeed(unit);
+
+    // 再应用 Debuff（Debuff 系统保留兼容性）
+    if (unit.debuffs) {
+      unit.debuffs.forEach((debuff) => {
+        if (debuff.type === 'slow') {
+          speed *= (1 - debuff.value / 100);
+        }
+      });
+    }
+
+    return speed;
+  }
+
+  private getTauntTarget(unit: BattleUnit): BattleUnit | null {
+    if (!unit.debuffs) return null;
+
+    // 查找嘲讽Debuff
+    const tauntDebuff = unit.debuffs.find((d) => d.type === 'taunt');
+    if (!tauntDebuff || !tauntDebuff.source) return null;
+
+    // 查找嘲讽来源单位
+    const allUnits = unit.team === 'player' ? this.enemyUnits : this.playerUnits;
+    return allUnits.find((u) => u.character.id === tauntDebuff.source && u.isAlive) || null;
+  }
+
+  /**
+   * 更新血条显示
+   */
+  private updateHealthBar(unit: BattleUnit) {
+    const container = this.allUnits.get(unit.character.id);
+    if (!container || !container.active) return;
+
+    // 查找血条元素（血条是第4个子元素）
+    const hpBar = container.getAt(3) as Phaser.GameObjects.Rectangle;
+    const hpText = container.getAt(4) as Phaser.GameObjects.Text;
+    
+    if (hpBar && hpText) {
+      // 更新血条长度
+      const hpPercent = unit.currentHp / unit.character.maxHp;
+      hpBar.width = 50 * hpPercent;
+      
+      // 更新血条颜色
+      if (hpPercent > 0.6) {
+        hpBar.fillColor = 0x00ff00; // 绿色
+      } else if (hpPercent > 0.3) {
+        hpBar.fillColor = 0xffaa00; // 橙色
+      } else {
+        hpBar.fillColor = 0xff0000; // 红色
+      }
+      
+      // 更新HP文字
+      hpText.setText(`${Math.ceil(unit.currentHp)}/${unit.character.maxHp}`);
+    }
+  }
+
+  /**
+   * 应用环境BUFF
+   */
+  private applyEnvironmentalBuffs() {
+    const gameState = useGameStore.getState();
+    const currentLevel = gameState.currentLevel;
+    
+    if (!currentLevel || !currentLevel.envEffect) {
+      console.log('[BattleScene] 没有环境BUFF');
+      return;
+    }
+
+    const envBuffId = currentLevel.envEffect;
+    console.log(`[BattleScene] 应用环境BUFF: ${envBuffId}`);
+
+    // 给所有单位添加环境BUFF
+    const allUnits = [...this.playerUnits, ...this.enemyUnits];
+    const currentTime = this.time.now;
+
+    allUnits.forEach((unit) => {
+      BuffManager.addBuff(unit, envBuffId, currentTime);
+      this.updateBuffIcons(unit); // 更新BUFF图标显示
+    });
+  }
+
+  /**
+   * 更新BUFF图标显示
+   */
+  private updateBuffIcons(unit: BattleUnit) {
+    const container = this.allUnits.get(unit.character.id);
+    if (!container) return;
+
+    // 移除旧的BUFF图标容器
+    const oldBuffContainer = container.getByName('buffIcons') as Phaser.GameObjects.Container;
+    if (oldBuffContainer) {
+      oldBuffContainer.destroy();
+    }
+
+    // 如果没有BUFF，直接返回
+    if (!unit.buffs || unit.buffs.length === 0) return;
+
+    // 创建新的BUFF图标容器
+    const buffContainer = this.add.container(0, -40);
+    buffContainer.setName('buffIcons');
+
+    // 为每个BUFF添加图标
+    unit.buffs.forEach((buff, index) => {
+      const icon = this.add.text(index * 25 - 12, 0, buff.config.icon, {
+        fontSize: '20px',
+      });
+      buffContainer.add(icon);
+    });
+
+    container.add(buffContainer);
+  }
+
+  private addBackButton() {
+    this.add.text(50, 30, '← 返回', {
+      fontSize: '18px',
+      color: '#ffffff',
+      backgroundColor: '#666666',
+      padding: { x: 10, y: 5 },
+    })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        useGameStore.getState().setScene('formation');
+      });
+  }
+}
+

@@ -1,0 +1,13 @@
+[
+  { "level": 1, "expRequired": 0, "hpBonus": 0, "damageBonus": 0 },
+  { "level": 2, "expRequired": 100, "hpBonus": 20, "damageBonus": 2 },
+  { "level": 3, "expRequired": 250, "hpBonus": 40, "damageBonus": 4 },
+  { "level": 4, "expRequired": 450, "hpBonus": 60, "damageBonus": 6 },
+  { "level": 5, "expRequired": 700, "hpBonus": 80, "damageBonus": 8 },
+  { "level": 6, "expRequired": 1000, "hpBonus": 100, "damageBonus": 10 },
+  { "level": 7, "expRequired": 1400, "hpBonus": 120, "damageBonus": 12 },
+  { "level": 8, "expRequired": 1900, "hpBonus": 140, "damageBonus": 14 },
+  { "level": 9, "expRequired": 2500, "hpBonus": 160, "damageBonus": 16 },
+  { "level": 10, "expRequired": 3300, "hpBonus": 180, "damageBonus": 18 }
+]
+

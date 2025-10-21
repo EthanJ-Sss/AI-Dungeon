@@ -1,0 +1,224 @@
+[
+  {
+    "id": 1,
+    "name": "战士艾登",
+    "hp": 200,
+    "damage": 20,
+    "attackType": "melee",
+    "moveSpeed": 2,
+    "role": "warrior",
+    "skills": ["skill_005", "skill_009"],
+    "passiveSkills": ["passive_007"]
+  },
+  {
+    "id": 2,
+    "name": "弓手艾莉",
+    "hp": 120,
+    "damage": 15,
+    "attackType": "ranged",
+    "moveSpeed": 2.5,
+    "role": "archer",
+    "skills": ["skill_004"]
+  },
+  {
+    "id": 3,
+    "name": "刺客影",
+    "hp": 100,
+    "damage": 25,
+    "attackType": "melee",
+    "moveSpeed": 3.5,
+    "role": "assassin",
+    "skills": ["skill_003", "skill_001"]
+  },
+  {
+    "id": 4,
+    "name": "重装战士",
+    "hp": 250,
+    "damage": 15,
+    "attackType": "melee",
+    "moveSpeed": 1.5,
+    "role": "warrior",
+    "skills": ["skill_005"],
+    "passiveSkills": ["passive_008"]
+  },
+  {
+    "id": 5,
+    "name": "狂战士",
+    "hp": 180,
+    "damage": 30,
+    "attackType": "melee",
+    "moveSpeed": 2.5,
+    "role": "warrior",
+    "skills": ["skill_001", "skill_013"],
+    "passiveSkills": ["passive_001"]
+  },
+  {
+    "id": 6,
+    "name": "精灵射手",
+    "hp": 130,
+    "damage": 18,
+    "attackType": "ranged",
+    "moveSpeed": 3,
+    "role": "archer",
+    "skills": ["skill_004", "skill_010"]
+  },
+  {
+    "id": 7,
+    "name": "猎手",
+    "hp": 110,
+    "damage": 22,
+    "attackType": "ranged",
+    "moveSpeed": 2.8,
+    "role": "archer",
+    "skills": ["skill_001", "skill_006"]
+  },
+  {
+    "id": 8,
+    "name": "暗影刺客",
+    "hp": 90,
+    "damage": 35,
+    "attackType": "melee",
+    "moveSpeed": 4,
+    "role": "assassin",
+    "skills": ["skill_003", "skill_009"]
+  },
+  {
+    "id": 9,
+    "name": "圣骑士",
+    "hp": 220,
+    "damage": 12,
+    "attackType": "melee",
+    "moveSpeed": 1.8,
+    "role": "healer",
+    "skills": ["skill_002", "skill_012"],
+    "passiveSkills": ["passive_002"]
+  },
+  {
+    "id": 10,
+    "name": "祭司",
+    "hp": 150,
+    "damage": 10,
+    "attackType": "ranged",
+    "moveSpeed": 2.2,
+    "role": "healer",
+    "skills": ["skill_002", "skill_008"]
+  },
+  {
+    "id": 11,
+    "name": "守护者",
+    "hp": 280,
+    "damage": 12,
+    "attackType": "melee",
+    "moveSpeed": 1.5,
+    "role": "warrior",
+    "skills": ["skill_005"],
+    "passiveSkills": ["passive_008"]
+  },
+  {
+    "id": 12,
+    "name": "剑圣",
+    "hp": 190,
+    "damage": 22,
+    "attackType": "melee",
+    "moveSpeed": 2.8,
+    "role": "warrior",
+    "skills": ["skill_003", "skill_010"],
+    "passiveSkills": ["passive_007"]
+  },
+  {
+    "id": 13,
+    "name": "龙骑士",
+    "hp": 240,
+    "damage": 28,
+    "attackType": "melee",
+    "moveSpeed": 2.0,
+    "role": "warrior",
+    "skills": ["skill_001", "skill_007"],
+    "passiveSkills": ["passive_001"]
+  },
+  {
+    "id": 14,
+    "name": "神射手",
+    "hp": 130,
+    "damage": 28,
+    "attackType": "ranged",
+    "moveSpeed": 2.5,
+    "role": "archer",
+    "skills": ["skill_001", "skill_011"]
+  },
+  {
+    "id": 15,
+    "name": "游侠",
+    "hp": 140,
+    "damage": 18,
+    "attackType": "ranged",
+    "moveSpeed": 2.7,
+    "role": "archer",
+    "skills": ["skill_004", "skill_014"],
+    "passiveSkills": ["passive_006"]
+  },
+  {
+    "id": 16,
+    "name": "鹰眼",
+    "hp": 110,
+    "damage": 24,
+    "attackType": "ranged",
+    "moveSpeed": 3.0,
+    "role": "archer",
+    "skills": ["skill_004", "skill_006"],
+    "passiveSkills": ["passive_004"]
+  },
+  {
+    "id": 17,
+    "name": "幽灵刺客",
+    "hp": 85,
+    "damage": 38,
+    "attackType": "melee",
+    "moveSpeed": 4.2,
+    "role": "assassin",
+    "skills": ["skill_003", "skill_013"]
+  },
+  {
+    "id": 18,
+    "name": "夜行者",
+    "hp": 105,
+    "damage": 32,
+    "attackType": "melee",
+    "moveSpeed": 3.8,
+    "role": "assassin",
+    "skills": ["skill_003", "skill_001", "skill_009"]
+  },
+  {
+    "id": 19,
+    "name": "德鲁伊",
+    "hp": 200,
+    "damage": 10,
+    "attackType": "ranged",
+    "moveSpeed": 2.0,
+    "role": "healer",
+    "skills": ["skill_002", "skill_012"],
+    "passiveSkills": ["passive_005"]
+  },
+  {
+    "id": 20,
+    "name": "光明使者",
+    "hp": 160,
+    "damage": 12,
+    "attackType": "ranged",
+    "moveSpeed": 2.5,
+    "role": "healer",
+    "skills": ["skill_002", "skill_008"],
+    "passiveSkills": ["passive_003"]
+  },
+  {
+    "id": 21,
+    "name": "暗影领主",
+    "hp": 500,
+    "damage": 50,
+    "attackType": "melee",
+    "moveSpeed": 2.5,
+    "role": "warrior",
+    "skills": ["skill_001", "skill_006", "skill_009", "skill_015", "skill_016"],
+    "passiveSkills": ["passive_001", "passive_007"]
+  }
+]

@@ -1,0 +1,177 @@
+[
+  {
+    "id": "skill_001",
+    "name": "火球术",
+    "type": "damage",
+    "cd": 3,
+    "range": 250,
+    "targetType": "enemy",
+    "damage": 50,
+    "description": "发射一颗火球，对单个敌人造成50点伤害"
+  },
+  {
+    "id": "skill_002",
+    "name": "紧急回血",
+    "type": "heal",
+    "cd": 3,
+    "range": 0,
+    "targetType": "self",
+    "heal": 20,
+    "description": "立即回复自身20%最大生命值"
+  },
+  {
+    "id": "skill_003",
+    "name": "快速闪现",
+    "type": "teleport",
+    "cd": 3,
+    "range": 0,
+    "targetType": "self",
+    "teleportDistance": 200,
+    "description": "向前方瞬移200像素距离"
+  },
+  {
+    "id": "skill_004",
+    "name": "减速射击",
+    "type": "debuff",
+    "cd": 3,
+    "range": 250,
+    "targetType": "enemy",
+    "damage": 20,
+    "debuffType": "slow",
+    "debuffValue": 30,
+    "debuffDuration": 2,
+    "description": "射出减速箭矢，造成20点伤害并使目标减速30%，持续2秒"
+  },
+  {
+    "id": "skill_005",
+    "name": "嘲讽吸引",
+    "type": "control",
+    "cd": 3,
+    "range": 150,
+    "targetType": "area",
+    "areaRadius": 150,
+    "debuffType": "taunt",
+    "debuffDuration": 1,
+    "description": "嘲讽范围内所有敌人，强制其攻击自己，持续1秒"
+  },
+  {
+    "id": "skill_006",
+    "name": "雷电劈击",
+    "type": "area_damage",
+    "cd": 5,
+    "range": 200,
+    "targetType": "area",
+    "areaRadius": 200,
+    "damage": 30,
+    "description": "召唤雷电，对范围内所有敌人造成30点伤害"
+  },
+  {
+    "id": "skill_007",
+    "name": "道具投掷",
+    "type": "area_damage",
+    "cd": 6,
+    "range": 250,
+    "targetType": "area",
+    "areaRadius": 150,
+    "damage": 40,
+    "description": "投掷爆炸物，对范围内所有敌人造成40点伤害"
+  },
+  {
+    "id": "skill_008",
+    "name": "自愈脉冲",
+    "type": "heal",
+    "cd": 5,
+    "range": 0,
+    "targetType": "self",
+    "heal": 30,
+    "description": "立即回复自身30%最大生命值"
+  },
+  {
+    "id": "skill_009",
+    "name": "冲刺撞击",
+    "type": "dash",
+    "cd": 4,
+    "range": 0,
+    "targetType": "self",
+    "dashDistance": 200,
+    "damage": 20,
+    "description": "向前冲刺，撞到敌人造成20点伤害"
+  },
+  {
+    "id": "skill_010",
+    "name": "能量扫射",
+    "type": "cone_damage",
+    "cd": 4,
+    "range": 200,
+    "targetType": "cone",
+    "coneAngle": 60,
+    "damage": 25,
+    "description": "向前方扇形区域发射能量，造成25点伤害"
+  },
+  {
+    "id": "skill_011",
+    "name": "冰冻定身",
+    "type": "control",
+    "cd": 7,
+    "range": 250,
+    "targetType": "enemy",
+    "debuffType": "stun",
+    "debuffDuration": 1.5,
+    "description": "冻结目标敌人1.5秒，无法移动和攻击"
+  },
+  {
+    "id": "skill_012",
+    "name": "范围回血",
+    "type": "area_heal",
+    "cd": 6,
+    "range": 200,
+    "targetType": "area",
+    "areaRadius": 200,
+    "heal": 15,
+    "description": "回复周围所有友军15%最大生命值"
+  },
+  {
+    "id": "skill_013",
+    "name": "加速冲锋",
+    "type": "buff",
+    "cd": 5,
+    "range": 0,
+    "targetType": "self",
+    "buffId": "buff_speed",
+    "description": "给自己添加加速BUFF，移速+50%，持续3秒"
+  },
+  {
+    "id": "skill_014",
+    "name": "毒刺射击",
+    "type": "debuff",
+    "cd": 4,
+    "range": 250,
+    "targetType": "enemy",
+    "damage": 15,
+    "debuffType": "poison",
+    "buffId": "buff_poison",
+    "description": "射击造成15点伤害，附加中毒效果"
+  },
+  {
+    "id": "skill_015",
+    "name": "暗影冲击",
+    "type": "area_damage",
+    "cd": 6,
+    "range": 250,
+    "targetType": "area",
+    "areaRadius": 250,
+    "damage": 60,
+    "description": "释放暗影能量，对大范围敌人造成60点伤害"
+  },
+  {
+    "id": "skill_016",
+    "name": "黑暗治愈",
+    "type": "heal",
+    "cd": 10,
+    "range": 0,
+    "targetType": "self",
+    "heal": 50,
+    "description": "吸收暗影能量，回复自身50%最大生命值"
+  }
+]
+

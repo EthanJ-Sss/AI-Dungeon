@@ -1,0 +1,113 @@
+[
+  {
+    "id": "buff_burn",
+    "name": "燃烧",
+    "type": "damage",
+    "description": "持续造成火焰伤害",
+    "damagePerSecond": 5,
+    "duration": 5,
+    "icon": "🔥",
+    "color": "#ff6600"
+  },
+  {
+    "id": "buff_freeze",
+    "name": "冰冻减速",
+    "type": "slow",
+    "description": "移动速度降低50%",
+    "slowPercent": 50,
+    "duration": 3,
+    "icon": "❄️",
+    "color": "#00ccff"
+  },
+  {
+    "id": "buff_poison",
+    "name": "中毒",
+    "type": "damage",
+    "description": "持续造成毒素伤害",
+    "damagePerSecond": 3,
+    "duration": 8,
+    "icon": "☠️",
+    "color": "#00ff00"
+  },
+  {
+    "id": "buff_speed",
+    "name": "加速",
+    "type": "haste",
+    "description": "移动速度提升50%",
+    "hastePercent": 50,
+    "duration": 3,
+    "icon": "⚡",
+    "color": "#ffff00"
+  },
+  {
+    "id": "buff_swamp",
+    "name": "沼泽瘴气",
+    "type": "combo",
+    "description": "移动速度-30%，持续中毒",
+    "slowPercent": 30,
+    "damagePerSecond": 2,
+    "duration": 999,
+    "icon": "🌫️",
+    "color": "#556b2f"
+  },
+  {
+    "id": "buff_attack_up",
+    "name": "攻击强化",
+    "type": "attack_up",
+    "description": "攻击力+30%",
+    "attackBonus": 30,
+    "duration": 5,
+    "icon": "⚔️",
+    "color": "#ff0000"
+  },
+  {
+    "id": "buff_attack_down",
+    "name": "攻击衰弱",
+    "type": "attack_down",
+    "description": "攻击力-30%",
+    "attackPenalty": 30,
+    "duration": 4,
+    "icon": "🛡️",
+    "color": "#888888"
+  },
+  {
+    "id": "buff_heal_over_time",
+    "name": "持续治疗",
+    "type": "heal",
+    "description": "每秒回复3HP",
+    "healPerSecond": 3,
+    "duration": 5,
+    "icon": "💚",
+    "color": "#00ff00"
+  },
+  {
+    "id": "buff_bleed",
+    "name": "流血",
+    "type": "damage",
+    "description": "每秒受到4点流血伤害",
+    "damagePerSecond": 4,
+    "duration": 6,
+    "icon": "🩸",
+    "color": "#8b0000"
+  },
+  {
+    "id": "buff_stun",
+    "name": "眩晕",
+    "type": "stun",
+    "description": "无法移动和攻击",
+    "duration": 1.5,
+    "icon": "💫",
+    "color": "#ffaa00"
+  },
+  {
+    "id": "buff_shield",
+    "name": "护盾",
+    "type": "shield",
+    "description": "受到的伤害-30%",
+    "damageReduction": 30,
+    "duration": 5,
+    "icon": "🛡️",
+    "color": "#4169e1"
+  }
+]
+

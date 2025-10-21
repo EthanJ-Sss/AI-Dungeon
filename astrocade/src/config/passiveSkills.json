@@ -1,0 +1,88 @@
+[
+  {
+    "id": "passive_001",
+    "name": "火焰抗性",
+    "type": "resistance",
+    "trigger": "always",
+    "effect": {
+      "resistBurn": 50,
+      "damageBonus": 50
+    },
+    "description": "燃烧伤害-50%，攻击力+50%"
+  },
+  {
+    "id": "passive_002",
+    "name": "燃烧免疫",
+    "type": "aura",
+    "trigger": "always",
+    "effect": {
+      "resistBurnAura": 20,
+      "auraRadius": 300
+    },
+    "description": "自身和周围队友燃烧伤害-20%"
+  },
+  {
+    "id": "passive_003",
+    "name": "燃烧回复",
+    "type": "conditional",
+    "trigger": "on_burn",
+    "effect": {
+      "healPercentPerSecond": 2
+    },
+    "description": "受到燃烧时每秒回复2%最大HP"
+  },
+  {
+    "id": "passive_004",
+    "name": "寒冷免疫",
+    "type": "attack_effect",
+    "trigger": "on_attack",
+    "effect": {
+      "applySlowPercent": 10,
+      "slowDuration": 1.5
+    },
+    "description": "攻击附带减速效果10%，持续1.5秒"
+  },
+  {
+    "id": "passive_005",
+    "name": "沼泽适应",
+    "type": "resistance",
+    "trigger": "always",
+    "effect": {
+      "resistSlow": 30,
+      "resistPoison": 30
+    },
+    "description": "减速和中毒效果-30%"
+  },
+  {
+    "id": "passive_006",
+    "name": "毒性强化",
+    "type": "buff_amplify",
+    "trigger": "always",
+    "effect": {
+      "poisonDamageBonus": 50
+    },
+    "description": "造成的中毒伤害+50%"
+  },
+  {
+    "id": "passive_007",
+    "name": "攻击强化",
+    "type": "stat_bonus",
+    "trigger": "always",
+    "effect": {
+      "damageBonus": 20
+    },
+    "description": "攻击力+20%"
+  },
+  {
+    "id": "passive_008",
+    "name": "生命强化",
+    "type": "stat_bonus",
+    "trigger": "always",
+    "effect": {
+      "hpBonus": 30
+    },
+    "description": "最大生命值+30%"
+  }
+]
+
+
