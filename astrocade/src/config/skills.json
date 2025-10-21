@@ -172,6 +172,83 @@
     "targetType": "self",
     "heal": 50,
     "description": "吸收暗影能量，回复自身50%最大生命值"
+  },
+  {
+    "id": "v_skill_001",
+    "name": "火球爆裂",
+    "element": "fire",
+    "type": "area_damage",
+    "cd": 5,
+    "range": 250,
+    "targetType": "area",
+    "areaRadius": 120,
+    "damage": 80,
+    "description": "投掷火球造成80点伤害，并在目标位置爆炸，对120范围内敌人造成额外40点伤害"
+  },
+  {
+    "id": "v_skill_006",
+    "name": "寒冰箭",
+    "element": "ice",
+    "type": "debuff",
+    "cd": 4,
+    "range": 300,
+    "targetType": "enemy",
+    "damage": 70,
+    "debuffType": "slow",
+    "debuffValue": 40,
+    "debuffDuration": 3,
+    "description": "发射寒冰箭造成70点伤害，减速目标40%持续3秒。对火系敌人额外+30%伤害"
+  },
+  {
+    "id": "v_skill_010",
+    "name": "岩石护甲",
+    "element": "earth",
+    "type": "buff",
+    "cd": 12,
+    "range": 0,
+    "targetType": "self",
+    "buffId": "buff_shield",
+    "shieldValue": 200,
+    "duration": 6,
+    "description": "化身岩石，获得200点护盾，持续6秒。岩浆喷发伤害-50%"
+  },
+  {
+    "id": "v_skill_013",
+    "name": "圣光庇护",
+    "element": "neutral",
+    "type": "area_heal",
+    "cd": 8,
+    "range": 200,
+    "targetType": "area",
+    "areaRadius": 200,
+    "heal": 20,
+    "cleanseBurn": true,
+    "description": "治疗范围内所有友军20%最大生命值，消除燃烧效果，并在3秒内免疫燃烧"
+  },
+  {
+    "id": "boss_skill_01",
+    "name": "炎魔之怒",
+    "element": "fire",
+    "type": "area_damage",
+    "cd": 12,
+    "range": 0,
+    "targetType": "area",
+    "areaRadius": 250,
+    "damage": 100,
+    "description": "释放炎魔之怒，对周围250范围内所有敌人造成100点火焰伤害"
+  },
+  {
+    "id": "boss_skill_02",
+    "name": "熔岩召唤",
+    "element": "fire",
+    "type": "terrain_control",
+    "cd": 20,
+    "range": 0,
+    "targetType": "ground",
+    "summonDuration": 10,
+    "eruptionInterval": 2,
+    "eruptionDamage": 50,
+    "description": "在战场中央额外召唤一个临时岩浆地块，持续10秒，每2秒喷发一次（伤害50点）"
   }
 ]
 

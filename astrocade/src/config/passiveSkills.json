@@ -82,6 +82,78 @@
       "hpBonus": 30
     },
     "description": "最大生命值+30%"
+  },
+  {
+    "id": "v_passive_001",
+    "name": "烈焰之体",
+    "element": "fire",
+    "type": "elemental_immunity",
+    "trigger": "always",
+    "effect": {
+      "immunityType": "burn",
+      "value": 100
+    },
+    "description": "免疫环境燃烧伤害"
+  },
+  {
+    "id": "v_passive_002",
+    "name": "火焰强化",
+    "element": "fire",
+    "type": "damage_boost",
+    "trigger": "always",
+    "effect": {
+      "damageBonus": 20,
+      "targetElement": "fire"
+    },
+    "description": "火系技能伤害+20%"
+  },
+  {
+    "id": "v_passive_004",
+    "name": "寒冰体质",
+    "element": "ice",
+    "type": "elemental_resistance",
+    "trigger": "always",
+    "effect": {
+      "resistanceType": "burn",
+      "value": 50
+    },
+    "description": "燃烧伤害减少50%"
+  },
+  {
+    "id": "v_passive_005",
+    "name": "冰霜亲和",
+    "element": "ice",
+    "type": "damage_bonus",
+    "trigger": "always",
+    "effect": {
+      "damageBonus": 30,
+      "targetElement": "fire"
+    },
+    "description": "对火系敌人伤害+30%"
+  },
+  {
+    "id": "v_passive_008",
+    "name": "坚岩之躯",
+    "element": "earth",
+    "type": "damage_reduction",
+    "trigger": "always",
+    "effect": {
+      "damageReduction": 40,
+      "sourceType": "lava_eruption"
+    },
+    "description": "受到的岩浆喷发伤害减少40%"
+  },
+  {
+    "id": "boss_passive_01",
+    "name": "炎魔之躯",
+    "element": "fire",
+    "type": "immunity_resistance",
+    "trigger": "always",
+    "effect": {
+      "burnImmunity": 100,
+      "iceResistance": 10
+    },
+    "description": "免疫环境燃烧伤害。冰系对Boss伤害克制从+30%降为+20%"
   }
 ]
 
