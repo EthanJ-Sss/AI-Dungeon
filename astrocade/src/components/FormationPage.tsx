@@ -323,21 +323,35 @@ function FormationPageContent() {
 
     // 保存阵型数据（转换回3×3坐标系统）
     const formation: Formation[] = [];
+    console.log('🔍 [FormationPage] 开始保存阵型...');
+    console.log(`   战场尺寸: ${BATTLEFIELD_ROWS}行 × ${BATTLEFIELD_COLS}列`);
+    
     battlefield.forEach((row, r) => {
       row.forEach((cell, c) => {
+        if (cell) {
+          console.log(`   检查格子(${r}, ${c}): ${cell.name}, ID=${cell.id.substring(0, 20)}..., isPlayerZone=${isPlayerZone(c)}, isEnemy=${cell.id.startsWith('enemy_')}`);
+        }
         if (cell && isPlayerZone(c) && !cell.id.startsWith('enemy_')) {
           // 映射：col(0-2) -> x(0-2), row(1-3) -> y(0-2)
           const x = c;
           const y = r - 1;
+          console.log(`   ✅ 保存角色: ${cell.name}, 战场位置(${r}, ${c}) -> 阵型坐标(${x}, ${y}), y范围检查: ${y >= 0 && y <= 2}`);
           if (y >= 0 && y <= 2) {
             formation.push({
               playerId: cell.id,
               characterId: cell.id,
               position: { x, y },
             });
+          } else {
+            console.warn(`   ⚠️ 跳过角色（y超出范围）: ${cell.name}, y=${y}`);
           }
         }
       });
+    });
+
+    console.log(`🎯 [FormationPage] 最终保存了 ${formation.length} 个角色`);
+    formation.forEach((f, i) => {
+      console.log(`   ${i}: characterId=${f.characterId.substring(0, 20)}..., position=(${f.position.x}, ${f.position.y})`);
     });
 
     setFormation(formation);
