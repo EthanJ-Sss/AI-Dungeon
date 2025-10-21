@@ -649,9 +649,27 @@ export default class BattleScene extends Phaser.Scene {
         usePlayerStore.getState().gainExp(unit.character.id, finalExp);
       });
 
-      // 检测是否击败了Boss（第10关）
-      if (currentLevel?.id === 10) {
-        console.log('[BattleScene] 恭喜！击败了最终Boss！');
+      // 解锁下一关
+      if (currentLevel) {
+        const nextLevelId = currentLevel.id + 1;
+        console.log(`[BattleScene] 当前关卡ID: ${currentLevel.id}, 尝试解锁下一关: ${nextLevelId}`);
+        
+        // 标记当前关卡为已完成
+        useGameStore.getState().completeLevel(currentLevel.id);
+        
+        // 解锁下一关（如果存在）
+        // 火山关卡有 1-5 关
+        if (nextLevelId <= 5) {
+          useGameStore.getState().unlockLevel(nextLevelId);
+          console.log(`[BattleScene] ✅ 已解锁关卡 ${nextLevelId}`);
+        } else {
+          console.log('[BattleScene] 已经是最后一关了');
+        }
+      }
+
+      // 检测是否击败了Boss（第5关）
+      if (currentLevel?.id === 5) {
+        console.log('[BattleScene] 🎉 恭喜！击败了火山Boss - 炎魔之王！');
         // 延迟跳转到胜利界面
         this.time.delayedCall(3000, () => {
           useGameStore.getState().setScene('victory');
