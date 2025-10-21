@@ -152,6 +152,7 @@ function CharacterCard({ character, isPlaced }: CharacterCardProps) {
 
 function FormationPageContent() {
   const playerCharacters = usePlayerStore((state) => state.characters);
+  const currentLevel = useGameStore((state) => state.currentLevel);
   const setScene = useGameStore((state) => state.setScene);
   const setLevel = useGameStore((state) => state.setLevel);
   const setFormation = useGameStore((state) => state.setFormation);
@@ -160,8 +161,10 @@ function FormationPageContent() {
     Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => null))
   );
 
-  // 加载敌方阵型（第一关）
-  const level = levelsData[0];
+  // 使用当前选中的关卡（如果没有，则使用第一关）
+  const level = currentLevel || levelsData[0];
+  
+  console.log(`[FormationPage] 当前关卡: ID=${level.id}, 名称=${level.name}`);
   const enemyGrid: (Character | null)[][] = Array.from({ length: 3 }, () => 
     Array.from({ length: 3 }, () => null)
   );

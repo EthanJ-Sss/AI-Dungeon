@@ -58,7 +58,10 @@ export const useGameStore = create<GameState>()(
 
       setScene: (scene) => set({ currentScene: scene }),
       
-      setLevel: (level) => set({ currentLevel: level }),
+      setLevel: (level) => {
+        console.log(`[GameStore] setLevel 被调用，关卡ID: ${level?.id}, 关卡名称: ${level?.name}`);
+        set({ currentLevel: level });
+      },
       
       setFormation: (formation) => set({ playerFormation: formation }),
       
