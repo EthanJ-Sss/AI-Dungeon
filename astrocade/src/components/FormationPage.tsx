@@ -236,46 +236,44 @@ function FormationPageContent() {
   const setLevel = useGameStore((state) => state.setLevel);
   const setFormation = useGameStore((state) => state.setFormation);
 
-  // 使用完整的战场网格：5行×11列
-  const [battlefield, setBattlefield] = useState<(Character | null)[][]>(() =>
-    Array.from({ length: BATTLEFIELD_ROWS }, () => 
-      Array.from({ length: BATTLEFIELD_COLS }, () => null)
-    )
-  );
-
   // 使用当前选中的关卡（如果没有，则使用第一关）
   const level = currentLevel || levelsData[0];
+
+  // 使用完整的战场网格：5行×11列，初始化时加载敌方阵型
+  const [battlefield, setBattlefield] = useState<(Character | null)[][]>(() => {
+    const grid = Array.from({ length: BATTLEFIELD_ROWS }, () => 
+      Array.from({ length: BATTLEFIELD_COLS }, () => null)
+    );
+
+    // 在初始化时加载敌方阵型
+    level.enemies.forEach((enemy) => {
+      const preset = volcanoCharactersData.find((c) => c.id === enemy.characterId);
+      
+      if (preset) {
+        const enemyChar: Character = {
+          id: `enemy_${enemy.characterId}_${enemy.position.x}_${enemy.position.y}`,
+          name: preset.name,
+          hp: preset.hp,
+          maxHp: preset.hp,
+          damage: preset.damage,
+          moveSpeed: preset.moveSpeed,
+          attackType: preset.attackType,
+          role: preset.role,
+          ...(preset.element && { element: preset.element }),
+        } as any;
+        
+        // 敌方位置映射：x(0-2) -> col(8-10), y(0-2) -> row(1-3)
+        const col = 8 + enemy.position.x;
+        const row = 1 + enemy.position.y;
+        
+        grid[row][col] = enemyChar;
+      }
+    });
+
+    return grid;
+  });
   
   console.log(`[FormationPage] 当前关卡: ID=${level.id}, 名称=${level.name}`);
-  
-  // 加载敌方阵型
-  level.enemies.forEach((enemy) => {
-    const preset = volcanoCharactersData.find((c) => c.id === enemy.characterId);
-    
-    if (preset) {
-      const enemyChar: Character = {
-        id: `enemy_${enemy.characterId}_${enemy.position.x}_${enemy.position.y}`,
-        name: preset.name,
-        hp: preset.hp,
-        maxHp: preset.hp,
-        damage: preset.damage,
-        moveSpeed: preset.moveSpeed,
-        attackType: preset.attackType,
-        role: preset.role,
-        ...(preset.element && { element: preset.element }),
-      } as any;
-      
-      // 敌方位置映射：x(0-2) -> col(8-10), y(0-2) -> row(1-3)
-      const col = 8 + enemy.position.x;
-      const row = 1 + enemy.position.y;
-      
-      setBattlefield(prev => {
-        const newGrid = prev.map(r => [...r]);
-        newGrid[row][col] = enemyChar;
-        return newGrid;
-      });
-    }
-  });
 
   const handleDrop = useCallback((char: Character, row: number, col: number) => {
     setBattlefield(prevGrid => {
