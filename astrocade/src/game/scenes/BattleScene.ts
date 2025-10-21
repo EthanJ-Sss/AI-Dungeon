@@ -2094,7 +2094,7 @@ export default class BattleScene extends Phaser.Scene {
         });
 
         // 更新HP条
-        this.updateHPBar(ally);
+        this.updateHealthBar(ally);
         healedCount++;
       }
     });
@@ -2160,7 +2160,7 @@ export default class BattleScene extends Phaser.Scene {
         });
 
         // 更新HP条
-        this.updateHPBar(ally);
+        this.updateHealthBar(ally);
         healedCount++;
       }
     });
@@ -2546,7 +2546,7 @@ export default class BattleScene extends Phaser.Scene {
       }
 
       // 更新HP条
-      this.updateHPBar(unit);
+      this.updateHealthBar(unit);
 
       // 检查是否死亡
       if (unit.currentHp <= 0) {
@@ -2716,7 +2716,7 @@ export default class BattleScene extends Phaser.Scene {
         });
 
         // 更新HP条
-        this.updateHPBar(unit);
+        this.updateHealthBar(unit);
 
         // 检查是否死亡
         if (unit.currentHp <= 0) {
