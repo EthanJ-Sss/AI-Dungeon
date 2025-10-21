@@ -3,7 +3,7 @@
  * 处理元素克制关系和伤害计算
  */
 
-import { ElementType } from '../types';
+import type { ElementType } from '../types/index.js';
 
 /**
  * 元素克制关系常量
