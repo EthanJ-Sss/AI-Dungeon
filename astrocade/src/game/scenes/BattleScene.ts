@@ -565,14 +565,8 @@ export default class BattleScene extends Phaser.Scene {
       SkillManager.onHit(target.skillInstances);
     }
 
-    // 更新血条
-    const hpBar = (targetContainer as any).hpBar as Phaser.GameObjects.Rectangle;
-    const hpText = (targetContainer as any).hpText as Phaser.GameObjects.Text;
-    
-    const hpPercentage = target.currentHp / target.character.maxHp;
-    hpBar.width = 50 * hpPercentage;
-    hpBar.setFillStyle(hpPercentage > 0.5 ? 0x00ff00 : hpPercentage > 0.2 ? 0xffaa00 : 0xff0000);
-    hpText.setText(`${Math.ceil(target.currentHp)}/${target.character.maxHp}`);
+    // 更新血条显示
+    this.updateHealthBar(target);
 
     // 受击闪烁
     this.tweens.add({
