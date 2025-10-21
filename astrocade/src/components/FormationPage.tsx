@@ -5,17 +5,15 @@ import { usePlayerStore } from '../store/playerStore';
 import { useGameStore } from '../store/gameStore';
 import type { Character, Formation, Position } from '../types';
 import levelsData from '../config/levels.json';
-import charactersData from '../config/characters.json';
+import volcanoCharactersData from '../config/volcanoCharacters.json';
 
 const ItemType = 'CHARACTER';
 
-// 岩浆地块位置（与BattleScene中的坐标对应）
+// 岩浆地块位置（战场中央）
 const LAVA_BLOCKS = [
-  { row: 2, col: 4 }, // 战场中央
-  { row: 1, col: 2 }, // 玩家左上
-  { row: 3, col: 2 }, // 玩家左下
-  { row: 1, col: 8 }, // 敌方右上
-  { row: 3, col: 8 }, // 敌方右下
+  { row: 0, col: 0 }, // 中央上
+  { row: 1, col: 0 }, // 中央中
+  { row: 2, col: 0 }, // 中央下
 ];
 
 // 检查是否是岩浆地块
@@ -29,85 +27,108 @@ interface GridCellProps {
   onDrop: (char: Character, pos: Position) => void;
   onRemove: (pos: Position) => void;
   isEnemy?: boolean;
+  isLavaZone?: boolean;
 }
 
-function GridCell({ position, character, onDrop, onRemove, isEnemy = false }: GridCellProps) {
+function GridCell({ position, character, onDrop, onRemove, isEnemy = false, isLavaZone = false }: GridCellProps) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemType,
     drop: (item: { character: Character }) => {
-      if (!isEnemy && !character) {
+      if (!isEnemy && !isLavaZone && !character) {
         onDrop(item.character, position);
       }
     },
-    canDrop: () => !isEnemy && !character,
+    canDrop: () => !isEnemy && !isLavaZone && !character,
     collect: (monitor) => ({
       isOver: monitor.isOver(),
     }),
-  }), [character, isEnemy, onDrop, position]);
+  }), [character, isEnemy, isLavaZone, onDrop, position]);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemType,
     item: character ? { character } : null,
-    canDrag: () => !isEnemy && !!character,
+    canDrag: () => !isEnemy && !isLavaZone && !!character,
     end: (item, monitor) => {
-      if (monitor.didDrop() && !isEnemy) {
+      if (monitor.didDrop() && !isEnemy && !isLavaZone) {
         onRemove(position);
       }
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  }), [character, isEnemy, onRemove, position]);
+  }), [character, isEnemy, isLavaZone, onRemove, position]);
 
   // 组合 drag 和 drop refs
   const attachRef = (el: HTMLDivElement | null) => {
-    if (!isEnemy && el) {
+    if (!isEnemy && !isLavaZone && el) {
       drop(el);
     }
   };
 
   const attachDragRef = (el: HTMLDivElement | null) => {
-    if (!isEnemy && el && character) {
+    if (!isEnemy && !isLavaZone && el && character) {
       drag(el);
     }
   };
 
   // 检查是否是岩浆地块
-  const isLava = isLavaBlock(position.y, position.x);
+  const isLava = isLavaZone && isLavaBlock(position.y, position.x);
+
+  // 获取元素图标
+  const getElementIcon = (element?: string) => {
+    const icons: Record<string, string> = {
+      fire: '🔥',
+      ice: '❄️',
+      earth: '🪨',
+      water: '💧',
+      neutral: '⚪',
+    };
+    return element ? icons[element] || '' : '';
+  };
 
   return (
     <div
       ref={attachRef}
       className={`
-        relative w-20 h-20 border-2 rounded-lg flex items-center justify-center
+        relative w-16 h-16 border-2 rounded-lg flex items-center justify-center
         transition-all duration-200
-        ${isEnemy ? 'border-red-500 bg-red-900/20' : 'border-blue-500 bg-blue-900/20'}
-        ${isLava && !isEnemy ? 'border-orange-600 bg-orange-900/40 border-4 animate-pulse' : ''}
-        ${isOver && !isEnemy && 'bg-blue-500/50 scale-105'}
-        ${!character && !isEnemy && 'hover:bg-blue-500/30 cursor-pointer'}
+        ${isEnemy ? 'border-red-500 bg-red-900/30' : ''}
+        ${!isEnemy && !isLavaZone ? 'border-blue-500 bg-blue-900/30' : ''}
+        ${isLavaZone && isLava ? 'border-orange-600 bg-orange-900/60 border-4 animate-pulse' : ''}
+        ${isLavaZone && !isLava ? 'border-gray-600 bg-gray-800/40' : ''}
+        ${isOver && !isEnemy && !isLavaZone && 'bg-blue-500/50 scale-105'}
+        ${!character && !isEnemy && !isLavaZone && 'hover:bg-blue-500/30 cursor-pointer'}
       `}
-      title={isLava && !isEnemy ? '⚠️ 岩浆地块：每10秒喷发一次，造成50点伤害！' : ''}
+      title={isLava ? '⚠️ 岩浆地块：每10秒喷发一次，造成80点伤害！' : ''}
     >
       {/* 岩浆警告标记 */}
-      {isLava && !isEnemy && (
+      {isLava && (
         <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center pointer-events-none">
-          <div className="text-4xl opacity-50">🌋</div>
+          <div className="text-3xl opacity-70">🌋</div>
         </div>
       )}
       
       {character && (
         <div
           ref={attachDragRef}
-          onClick={() => !isEnemy && onRemove(position)}
+          onClick={() => !isEnemy && !isLavaZone && onRemove(position)}
           className={`
             w-full h-full flex flex-col items-center justify-center text-white text-xs p-1 relative z-10
-            ${!isEnemy && 'cursor-move hover:scale-110'}
+            ${!isEnemy && !isLavaZone && 'cursor-move hover:scale-110'}
             ${isDragging && 'opacity-50'}
           `}
         >
-          <div className="text-2xl mb-1">{getRoleEmoji(character.role)}</div>
-          <div className="text-[10px] text-center leading-tight truncate w-full">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="text-xl">{getRoleEmoji(character.role)}</div>
+            {(character as any).element && (
+              <div className="text-xs">{getElementIcon((character as any).element)}</div>
+            )}
+          </div>
+          <div className="text-[9px] text-center leading-tight truncate w-full font-semibold">
             {character.name}
+          </div>
+          <div className="text-[8px] text-slate-400">
+            {character.hp}HP
           </div>
         </div>
       )}
@@ -130,11 +151,22 @@ function CharacterCard({ character, isPlaced }: CharacterCardProps) {
     }),
   }), [character, isPlaced]);
 
+  const getElementIcon = (element?: string) => {
+    const icons: Record<string, string> = {
+      fire: '🔥',
+      ice: '❄️',
+      earth: '🪨',
+      water: '💧',
+      neutral: '⚪',
+    };
+    return element ? icons[element] || '' : '';
+  };
+
   return (
     <div
       ref={drag}
       className={`
-        bg-slate-700 rounded-lg p-3 border-2 border-slate-600
+        bg-slate-700 rounded-lg p-2 border-2 border-slate-600
         ${!isPlaced && 'cursor-move hover:border-blue-500 hover:scale-105'}
         ${isPlaced && 'opacity-40 cursor-not-allowed'}
         ${isDragging && 'opacity-50'}
@@ -142,9 +174,15 @@ function CharacterCard({ character, isPlaced }: CharacterCardProps) {
       `}
     >
       <div className="text-center">
-        <div className="text-3xl mb-1">{getRoleEmoji(character.role)}</div>
-        <div className="text-white text-sm font-semibold truncate">{character.name}</div>
-        <div className="text-slate-400 text-xs">{getRoleName(character.role)}</div>
+        <div className="flex items-center justify-center gap-1 mb-1">
+          <div className="text-2xl">{getRoleEmoji(character.role)}</div>
+          {(character as any).element && (
+            <div className="text-sm">{getElementIcon((character as any).element)}</div>
+          )}
+        </div>
+        <div className="text-white text-xs font-semibold truncate">{character.name}</div>
+        <div className="text-slate-400 text-[10px]">{getRoleName(character.role)}</div>
+        <div className="text-slate-400 text-[10px]">{character.hp}HP</div>
       </div>
     </div>
   );
@@ -165,12 +203,21 @@ function FormationPageContent() {
   const level = currentLevel || levelsData[0];
   
   console.log(`[FormationPage] 当前关卡: ID=${level.id}, 名称=${level.name}`);
+  
+  // 加载敌方阵型
   const enemyGrid: (Character | null)[][] = Array.from({ length: 3 }, () => 
     Array.from({ length: 3 }, () => null)
   );
   
   level.enemies.forEach((enemy) => {
-    const preset = charactersData.find((c) => c.id === enemy.characterId);
+    // 先在火山角色中查找
+    let preset = volcanoCharactersData.find((c) => c.id === enemy.characterId);
+    
+    // 如果没找到，再在普通角色中查找
+    if (!preset) {
+      preset = null; // characters.json 暂时不加载，因为火山关卡使用火山角色
+    }
+    
     if (preset) {
       const enemyChar: Character = {
         id: `enemy_${enemy.characterId}_${enemy.position.x}_${enemy.position.y}`,
@@ -181,7 +228,8 @@ function FormationPageContent() {
         moveSpeed: preset.moveSpeed,
         attackType: preset.attackType,
         role: preset.role,
-      };
+        ...(preset.element && { element: preset.element }),
+      } as any;
       enemyGrid[enemy.position.y][enemy.position.x] = enemyChar;
     }
   });
@@ -252,42 +300,105 @@ function FormationPageContent() {
   const placedIds = getPlacedCharacterIds();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-white text-center mb-8">阵型布置</h1>
+        <h1 className="text-3xl font-bold text-white text-center mb-2">⚔️ 战场布阵 ⚔️</h1>
+        <p className="text-slate-400 text-center mb-6">{level.name} - {level.difficulty}</p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* 玩家阵型 */}
-          <div className="bg-slate-800/50 rounded-xl p-6 border border-blue-500">
-            <h2 className="text-2xl font-bold text-blue-400 mb-4 text-center">
-              我方阵型 (3×3)
-            </h2>
-            <div className="flex flex-col gap-2">
-              {playerGrid.map((row, y) => (
-                <div key={y} className="flex gap-2 justify-center">
-                  {row.map((cell, x) => (
-                    <GridCell
-                      key={`${x}-${y}`}
-                      position={{ x, y }}
-                      character={cell}
-                      onDrop={handleDrop}
-                      onRemove={handleRemove}
-                    />
+        {/* 完整战场布局 */}
+        <div className="bg-slate-800/50 rounded-xl p-6 border-2 border-slate-700 mb-6">
+          <div className="flex items-center justify-center gap-4">
+            {/* 我方区域 */}
+            <div className="flex flex-col items-center">
+              <div className="text-blue-400 font-bold mb-2 text-sm flex items-center gap-2">
+                <span>🛡️</span>
+                <span>我方阵地</span>
+              </div>
+              <div className="flex flex-col gap-1 bg-blue-900/20 p-3 rounded-lg border-2 border-blue-500">
+                {playerGrid.map((row, y) => (
+                  <div key={y} className="flex gap-1">
+                    {row.map((cell, x) => (
+                      <GridCell
+                        key={`player-${x}-${y}`}
+                        position={{ x, y }}
+                        character={cell}
+                        onDrop={handleDrop}
+                        onRemove={handleRemove}
+                        isEnemy={false}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <div className="text-slate-500 text-xs mt-2 text-center">
+                拖拽角色到格子<br/>或点击移除
+              </div>
+            </div>
+
+            {/* 中间火山区域 */}
+            {level.scene === 'volcano' && (
+              <div className="flex flex-col items-center">
+                <div className="text-orange-400 font-bold mb-2 text-sm flex items-center gap-2">
+                  <span>🌋</span>
+                  <span>火山地带</span>
+                </div>
+                <div className="flex flex-col gap-1 bg-orange-900/20 p-3 rounded-lg border-2 border-orange-600">
+                  {Array.from({ length: 3 }).map((_, y) => (
+                    <div key={y} className="flex gap-1">
+                      <GridCell
+                        key={`lava-0-${y}`}
+                        position={{ x: 0, y }}
+                        character={null}
+                        onDrop={() => {}}
+                        onRemove={() => {}}
+                        isLavaZone={true}
+                      />
+                    </div>
                   ))}
                 </div>
-              ))}
-            </div>
-            <p className="text-slate-400 text-sm text-center mt-4">
-              拖拽角色到格子中或点击已放置的角色移除
-            </p>
-          </div>
+                <div className="text-orange-400 text-xs mt-2 text-center font-semibold">
+                  ⚠️ 危险区域<br/>岩浆喷发
+                </div>
+              </div>
+            )}
 
+            {/* 敌方区域 */}
+            <div className="flex flex-col items-center">
+              <div className="text-red-400 font-bold mb-2 text-sm flex items-center gap-2">
+                <span>⚔️</span>
+                <span>敌方阵地</span>
+              </div>
+              <div className="flex flex-col gap-1 bg-red-900/20 p-3 rounded-lg border-2 border-red-500">
+                {enemyGrid.map((row, y) => (
+                  <div key={y} className="flex gap-1">
+                    {row.map((cell, x) => (
+                      <GridCell
+                        key={`enemy-${x}-${y}`}
+                        position={{ x, y }}
+                        character={cell}
+                        onDrop={() => {}}
+                        onRemove={() => {}}
+                        isEnemy={true}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <div className="text-slate-500 text-xs mt-2 text-center">
+                敌方预设<br/>阵容
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 下方两列：可用角色 + 关卡信息 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* 可用角色 */}
-          <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-            <h2 className="text-2xl font-bold text-white mb-4 text-center">
-              可用角色
+          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <h2 className="text-xl font-bold text-white mb-3 text-center">
+              📦 可用角色 ({playerCharacters.length})
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-60 overflow-y-auto">
               {playerCharacters.map((char) => (
                 <CharacterCard
                   key={char.id}
@@ -297,91 +408,98 @@ function FormationPageContent() {
               ))}
             </div>
             {playerCharacters.length === 0 && (
-              <p className="text-slate-400 text-center py-8">暂无可用角色</p>
+              <p className="text-slate-400 text-center py-8">暂无可用角色<br/>请先招募角色</p>
             )}
           </div>
 
-          {/* 敌方阵型 */}
-          <div className="bg-slate-800/50 rounded-xl p-6 border border-red-500">
-            <h2 className="text-2xl font-bold text-red-400 mb-4 text-center">
-              敌方阵型 (3×3)
-            </h2>
-            <div className="flex flex-col gap-2">
-              {enemyGrid.map((row, y) => (
-                <div key={y} className="flex gap-2 justify-center">
-                  {row.map((cell, x) => (
-                    <GridCell
-                      key={`enemy-${x}-${y}`}
-                      position={{ x, y }}
-                      character={cell}
-                      onDrop={() => {}}
-                      onRemove={() => {}}
-                      isEnemy={true}
-                    />
-                  ))}
+          {/* 关卡信息与火山机制说明 */}
+          <div className="bg-slate-800/50 rounded-xl p-4 border border-orange-500">
+            <h3 className="text-xl font-bold text-orange-400 mb-3 text-center flex items-center justify-center gap-2">
+              <span className="text-2xl">🌋</span>
+              <span>关卡机制</span>
+            </h3>
+            <div className="space-y-3 text-sm">
+              {/* 关卡基本信息 */}
+              <div className="bg-slate-700/50 rounded-lg p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-slate-300">关卡名称：</span>
+                  <span className="text-white font-bold">{level.name}</span>
                 </div>
-              ))}
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-slate-300">难度：</span>
+                  <span className={`font-bold ${
+                    level.difficulty === 'Boss' ? 'text-purple-400' :
+                    level.difficulty === '极难' ? 'text-red-400' :
+                    level.difficulty === '困难' ? 'text-orange-400' :
+                    level.difficulty === '中等' ? 'text-yellow-400' :
+                    'text-green-400'
+                  }`}>{level.difficulty}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-300">战斗时长：</span>
+                  <span className="text-blue-400 font-bold">{level.duration || 30}秒</span>
+                </div>
+              </div>
+
+              {/* 火山机制 */}
+              {level.scene === 'volcano' && (
+                <>
+                  <div className="flex items-start gap-2 bg-red-900/30 rounded-lg p-2">
+                    <span className="text-xl">🔥</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-orange-300">环境燃烧</p>
+                      <p className="text-xs text-slate-300">
+                        持续燃烧：<span className="text-red-400 font-bold">{level.burnDamage || 0}点/秒</span>
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        🔥火系免疫 • ❄️冰系-70% • 🪨大地系全额
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {level.id >= 3 && (
+                    <div className="flex items-start gap-2 bg-orange-900/30 rounded-lg p-2">
+                      <span className="text-xl">🌋</span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-orange-300">岩浆喷发</p>
+                        <p className="text-xs text-slate-300">
+                          喷发伤害：<span className="text-red-400 font-bold">80点</span> (每10秒)
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          ⚠️喷发前1.5秒警告 • 🪨大地系-40%
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="bg-blue-900/30 rounded-lg p-2">
+                    <p className="text-xs text-blue-200 flex items-start gap-1">
+                      <span>💡</span>
+                      <span>
+                        <span className="font-semibold">策略：</span>
+                        携带❄️冰系角色抵抗燃烧，避开🌋岩浆地块，带✨治疗确保生存！
+                      </span>
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
-            <p className="text-slate-400 text-sm text-center mt-4">
-              {level.name}
-            </p>
           </div>
         </div>
-
-        {/* 岩浆地块图例说明 */}
-        {level.scene === 'volcano' && (
-          <div className="bg-slate-800/50 rounded-xl p-6 border border-orange-500 mb-8">
-            <h3 className="text-xl font-bold text-orange-400 mb-4 text-center flex items-center justify-center gap-2">
-              <span className="text-2xl">🌋</span>
-              <span>火山关卡特殊机制</span>
-            </h3>
-            <div className="space-y-3 text-white">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">🔥</span>
-                <div>
-                  <p className="font-semibold text-orange-300">环境燃烧</p>
-                  <p className="text-sm text-slate-300">
-                    战场中持续燃烧，所有单位每秒受到 <span className="text-red-400 font-bold">{level.burnDamage || 0}</span> 点伤害
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    • 火系角色免疫燃烧 • 冰系角色燃烧伤害减少50%
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">💥</span>
-                <div>
-                  <p className="font-semibold text-orange-300">岩浆喷发</p>
-                  <p className="text-sm text-slate-300">
-                    带有 <span className="text-orange-400">🌋标记</span> 的地块每 <span className="text-yellow-400 font-bold">10秒</span> 喷发一次，造成 <span className="text-red-400 font-bold">50点</span> 伤害
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    • 喷发前1.5秒会有红色警告 • 大地系角色岩浆伤害减少40%
-                  </p>
-                </div>
-              </div>
-              <div className="bg-orange-900/30 rounded-lg p-3 mt-2">
-                <p className="text-sm text-orange-200">
-                  ⚡ <span className="font-semibold">策略提示：</span>避开岩浆地块布阵，使用火系/冰系角色抵抗燃烧，携带治疗角色确保生存！
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* 操作按钮 */}
         <div className="flex gap-4 justify-center">
           <button
             onClick={() => setScene('home')}
-            className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition"
+            className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition shadow-lg"
           >
-            返回主页
+            ← 返回主页
           </button>
           <button
             onClick={handleStartBattle}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition shadow-lg"
           >
-            开始战斗
+            ⚔️ 开始战斗
           </button>
         </div>
       </div>
@@ -416,4 +534,3 @@ function getRoleEmoji(role: string): string {
   };
   return emojiMap[role] || '👤';
 }
-
