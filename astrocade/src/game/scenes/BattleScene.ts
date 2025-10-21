@@ -6,6 +6,7 @@ import { BuffManager } from '../BuffManager';
 import { calculateBurnDamage, calculateLavaDamage, calculateElementalDamage } from '../ElementManager';
 import type { Character, BattleUnit, Position, SkillInstance, DebuffInstance, PresetCharacter } from '../../types';
 import charactersData from '../../config/characters.json';
+import volcanoCharactersData from '../../config/volcanoCharacters.json';
 
 export default class BattleScene extends Phaser.Scene {
   private playerUnits: BattleUnit[] = [];
@@ -216,8 +217,9 @@ export default class BattleScene extends Phaser.Scene {
     // 生成敌方单位
     if (gameState.currentLevel) {
       gameState.currentLevel.enemies.forEach((enemy, index) => {
-        // ✅ 修复：从配置文件读取敌人角色数据
-        const presetChar = charactersData.find(c => c.id === enemy.characterId) as PresetCharacter;
+        // ✅ 修复：从配置文件读取敌人角色数据（支持旧角色和火山角色）
+        const allCharacters = [...charactersData, ...volcanoCharactersData];
+        const presetChar = allCharacters.find(c => c.id === enemy.characterId) as PresetCharacter;
         
         if (!presetChar) {
           console.warn(`[BattleScene] 找不到角色配置 ID: ${enemy.characterId}`);
@@ -234,7 +236,9 @@ export default class BattleScene extends Phaser.Scene {
           moveSpeed: presetChar.moveSpeed,
           attackType: presetChar.attackType,
           role: presetChar.role,
+          element: presetChar.element, // ✅ 添加元素属性
           skills: presetChar.skills || [], // ✅ 使用配置中的技能
+          passiveSkills: presetChar.passiveSkills || [], // ✅ 添加被动技能
         };
         
         console.log(`[BattleScene] 生成敌人: ${enemyChar.name}, 职业: ${enemyChar.role}, 技能: ${enemyChar.skills.join(', ')}`);

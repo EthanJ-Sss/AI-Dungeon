@@ -1,0 +1,264 @@
+[
+  {
+    "id": 1,
+    "name": "平原初战",
+    "description": "简单的战斗，适合新手",
+    "difficulty": "简单",
+    "scene": "plain",
+    "unlocked": true,
+    "envEffect": null,
+    "enemies": [
+      {
+        "characterId": 1,
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "characterId": 1,
+        "position": { "x": 1, "y": 1 }
+      },
+      {
+        "characterId": 2,
+        "position": { "x": 2, "y": 2 }
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "平原防御",
+    "description": "更强的敌人来袭",
+    "difficulty": "简单",
+    "scene": "plain",
+    "unlocked": false,
+    "envEffect": null,
+    "enemies": [
+      {
+        "characterId": 4,
+        "position": { "x": 0, "y": 1 }
+      },
+      {
+        "characterId": 1,
+        "position": { "x": 1, "y": 0 }
+      },
+      {
+        "characterId": 2,
+        "position": { "x": 1, "y": 2 }
+      },
+      {
+        "characterId": 6,
+        "position": { "x": 2, "y": 1 }
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "平原决战",
+    "description": "平原最后的考验",
+    "difficulty": "中等",
+    "scene": "plain",
+    "unlocked": false,
+    "envEffect": null,
+    "enemies": [
+      {
+        "characterId": 5,
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "characterId": 1,
+        "position": { "x": 0, "y": 2 }
+      },
+      {
+        "characterId": 7,
+        "position": { "x": 1, "y": 1 }
+      },
+      {
+        "characterId": 4,
+        "position": { "x": 2, "y": 0 }
+      },
+      {
+        "characterId": 2,
+        "position": { "x": 2, "y": 2 }
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "森林狩猎",
+    "description": "弓手与战士的配合，森林中的寒气会减缓所有单位的速度",
+    "difficulty": "中等",
+    "scene": "forest",
+    "unlocked": false,
+    "envEffect": "buff_freeze",
+    "enemies": [
+      {
+        "characterId": 4,
+        "position": { "x": 0, "y": 1 }
+      },
+      {
+        "characterId": 2,
+        "position": { "x": 1, "y": 0 }
+      },
+      {
+        "characterId": 6,
+        "position": { "x": 1, "y": 2 }
+      },
+      {
+        "characterId": 1,
+        "position": { "x": 2, "y": 1 }
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "森林迷雾",
+    "description": "迷雾中的危险，寒气持续侵蚀",
+    "difficulty": "中等",
+    "scene": "forest",
+    "unlocked": false,
+    "envEffect": "buff_freeze",
+    "enemies": [
+      {
+        "characterId": 6,
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "characterId": 14,
+        "position": { "x": 0, "y": 2 }
+      },
+      {
+        "characterId": 4,
+        "position": { "x": 1, "y": 1 }
+      },
+      {
+        "characterId": 3,
+        "position": { "x": 2, "y": 1 }
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "森林之王",
+    "description": "森林的守护者，强大的敌人阵容",
+    "difficulty": "困难",
+    "scene": "forest",
+    "unlocked": false,
+    "envEffect": "buff_freeze",
+    "enemies": [
+      {
+        "characterId": 5,
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "characterId": 7,
+        "position": { "x": 0, "y": 2 }
+      },
+      {
+        "characterId": 11,
+        "position": { "x": 1, "y": 1 }
+      },
+      {
+        "characterId": 14,
+        "position": { "x": 2, "y": 0 }
+      },
+      {
+        "characterId": 6,
+        "position": { "x": 2, "y": 2 }
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "沼泽外围",
+    "description": "沼泽瘴气弥漫，减速且持续中毒",
+    "difficulty": "困难",
+    "scene": "swamp",
+    "unlocked": false,
+    "envEffect": "buff_swamp",
+    "enemies": [
+      {
+        "characterId": 3,
+        "position": { "x": 0, "y": 1 }
+      },
+      {
+        "characterId": 8,
+        "position": { "x": 1, "y": 0 }
+      },
+      {
+        "characterId": 15,
+        "position": { "x": 2, "y": 2 }
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "沼泽深处",
+    "description": "深入沼泽，瘴气更加浓郁",
+    "difficulty": "困难",
+    "scene": "swamp",
+    "unlocked": false,
+    "envEffect": "buff_swamp",
+    "enemies": [
+      {
+        "characterId": 8,
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "characterId": 17,
+        "position": { "x": 0, "y": 2 }
+      },
+      {
+        "characterId": 13,
+        "position": { "x": 1, "y": 1 }
+      },
+      {
+        "characterId": 15,
+        "position": { "x": 2, "y": 1 }
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "沼泽核心",
+    "description": "沼泽的中心，最危险的区域",
+    "difficulty": "极难",
+    "scene": "swamp",
+    "unlocked": false,
+    "envEffect": "buff_swamp",
+    "enemies": [
+      {
+        "characterId": 17,
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "characterId": 18,
+        "position": { "x": 0, "y": 2 }
+      },
+      {
+        "characterId": 13,
+        "position": { "x": 1, "y": 1 }
+      },
+      {
+        "characterId": 14,
+        "position": { "x": 2, "y": 0 }
+      },
+      {
+        "characterId": 16,
+        "position": { "x": 2, "y": 2 }
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "暗影领主的挑战",
+    "description": "最终决战！挑战暗影领主！",
+    "difficulty": "Boss",
+    "scene": "shadow",
+    "unlocked": false,
+    "envEffect": "buff_burn",
+    "enemies": [
+      {
+        "characterId": 21,
+        "position": { "x": 1, "y": 1 }
+      }
+    ]
+  }
+]

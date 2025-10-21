@@ -3,8 +3,12 @@ import { usePlayerStore } from '../store/playerStore';
 import { useGameStore } from '../store/gameStore';
 import type { PresetCharacter, Character } from '../types';
 import charactersData from '../config/characters.json';
+import volcanoCharactersData from '../config/volcanoCharacters.json';
 import { getSkillsInfo, getSkillTypeIcon } from '../utils/skillUtils';
 import ReplaceCharacterModal from './ReplaceCharacterModal';
+
+// 合并所有角色配置
+const allCharactersData = [...charactersData, ...volcanoCharactersData];
 
 export default function RecruitPage() {
   const [currentCharacter, setCurrentCharacter] = useState<PresetCharacter | null>(null);
@@ -20,13 +24,13 @@ export default function RecruitPage() {
 
   // 获取随机角色（排除已拥有的）
   const getRandomCharacter = useCallback((): PresetCharacter => {
-    const availableChars = (charactersData as PresetCharacter[]).filter(
+    const availableChars = (allCharactersData as PresetCharacter[]).filter(
       char => !characters.some(c => c.name === char.name)
     );
     
     if (availableChars.length === 0) {
       // 如果所有角色都已拥有，从全部角色中随机
-      return charactersData[Math.floor(Math.random() * charactersData.length)] as PresetCharacter;
+      return allCharactersData[Math.floor(Math.random() * allCharactersData.length)] as PresetCharacter;
     }
     
     return availableChars[Math.floor(Math.random() * availableChars.length)];
@@ -57,14 +61,16 @@ export default function RecruitPage() {
       moveSpeed: currentCharacter.moveSpeed,
       attackType: currentCharacter.attackType,
       role: currentCharacter.role,
+      element: currentCharacter.element,
       skillId: currentCharacter.skillId,
       skills: currentCharacter.skills || [],
+      passiveSkills: currentCharacter.passiveSkills || [],
       level: 1,
       exp: 0,
       expToNext: 100,
     };
 
-    console.log(`[RecruitPage] 招募角色: ${newCharacter.name}, 技能: ${newCharacter.skills?.join(', ') || '无'}`);
+    console.log(`[RecruitPage] 招募角色: ${newCharacter.name}, 元素: ${newCharacter.element || '无'}, 技能: ${newCharacter.skills?.join(', ') || '无'}`);
 
     // 如果角色列表未满，直接添加
     if (characters.length < 6) {
@@ -97,14 +103,16 @@ export default function RecruitPage() {
       moveSpeed: currentCharacter.moveSpeed,
       attackType: currentCharacter.attackType,
       role: currentCharacter.role,
+      element: currentCharacter.element,
       skillId: currentCharacter.skillId,
       skills: currentCharacter.skills || [],
+      passiveSkills: currentCharacter.passiveSkills || [],
       level: 1,
       exp: 0,
       expToNext: 100,
     };
 
-    console.log(`[RecruitPage] 替换角色: ${newCharacter.name}`);
+    console.log(`[RecruitPage] 替换角色: ${newCharacter.name}, 元素: ${newCharacter.element || '无'}`);
     
     replaceCharacter(oldCharId, newCharacter);
     incrementStat('recruitCount');
