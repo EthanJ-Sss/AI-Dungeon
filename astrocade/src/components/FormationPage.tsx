@@ -56,42 +56,45 @@ function GridCell({ row, col, character, onDrop, onRemove }: GridCellProps) {
   const isEnemy = isEnemyZone(col);
   const isLava = isLavaBlock(row, col);
   const isNeutral = !isPlayer && !isEnemy;
+  
+  // 检查是否是有效的玩家放置格子（列0-2，行1-3）
+  const isValidPlayerCell = isPlayer && row >= 1 && row <= 3;
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemType,
     drop: (item: { character: Character }) => {
-      if (isPlayer && !character) {
+      if (isValidPlayerCell && !character) {
         onDrop(item.character, row, col);
       }
     },
-    canDrop: () => isPlayer && !character,
+    canDrop: () => isValidPlayerCell && !character,
     collect: (monitor) => ({
       isOver: monitor.isOver(),
     }),
-  }), [character, isPlayer, onDrop, row, col]);
+  }), [character, isValidPlayerCell, onDrop, row, col]);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemType,
     item: character ? { character } : null,
-    canDrag: () => isPlayer && !!character,
+    canDrag: () => isValidPlayerCell && !!character,
     end: (item, monitor) => {
-      if (monitor.didDrop() && isPlayer) {
+      if (monitor.didDrop() && isValidPlayerCell) {
         onRemove(row, col);
       }
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  }), [character, isPlayer, onRemove, row, col]);
+  }), [character, isValidPlayerCell, onRemove, row, col]);
 
   const attachRef = (el: HTMLDivElement | null) => {
-    if (isPlayer && el) {
+    if (isValidPlayerCell && el) {
       drop(el);
     }
   };
 
   const attachDragRef = (el: HTMLDivElement | null) => {
-    if (isPlayer && el && character) {
+    if (isValidPlayerCell && el && character) {
       drag(el);
     }
   };
@@ -112,8 +115,12 @@ function GridCell({ row, col, character, onDrop, onRemove }: GridCellProps) {
     if (isLava) {
       return 'border-orange-500 bg-orange-900/60 border-2 animate-pulse';
     }
-    if (isPlayer) {
+    if (isValidPlayerCell) {
       return 'border-blue-400 bg-blue-900/30';
+    }
+    if (isPlayer && !isValidPlayerCell) {
+      // 玩家列但不可放置的格子（行0和行4）
+      return 'border-blue-800/30 bg-blue-950/10';
     }
     if (isEnemy) {
       return 'border-red-400 bg-red-900/30';
@@ -127,12 +134,13 @@ function GridCell({ row, col, character, onDrop, onRemove }: GridCellProps) {
       className={`
         relative w-14 h-14 border flex items-center justify-center
         transition-all duration-200 ${getCellStyle()}
-        ${isOver && isPlayer && 'bg-blue-500/50 scale-105'}
-        ${!character && isPlayer && 'hover:bg-blue-500/30 cursor-pointer'}
+        ${isOver && isValidPlayerCell && 'bg-blue-500/50 scale-105'}
+        ${!character && isValidPlayerCell && 'hover:bg-blue-500/30 cursor-pointer'}
       `}
       title={
         isLava ? '⚠️ 岩浆地块：每10秒喷发，造成80点伤害！' :
-        isPlayer ? '我方可放置区域' :
+        isValidPlayerCell ? '✅ 我方可放置区域 (行1-3)' :
+        isPlayer && !isValidPlayerCell ? '❌ 玩家列但不可放置 (行0和行4)' :
         isEnemy ? '敌方区域' :
         '中立区域'
       }
@@ -424,7 +432,11 @@ function FormationPageContent() {
           <div className="flex justify-center gap-4 mt-4 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border-2 border-blue-400 bg-blue-900/30 rounded"></div>
-              <span className="text-slate-300">🛡️ 我方区域 (列0-2)</span>
+              <span className="text-slate-300">✅ 我方可放置 (列0-2, 行1-3)</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 border border-blue-800/30 bg-blue-950/10 rounded"></div>
+              <span className="text-slate-300">❌ 不可放置 (行0/4)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border border-gray-600 bg-gray-800/20 rounded"></div>
