@@ -3,7 +3,7 @@ import { useGameStore } from '../../store/gameStore';
 import { usePlayerStore } from '../../store/playerStore';
 import { SkillManager } from '../SkillManager';
 import { BuffManager } from '../BuffManager';
-import { calculateBurnDamage, calculateLavaDamage } from '../ElementManager';
+import { calculateBurnDamage, calculateLavaDamage, calculateElementalDamage } from '../ElementManager';
 import type { Character, BattleUnit, Position, SkillInstance, DebuffInstance, PresetCharacter } from '../../types';
 import charactersData from '../../config/characters.json';
 
@@ -796,6 +796,20 @@ export default class BattleScene extends Phaser.Scene {
         return this.castSpeedBuff(caster, casterContainer, config);
       case 'skill_014': // 毒刺射击
         return this.castPoisonShot(caster, targets, casterContainer, config);
+      // 火山技能
+      case 'v_skill_001': // 火球爆裂
+        return this.castVolcanoFireball(caster, targets, casterContainer, config);
+      case 'v_skill_006': // 寒冰箭
+        return this.castIceArrow(caster, targets, casterContainer, config);
+      case 'v_skill_010': // 岩石护甲
+        return this.castRockArmor(caster, casterContainer, config);
+      case 'v_skill_013': // 圣光庇护
+        return this.castHolyProtection(caster, targets, casterContainer, config);
+      // Boss技能
+      case 'boss_skill_01': // 炎魔之怒
+        return this.castBossRage(caster, targets, casterContainer, config);
+      case 'boss_skill_02': // 熔岩召唤
+        return this.castLavaSummon(caster, casterContainer, config);
       default:
         console.warn(`[BattleScene] 未实现的技能: ${config.id}`);
         return false;
@@ -1650,6 +1664,355 @@ export default class BattleScene extends Phaser.Scene {
         }
 
         arrow.destroy();
+      },
+    });
+
+    return true;
+  }
+
+  // ========== 火山技能实现 ==========
+
+  // v_skill_001: 火球爆裂（火系AOE）
+  private castVolcanoFireball(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff4500);
+
+    // 创建火球
+    const fireball = this.add.circle(casterContainer.x, casterContainer.y, 10, 0xff4500);
+    
+    this.tweens.add({
+      targets: fireball,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 500,
+      onComplete: () => {
+        if (!target.isAlive || !targetContainer.active) {
+          fireball.destroy();
+          return;
+        }
+
+        // 主目标伤害（考虑元素克制）
+        const baseDamage = config.damage || 80;
+        const mainDamage = calculateElementalDamage(baseDamage, caster.character.element, target.character.element);
+        this.dealDamage(target, mainDamage, targetContainer);
+
+        // AOE爆炸效果
+        const explosion = this.add.circle(targetContainer.x, targetContainer.y, 40, 0xff6600, 0.7);
+        this.tweens.add({
+          targets: explosion,
+          scaleX: 3,
+          scaleY: 3,
+          alpha: 0,
+          duration: 400,
+          onComplete: () => explosion.destroy(),
+        });
+
+        // 对范围内的敌人造成额外伤害
+        const areaRadius = config.areaRadius || 120;
+        targets.forEach((areaTarget) => {
+          if (areaTarget === target || !areaTarget.isAlive) return;
+
+          const areaTargetContainer = this.allUnits.get(areaTarget.character.id);
+          if (!areaTargetContainer || !areaTargetContainer.active) return;
+
+          const areaDist = Phaser.Math.Distance.Between(
+            targetContainer.x, targetContainer.y,
+            areaTargetContainer.x, areaTargetContainer.y
+          );
+
+          if (areaDist <= areaRadius) {
+            const areaDamage = Math.floor(mainDamage * 0.5); // AOE伤害是主伤害的50%
+            this.dealDamage(areaTarget, areaDamage, areaTargetContainer);
+          }
+        });
+
+        fireball.destroy();
+      },
+    });
+
+    return true;
+  }
+
+  // v_skill_006: 寒冰箭（冰系减速）
+  private castIceArrow(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x00bfff);
+
+    // 创建寒冰箭
+    const iceArrow = this.add.circle(casterContainer.x, casterContainer.y, 8, 0x00bfff);
+    
+    this.tweens.add({
+      targets: iceArrow,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 300,
+      onComplete: () => {
+        if (!target.isAlive || !targetContainer.active) {
+          iceArrow.destroy();
+          return;
+        }
+
+        // 造成伤害（考虑元素克制）
+        const baseDamage = config.damage || 70;
+        const finalDamage = calculateElementalDamage(baseDamage, caster.character.element, target.character.element);
+        this.dealDamage(target, finalDamage, targetContainer);
+
+        // 添加减速 debuff
+        if (config.debuffType === 'slow' && target.debuffs) {
+          const debuff = {
+            type: config.debuffType,
+            value: config.debuffValue || 40,
+            duration: config.debuffDuration || 3,
+          };
+          target.debuffs.push(debuff);
+        }
+
+        // 冰冻特效
+        const iceEffect = this.add.circle(targetContainer.x, targetContainer.y, 30, 0x87ceeb, 0.5);
+        this.tweens.add({
+          targets: iceEffect,
+          scaleX: 1.5,
+          scaleY: 1.5,
+          alpha: 0,
+          duration: 600,
+          onComplete: () => iceEffect.destroy(),
+        });
+
+        iceArrow.destroy();
+      },
+    });
+
+    return true;
+  }
+
+  // v_skill_010: 岩石护甲（大地系防御）
+  private castRockArmor(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    this.showSkillCast(casterContainer, config.name, 0x8b4513);
+
+    // 添加护盾 buff
+    const buffId = config.buffId || 'buff_shield';
+    BuffManager.addBuff(caster, buffId, this.time.now);
+    this.updateBuffIcons(caster);
+
+    // 岩石护甲特效
+    const armor = this.add.circle(casterContainer.x, casterContainer.y, 40, 0x8b4513, 0.4);
+    this.tweens.add({
+      targets: armor,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      alpha: 0.2,
+      duration: 500,
+      yoyo: true,
+      repeat: 5,
+      onComplete: () => armor.destroy(),
+    });
+
+    return true;
+  }
+
+  // v_skill_013: 圣光庇护（治疗+驱散燃烧）
+  private castHolyProtection(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    // 找到范围内的友军
+    const allies = targets.filter((unit) => unit.team === caster.team && unit.isAlive);
+    if (allies.length === 0) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xffd700);
+
+    const areaRadius = config.areaRadius || 200;
+    let healedCount = 0;
+
+    allies.forEach((ally) => {
+      const allyContainer = this.allUnits.get(ally.character.id);
+      if (!allyContainer || !allyContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        allyContainer.x, allyContainer.y
+      );
+
+      if (distance <= areaRadius) {
+        // 治疗
+        const healPercent = config.heal || 20;
+        const healAmount = ally.character.maxHp * (healPercent / 100);
+        ally.currentHp = Math.min(ally.character.maxHp, ally.currentHp + healAmount);
+
+        // 显示治疗数字
+        const healText = this.add.text(allyContainer.x, allyContainer.y - 30, `+${Math.ceil(healAmount)}💚`, {
+          fontSize: '18px',
+          color: '#00ff00',
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: healText,
+          y: healText.y - 30,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => healText.destroy(),
+        });
+
+        // 圣光特效
+        const holyLight = this.add.circle(allyContainer.x, allyContainer.y, 35, 0xffd700, 0.6);
+        this.tweens.add({
+          targets: holyLight,
+          scaleX: 1.5,
+          scaleY: 1.5,
+          alpha: 0,
+          duration: 800,
+          onComplete: () => holyLight.destroy(),
+        });
+
+        // 更新HP条
+        this.updateHPBar(ally);
+        healedCount++;
+      }
+    });
+
+    return healedCount > 0;
+  }
+
+  // boss_skill_01: 炎魔之怒（Boss AOE）
+  private castBossRage(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    this.showSkillCast(casterContainer, '炎魔之怒', 0xff0000);
+
+    const areaRadius = config.areaRadius || 250;
+    const baseDamage = config.damage || 100;
+
+    // Boss怒吼特效
+    const rage = this.add.circle(casterContainer.x, casterContainer.y, 50, 0xff0000, 0.7);
+    this.tweens.add({
+      targets: rage,
+      scaleX: 5,
+      scaleY: 5,
+      alpha: 0,
+      duration: 800,
+      onComplete: () => rage.destroy(),
+    });
+
+    // 对范围内所有敌人造成伤害
+    let hitCount = 0;
+    targets.forEach((target) => {
+      if (!target.isAlive) return;
+
+      const targetContainer = this.allUnits.get(target.character.id);
+      if (!targetContainer || !targetContainer.active) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        targetContainer.x, targetContainer.y
+      );
+
+      if (distance <= areaRadius) {
+        const finalDamage = calculateElementalDamage(baseDamage, caster.character.element, target.character.element);
+        this.dealDamage(target, finalDamage, targetContainer);
+        hitCount++;
+      }
+    });
+
+    return hitCount > 0;
+  }
+
+  // boss_skill_02: 熔岩召唤（动态生成岩浆地块）
+  private castLavaSummon(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    this.showSkillCast(casterContainer, '熔岩召唤', 0xff4500);
+
+    // 在战场中央召唤临时岩浆地块
+    const centerRow = 2; // 行2（战场中央）
+    const centerCol = 4; // 列4（战场中央）
+    
+    const x = this.gridOffsetX + centerCol * this.gridSize;
+    const y = this.gridOffsetY + centerRow * this.gridSize;
+
+    // 召唤特效
+    const summon = this.add.text(x, y, '🌋', {
+      fontSize: '48px',
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: summon,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      duration: 500,
+      yoyo: true,
+      onComplete: () => {
+        // 创建临时岩浆地块
+        const tempLava = this.add.rectangle(x, y, this.gridSize - 4, this.gridSize - 4, 0xff0000, 0.6);
+        tempLava.setDepth(-1);
+
+        // 持续10秒，每2秒喷发一次
+        const duration = (config.summonDuration || 10) * 1000;
+        const interval = (config.eruptionInterval || 2) * 1000;
+        
+        const eruptionTimer = this.time.addEvent({
+          delay: interval,
+          callback: () => {
+            if (this.battleEnded) {
+              eruptionTimer.remove();
+              return;
+            }
+            this.triggerLavaEruption(centerRow, centerCol);
+          },
+          loop: true,
+        });
+
+        // 10秒后移除
+        this.time.delayedCall(duration, () => {
+          eruptionTimer.remove();
+          tempLava.destroy();
+          summon.destroy();
+        });
       },
     });
 
