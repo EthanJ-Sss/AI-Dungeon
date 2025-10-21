@@ -192,4 +192,14 @@ export interface CharacterLevelConfig {
   damageBonus: number;
 }
 
-
+// 显式导出所有类型（解决 Vite HMR 缓存问题）
+export type {
+  AttackType,
+  RoleType,
+  ElementType,
+  TeamType,
+  SkillType,
+  TargetType,
+  DebuffType,
+  BuffType,
+};
