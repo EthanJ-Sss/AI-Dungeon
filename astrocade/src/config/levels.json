@@ -2,12 +2,12 @@
   {
     "id": 1,
     "name": "火山入口",
-    "description": "初入火山，感受灼热的气息。环境燃烧每秒造成3点伤害",
+    "description": "初入火山，感受灼热的气息。环境燃烧每秒造成6点伤害",
     "difficulty": "简单",
     "scene": "volcano",
     "unlocked": true,
     "duration": 30,
-    "burnDamage": 3,
+    "burnDamage": 6,
     "enemies": [
       {
         "characterId": 101,
@@ -26,12 +26,12 @@
   {
     "id": 2,
     "name": "熔岩小径",
-    "description": "沿着熔岩小径前进，火焰愈发炽热。环境燃烧每秒造成5点伤害",
+    "description": "沿着熔岩小径前进，火焰愈发炽热。环境燃烧每秒造成10点伤害",
     "difficulty": "中等",
     "scene": "volcano",
     "unlocked": false,
     "duration": 35,
-    "burnDamage": 5,
+    "burnDamage": 10,
     "enemies": [
       {
         "characterId": 104,
@@ -50,12 +50,12 @@
   {
     "id": 3,
     "name": "火山通道",
-    "description": "深入火山腹地，岩浆开始周期性喷发！环境燃烧每秒造成8点伤害",
+    "description": "深入火山腹地，岩浆开始周期性喷发！环境燃烧每秒造成15点伤害",
     "difficulty": "中等",
     "scene": "volcano",
     "unlocked": false,
     "duration": 40,
-    "burnDamage": 8,
+    "burnDamage": 15,
     "enemies": [
       {
         "characterId": 107,
@@ -74,12 +74,12 @@
   {
     "id": 4,
     "name": "熔岩核心",
-    "description": "接近火山核心，炽热达到顶峰！环境燃烧每秒造成12点伤害",
+    "description": "接近火山核心，炽热达到顶峰！环境燃烧每秒造成22点伤害",
     "difficulty": "困难",
     "scene": "volcano",
     "unlocked": false,
     "duration": 45,
-    "burnDamage": 12,
+    "burnDamage": 22,
     "enemies": [
       {
         "characterId": 110,
@@ -98,12 +98,12 @@
   {
     "id": 5,
     "name": "炎魔之王的挑战",
-    "description": "最终决战！挑战火山之主 —— 伊格尼斯·炎魔之王！",
+    "description": "最终决战！挑战火山之主 —— 伊格尼斯·炎魔之王！环境燃烧每秒造成28点伤害",
     "difficulty": "Boss",
     "scene": "volcano",
     "unlocked": false,
     "duration": 60,
-    "burnDamage": 15,
+    "burnDamage": 28,
     "enemies": [
       {
         "characterId": 999,

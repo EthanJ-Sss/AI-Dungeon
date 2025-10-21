@@ -15,8 +15,8 @@ export const ELEMENT_RELATIONS = {
   // 火对冰减伤：受到冰系攻击-20%伤害
   FIRE_VS_ICE_PENALTY: 0.8,
   
-  // 冰系燃烧抗性：燃烧伤害-50%
-  ICE_BURN_RESISTANCE: 0.5,
+  // 冰系燃烧抗性：燃烧伤害-70%
+  ICE_BURN_RESISTANCE: 0.3,
   
   // 火系燃烧免疫：燃烧伤害-100%
   FIRE_BURN_IMMUNITY: 0,
@@ -79,7 +79,7 @@ export function calculateBurnDamage(
     return 0;
   }
   
-  // 冰系减伤50%
+  // 冰系减伤70%
   if (targetElement === 'ice') {
     return Math.round(baseBurnDamage * ELEMENT_RELATIONS.ICE_BURN_RESISTANCE);
   }

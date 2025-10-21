@@ -6,8 +6,8 @@
     "cd": 3,
     "range": 250,
     "targetType": "enemy",
-    "damage": 50,
-    "description": "发射一颗火球，对单个敌人造成50点伤害"
+    "damage": 33,
+    "description": "发射一颗火球，对单个敌人造成33点伤害"
   },
   {
     "id": "skill_002",
@@ -16,8 +16,8 @@
     "cd": 3,
     "range": 0,
     "targetType": "self",
-    "heal": 20,
-    "description": "立即回复自身20%最大生命值"
+    "heal": 15,
+    "description": "立即回复自身15%最大生命值"
   },
   {
     "id": "skill_003",
@@ -36,11 +36,11 @@
     "cd": 3,
     "range": 250,
     "targetType": "enemy",
-    "damage": 20,
+    "damage": 13,
     "debuffType": "slow",
     "debuffValue": 30,
     "debuffDuration": 2,
-    "description": "射出减速箭矢，造成20点伤害并使目标减速30%，持续2秒"
+    "description": "射出减速箭矢，造成13点伤害并使目标减速30%，持续2秒"
   },
   {
     "id": "skill_005",
@@ -62,8 +62,8 @@
     "range": 200,
     "targetType": "area",
     "areaRadius": 200,
-    "damage": 30,
-    "description": "召唤雷电，对范围内所有敌人造成30点伤害"
+    "damage": 20,
+    "description": "召唤雷电，对范围内所有敌人造成20点伤害"
   },
   {
     "id": "skill_007",
@@ -73,8 +73,8 @@
     "range": 250,
     "targetType": "area",
     "areaRadius": 150,
-    "damage": 40,
-    "description": "投掷爆炸物，对范围内所有敌人造成40点伤害"
+    "damage": 26,
+    "description": "投掷爆炸物，对范围内所有敌人造成26点伤害"
   },
   {
     "id": "skill_008",
@@ -83,8 +83,8 @@
     "cd": 5,
     "range": 0,
     "targetType": "self",
-    "heal": 30,
-    "description": "立即回复自身30%最大生命值"
+    "heal": 23,
+    "description": "立即回复自身23%最大生命值"
   },
   {
     "id": "skill_009",
@@ -94,8 +94,8 @@
     "range": 0,
     "targetType": "self",
     "dashDistance": 200,
-    "damage": 20,
-    "description": "向前冲刺，撞到敌人造成20点伤害"
+    "damage": 13,
+    "description": "向前冲刺，撞到敌人造成13点伤害"
   },
   {
     "id": "skill_010",
@@ -105,8 +105,8 @@
     "range": 200,
     "targetType": "cone",
     "coneAngle": 60,
-    "damage": 25,
-    "description": "向前方扇形区域发射能量，造成25点伤害"
+    "damage": 16,
+    "description": "向前方扇形区域发射能量，造成16点伤害"
   },
   {
     "id": "skill_011",
@@ -127,8 +127,8 @@
     "range": 200,
     "targetType": "area",
     "areaRadius": 200,
-    "heal": 15,
-    "description": "回复周围所有友军15%最大生命值"
+    "heal": 11,
+    "description": "回复周围所有友军11%最大生命值"
   },
   {
     "id": "skill_013",
@@ -147,10 +147,10 @@
     "cd": 4,
     "range": 250,
     "targetType": "enemy",
-    "damage": 15,
+    "damage": 10,
     "debuffType": "poison",
     "buffId": "buff_poison",
-    "description": "射击造成15点伤害，附加中毒效果"
+    "description": "射击造成10点伤害，附加中毒效果"
   },
   {
     "id": "skill_015",
@@ -160,8 +160,8 @@
     "range": 250,
     "targetType": "area",
     "areaRadius": 250,
-    "damage": 60,
-    "description": "释放暗影能量，对大范围敌人造成60点伤害"
+    "damage": 39,
+    "description": "释放暗影能量，对大范围敌人造成39点伤害"
   },
   {
     "id": "skill_016",
@@ -170,8 +170,8 @@
     "cd": 10,
     "range": 0,
     "targetType": "self",
-    "heal": 50,
-    "description": "吸收暗影能量，回复自身50%最大生命值"
+    "heal": 38,
+    "description": "吸收暗影能量，回复自身38%最大生命值"
   },
   {
     "id": "v_skill_001",
@@ -182,8 +182,8 @@
     "range": 250,
     "targetType": "area",
     "areaRadius": 120,
-    "damage": 80,
-    "description": "投掷火球造成80点伤害，并在目标位置爆炸，对120范围内敌人造成额外40点伤害"
+    "damage": 50,
+    "description": "投掷火球造成50点伤害，并在目标位置爆炸，对120范围内敌人造成额外25点伤害"
   },
   {
     "id": "v_skill_006",
@@ -193,11 +193,11 @@
     "cd": 4,
     "range": 300,
     "targetType": "enemy",
-    "damage": 70,
+    "damage": 45,
     "debuffType": "slow",
     "debuffValue": 40,
     "debuffDuration": 3,
-    "description": "发射寒冰箭造成70点伤害，减速目标40%持续3秒。对火系敌人额外+30%伤害"
+    "description": "发射寒冰箭造成45点伤害，减速目标40%持续3秒。对火系敌人额外+30%伤害"
   },
   {
     "id": "v_skill_010",
@@ -208,9 +208,9 @@
     "range": 0,
     "targetType": "self",
     "buffId": "buff_shield",
-    "shieldValue": 200,
+    "shieldValue": 160,
     "duration": 6,
-    "description": "化身岩石，获得200点护盾，持续6秒。岩浆喷发伤害-50%"
+    "description": "化身岩石，获得160点护盾，持续6秒。岩浆喷发伤害-50%"
   },
   {
     "id": "v_skill_013",
@@ -221,9 +221,9 @@
     "range": 200,
     "targetType": "area",
     "areaRadius": 200,
-    "heal": 20,
+    "heal": 15,
     "cleanseBurn": true,
-    "description": "治疗范围内所有友军20%最大生命值，消除燃烧效果，并在3秒内免疫燃烧"
+    "description": "治疗范围内所有友军15%最大生命值，消除燃烧效果，并在3秒内免疫燃烧"
   },
   {
     "id": "boss_skill_01",
@@ -234,8 +234,8 @@
     "range": 0,
     "targetType": "area",
     "areaRadius": 250,
-    "damage": 100,
-    "description": "释放炎魔之怒，对周围250范围内所有敌人造成100点火焰伤害"
+    "damage": 70,
+    "description": "释放炎魔之怒，对周围250范围内所有敌人造成70点火焰伤害"
   },
   {
     "id": "boss_skill_02",
@@ -247,8 +247,8 @@
     "targetType": "ground",
     "summonDuration": 10,
     "eruptionInterval": 2,
-    "eruptionDamage": 50,
-    "description": "在战场中央额外召唤一个临时岩浆地块，持续10秒，每2秒喷发一次（伤害50点）"
+    "eruptionDamage": 35,
+    "description": "在战场中央额外召唤一个临时岩浆地块，持续10秒，每2秒喷发一次（伤害35点）"
   },
   {
     "id": "v_skill_002",
@@ -259,8 +259,8 @@
     "range": 0,
     "targetType": "self",
     "dashDistance": 200,
-    "damage": 60,
-    "description": "向前冲刺200距离，撞击路径上的敌人造成60点伤害"
+    "damage": 40,
+    "description": "向前冲刺200距离，撞击路径上的敌人造成40点伤害"
   },
   {
     "id": "v_skill_007",
@@ -271,9 +271,9 @@
     "range": 0,
     "targetType": "self",
     "buffId": "buff_shield",
-    "shieldValue": 150,
+    "shieldValue": 120,
     "duration": 5,
-    "description": "为自己创造冰霜护盾，吸收150点伤害，持续5秒"
+    "description": "为自己创造冰霜护盾，吸收120点伤害，持续5秒"
   },
   {
     "id": "v_skill_008",
@@ -283,9 +283,9 @@
     "cd": 7,
     "range": 250,
     "targetType": "enemy",
-    "damage": 120,
+    "damage": 80,
     "stunDuration": 1,
-    "description": "对单个敌人造成120点冰霜伤害并冻结1秒。对火系敌人额外+30%伤害"
+    "description": "对单个敌人造成80点冰霜伤害并冻结1秒。对火系敌人额外+30%伤害"
   },
   {
     "id": "v_skill_014",
@@ -296,10 +296,9 @@
     "range": 0,
     "targetType": "area",
     "areaRadius": 250,
-    "heal": 15,
+    "heal": 12,
     "hotDuration": 5,
-    "hotHeal": 3,
-    "description": "在自身周围创造生命之泉，立即治疗250范围内所有友军15%生命，并在5秒内每秒额外回复3%生命"
+    "hotHeal": 2,
+    "description": "在自身周围创造生命之泉，立即治疗250范围内所有友军12%生命，并在5秒内每秒额外回复2%生命"
   }
 ]
-

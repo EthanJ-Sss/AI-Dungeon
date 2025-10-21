@@ -41,7 +41,7 @@ export default class BattleScene extends Phaser.Scene {
   ];
   private lavaInterval = 10000; // 喷发间隔（10秒）
   private lavaWarningTime = 1500; // 警告时间（1.5秒）
-  private lavaDamage = 50; // 岩浆伤害
+  private lavaDamage = 80; // 岩浆伤害
   private lavaMarkers: Map<string, Phaser.GameObjects.Rectangle> = new Map();
 
   constructor() {
