@@ -1443,6 +1443,9 @@ export default class BattleScene extends Phaser.Scene {
     // 冲刺特效
     const dashTrail = this.add.rectangle(casterContainer.x, casterContainer.y, 20, 20, 0x00ffff, 0.5);
     
+    // 记录已命中的敌人，防止重复伤害
+    const hitEnemies = new Set<string>();
+    
     this.tweens.add({
       targets: casterContainer,
       x: targetX,
@@ -1452,6 +1455,7 @@ export default class BattleScene extends Phaser.Scene {
         // 检查碰撞
         targets.forEach((t) => {
           if (!t.isAlive) return;
+          if (hitEnemies.has(t.character.id)) return; // 已命中，跳过
           
           const tc = this.allUnits.get(t.character.id);
           if (!tc || !tc.active) return;
@@ -1462,16 +1466,12 @@ export default class BattleScene extends Phaser.Scene {
           );
 
           if (dist < 50) {
-            const damage = config.damage || 35;
-            t.currentHp = Math.max(0, t.currentHp - damage);
-
-            this.showDamageNumber(tc, damage);
-
-            if (t.currentHp <= 0 && t.isAlive) {
-              t.isAlive = false;
-              this.showDeathAnimation(tc);
-              this.allUnits.delete(t.character.id);
-            }
+            // 标记为已命中
+            hitEnemies.add(t.character.id);
+            
+            // 造成伤害
+            const damage = config.damage || 13;
+            this.dealDamage(t, damage, tc);
           }
         });
       },
@@ -1886,6 +1886,9 @@ export default class BattleScene extends Phaser.Scene {
     trail.lineStyle(10, 0xff4500, 0.6);
     trail.lineBetween(casterContainer.x, casterContainer.y, targetX, targetY);
 
+    // 记录已命中的敌人，防止重复伤害
+    const hitEnemies = new Set<string>();
+
     // 冲刺动画
     this.tweens.add({
       targets: casterContainer,
@@ -1896,6 +1899,8 @@ export default class BattleScene extends Phaser.Scene {
         // 检查路径上的敌人
         targets.forEach((enemy) => {
           if (!enemy.isAlive) return;
+          if (hitEnemies.has(enemy.character.id)) return; // 已命中，跳过
+          
           const enemyContainer = this.allUnits.get(enemy.character.id);
           if (!enemyContainer || !enemyContainer.active) return;
 
@@ -1905,7 +1910,11 @@ export default class BattleScene extends Phaser.Scene {
           );
 
           if (distance < 50) {
-            const damage = config.damage || 60;
+            // 标记为已命中
+            hitEnemies.add(enemy.character.id);
+            
+            // 造成伤害（带元素克制计算）
+            const damage = config.damage || 40;
             const finalDamage = calculateElementalDamage(damage, caster.character.element, enemy.character.element);
             this.dealDamage(enemy, finalDamage, enemyContainer);
           }
