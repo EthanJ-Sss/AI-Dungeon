@@ -5,8 +5,10 @@ import { usePlayerStore } from '../store/playerStore';
 import { useGameStore } from '../store/gameStore';
 import type { Character, Formation, Position } from '../types';
 import levelsData from '../config/levels.json';
-import volcanoCharactersData from '../config/volcanoCharacters.json';
+import { loadAllCharacters } from '../utils/characterLoader';
 import { CharacterDetailSidebar } from './CharacterDetailSidebar';
+
+const allCharactersData = loadAllCharacters();
 
 const ItemType = 'CHARACTER';
 
@@ -252,7 +254,7 @@ function FormationPageContent() {
 
     // 在初始化时加载敌方阵型
     level.enemies.forEach((enemy) => {
-      const preset = volcanoCharactersData.find((c) => c.id === enemy.characterId);
+      const preset = allCharactersData.find((c) => c.id === enemy.characterId);
       
       if (preset) {
         const enemyChar: Character = {
