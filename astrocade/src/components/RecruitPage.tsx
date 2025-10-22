@@ -7,6 +7,7 @@ import { loadAllCharacters } from '../utils/characterLoader';
 const charactersData = loadAllCharacters();
 import { getSkillsInfo, getSkillTypeIcon } from '../utils/skillUtils';
 import ReplaceCharacterModal from './ReplaceCharacterModal';
+import elementsData from '../config/elements.json';
 
 // 使用新的角色配置（已按元素分类，包含所有18个新角色）
 const allCharactersData = charactersData;
@@ -162,12 +163,25 @@ export default function RecruitPage() {
             <h2 className="text-3xl font-bold text-white mb-2">
               {currentCharacter.name}
             </h2>
-            <span className="inline-block px-4 py-1 bg-blue-600 text-white rounded-full text-sm">
-              {getRoleName(currentCharacter.role)}
-            </span>
+            <div className="flex items-center justify-center gap-2">
+              <span className="inline-block px-4 py-1 bg-blue-600 text-white rounded-full text-sm">
+                {getRoleName(currentCharacter.role)}
+              </span>
+              {currentCharacter.element && (() => {
+                const elementInfo = getElementInfo(currentCharacter.element);
+                return (
+                  <span 
+                    className="inline-block px-4 py-1 text-white rounded-full text-sm font-semibold"
+                    style={{ backgroundColor: elementInfo.color }}
+                  >
+                    {elementInfo.icon} {elementInfo.name}系
+                  </span>
+                );
+              })()}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-white">
+          <div className="grid grid-cols-2 gap-4 text-white mb-6">
             <div className="bg-slate-700/50 rounded-lg p-4">
               <div className="text-slate-400 text-sm mb-1">生命值</div>
               <div className="text-2xl font-bold text-green-400">{currentCharacter.hp}</div>
@@ -187,6 +201,43 @@ export default function RecruitPage() {
               </div>
             </div>
           </div>
+
+          {/* 元素属性说明 */}
+          {currentCharacter.element && (() => {
+            const elementInfo = getElementInfo(currentCharacter.element);
+            const elementData = elementsData.elements.find(e => e.id === currentCharacter.element);
+            return (
+              <div className="bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg p-4 mb-6 border-2" style={{ borderColor: elementInfo.color }}>
+                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                  <span className="text-2xl">{elementInfo.icon}</span>
+                  <span>{elementInfo.name}系元素特性</span>
+                </h3>
+                <div className="text-slate-300 text-sm space-y-1">
+                  {elementData?.passive && (
+                    <>
+                      {elementData.passive.burnImmune && <p>• 🛡️ 免疫燃烧伤害</p>}
+                      {elementData.passive.igniteChance && (
+                        <p>• 🔥 {(elementData.passive.igniteChance * 100).toFixed(0)}% 概率点燃敌人，造成持续伤害</p>
+                      )}
+                      {elementData.passive.hpRegenPercent && (
+                        <p>• 💚 每{(elementData.passive.hpRegenInterval || 5000) / 1000}秒恢复{(elementData.passive.hpRegenPercent * 100).toFixed(0)}%生命值</p>
+                      )}
+                      {elementData.passive.slowChance && (
+                        <p>• ❄️ {(elementData.passive.slowChance * 100).toFixed(0)}% 概率减速敌人{(elementData.passive.slowAmount * 100).toFixed(0)}%</p>
+                      )}
+                      {elementData.passive.hpBonus && (
+                        <p>• 🪨 生命值提升{((elementData.passive.hpBonus - 1) * 100).toFixed(0)}%</p>
+                      )}
+                      {elementData.passive.startShieldPercent && (
+                        <p>• 🛡️ 战斗开始获得{(elementData.passive.startShieldPercent * 100).toFixed(0)}%生命值的护盾</p>
+                      )}
+                    </>
+                  )}
+                  {!elementData?.passive && <p>• 无特殊被动效果</p>}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* 技能信息 */}
           {currentCharacter.skills && currentCharacter.skills.length > 0 && (
@@ -277,6 +328,14 @@ function getRoleEmoji(role: string): string {
     healer: '✨',
   };
   return emojiMap[role] || '👤';
+}
+
+function getElementInfo(elementId?: string) {
+  if (!elementId) {
+    return { name: '无', icon: '⚪', color: '#cccccc' };
+  }
+  const element = elementsData.elements.find(e => e.id === elementId);
+  return element ? { name: element.name, icon: element.icon, color: element.color } : { name: '无', icon: '⚪', color: '#cccccc' };
 }
 
 
