@@ -41,6 +41,22 @@ export default class BattleScene extends Phaser.Scene {
   private lavaDamage = 80; // 岩浆伤害
   private lavaMarkers: Map<string, Phaser.GameObjects.Rectangle> = new Map();
 
+  // 角色信息面板
+  private characterPanels: Map<string, {
+    container: Phaser.GameObjects.Container,
+    hpBar: Phaser.GameObjects.Rectangle,
+    hpText: Phaser.GameObjects.Text,
+    skillBars: Array<{
+      bar: Phaser.GameObjects.Rectangle,
+      text: Phaser.GameObjects.Text,
+      background: Phaser.GameObjects.Rectangle
+    }>
+  }> = new Map();
+
+  // 伤害统计面板
+  private damageStatsText?: Phaser.GameObjects.Text;
+  private lastSkillUpdateTime: number = 0;
+
   constructor() {
     super({ key: 'BattleScene' });
   }
@@ -51,6 +67,7 @@ export default class BattleScene extends Phaser.Scene {
     this.playerUnits = [];
     this.enemyUnits = [];
     this.allUnits.clear();
+    this.characterPanels.clear();
     
     // 检测是否为Boss关卡
     const currentLevel = useGameStore.getState().currentLevel;
@@ -125,6 +142,12 @@ export default class BattleScene extends Phaser.Scene {
     // 执行刺客背刺瞬移
     this.executeAssassinBackstab();
 
+    // 创建角色信息面板
+    this.createCharacterInfoPanels();
+
+    // 创建伤害统计面板
+    this.createDamageStatsPanel();
+
     // 应用环境BUFF
     this.applyEnvironmentalBuffs();
 
@@ -175,6 +198,14 @@ export default class BattleScene extends Phaser.Scene {
     this.time.addEvent({
       delay: 100,
       callback: this.updateDebuffs,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 启动技能冷却显示更新（每100ms更新一次）
+    this.time.addEvent({
+      delay: 100,
+      callback: this.updateSkillCooldownDisplay,
       callbackScope: this,
       loop: true,
     });
@@ -524,6 +555,8 @@ export default class BattleScene extends Phaser.Scene {
       skillInstances,
       debuffs: [],
       shield: 0, // 初始护盾值
+      damageDealt: 0, // 造成的伤害
+      damageReceived: 0, // 受到的伤害
     };
 
     // 应用土系开战护盾
@@ -725,6 +758,14 @@ export default class BattleScene extends Phaser.Scene {
     targetContainer: Phaser.GameObjects.Container,
     attacker?: BattleUnit
   ) {
+    // 记录伤害统计
+    if (attacker && attacker.damageDealt !== undefined) {
+      attacker.damageDealt += damage;
+    }
+    if (target.damageReceived !== undefined) {
+      target.damageReceived += damage;
+    }
+
     // 扣除血量
     target.currentHp = Math.max(0, target.currentHp - damage);
 
@@ -735,6 +776,9 @@ export default class BattleScene extends Phaser.Scene {
 
     // 更新血条显示
     this.updateHealthBar(target);
+
+    // 更新伤害统计面板
+    this.updateDamageStats();
 
     // 受击闪烁
     this.tweens.add({
@@ -871,29 +915,11 @@ export default class BattleScene extends Phaser.Scene {
       }
     }
 
-    // 显示结果
-    const resultText = result === 'win' ? '胜利！' : '失败！';
-    const color = result === 'win' ? '#00ff00' : '#ff0000';
-
-    const bg = this.add.rectangle(600, 350, 400, 200, 0x000000, 0.8);
-    const text = this.add.text(600, 330, resultText, {
-      fontSize: '48px',
-      color: color,
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
-
-    const backButton = this.add.text(600, 400, result === 'win' ? '选择俘虏' : '返回主页', {
-      fontSize: '24px',
-      color: '#ffffff',
-      backgroundColor: result === 'win' ? '#ff8800' : '#4488ff',
-      padding: { x: 20, y: 10 },
-    })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
-        useGameStore.getState().setBattleResult(result);
-        useGameStore.getState().setScene('home');
-      });
+    // 显示战斗结算面板
+    this.showBattleSummary(result === 'win');
+    
+    // 设置战斗结果
+    useGameStore.getState().setBattleResult(result);
 
     // 触发游戏结束事件
     this.game.events.emit('battle-end', result);
@@ -2757,6 +2783,26 @@ export default class BattleScene extends Phaser.Scene {
         hpText.setColor('#ff0000'); // 红色
       }
     }
+
+    // 更新角色信息面板的HP条
+    const panel = this.characterPanels.get(unit.character.id);
+    if (panel) {
+      const hpPercent = unit.currentHp / unit.character.maxHp;
+      const barWidth = 140; // HP条总宽度
+      panel.hpBar.width = barWidth * hpPercent;
+      
+      // 更新HP条颜色
+      let hpColor = 0x00ff00; // 绿色
+      if (hpPercent <= 0.3) {
+        hpColor = 0xff0000; // 红色
+      } else if (hpPercent <= 0.6) {
+        hpColor = 0xffff00; // 黄色
+      }
+      panel.hpBar.setFillStyle(hpColor);
+      
+      // 更新HP文字
+      panel.hpText.setText(`${Math.ceil(unit.currentHp)}/${unit.character.maxHp}`);
+    }
   }
 
   /**
@@ -3816,6 +3862,384 @@ export default class BattleScene extends Phaser.Scene {
     this.time.delayedCall((config.duration || 4) * 1000, () => shield.destroy());
 
     return true;
+  }
+
+  /**
+   * 创建角色信息面板
+   */
+  private createCharacterInfoPanels() {
+    // 创建玩家队伍面板（左侧）
+    this.playerUnits.forEach((unit, index) => {
+      this.createCharacterPanel(unit, 50, 130 + index * 90, 'player');
+    });
+
+    // 创建敌方队伍面板（右侧）
+    this.enemyUnits.forEach((unit, index) => {
+      this.createCharacterPanel(unit, 1050, 130 + index * 90, 'enemy');
+    });
+  }
+
+  /**
+   * 创建单个角色面板
+   */
+  private createCharacterPanel(unit: BattleUnit, x: number, y: number, team: 'player' | 'enemy') {
+    const panelWidth = 180;
+    const panelHeight = 80;
+    const teamColor = team === 'player' ? 0x4488ff : 0xff4444;
+
+    // 创建面板容器
+    const container = this.add.container(x, y);
+
+    // 面板背景
+    const bg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x000000, 0.7);
+    const border = this.add.rectangle(0, 0, panelWidth, panelHeight)
+      .setStrokeStyle(2, teamColor, 1)
+      .setFillStyle(0x000000, 0);
+    container.add([bg, border]);
+
+    // 角色名称和头像
+    const roleEmoji = this.getRoleEmoji(unit.character.role);
+    const elementEmoji = this.getElementIcon(unit.character.element);
+    const nameText = this.add.text(-panelWidth / 2 + 10, -panelHeight / 2 + 10, 
+      `${roleEmoji}${elementEmoji} ${unit.character.name.slice(0, 6)}`, {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    });
+    container.add(nameText);
+
+    // HP条背景
+    const hpBarBg = this.add.rectangle(-panelWidth / 2 + 80, -panelHeight / 2 + 32, 140, 12, 0x333333);
+    container.add(hpBarBg);
+
+    // HP条
+    const hpPercent = unit.currentHp / unit.character.maxHp;
+    const hpBar = this.add.rectangle(-panelWidth / 2 + 10, -panelHeight / 2 + 32, 140 * hpPercent, 12, 0x00ff00);
+    hpBar.setOrigin(0, 0.5);
+    container.add(hpBar);
+
+    // HP文字
+    const hpText = this.add.text(panelWidth / 2 - 10, -panelHeight / 2 + 32, 
+      `${Math.ceil(unit.currentHp)}/${unit.character.maxHp}`, {
+      fontSize: '10px',
+      color: '#ffffff'
+    }).setOrigin(1, 0.5);
+    container.add(hpText);
+
+    // 技能列表
+    const skillBars: Array<{ bar: Phaser.GameObjects.Rectangle, text: Phaser.GameObjects.Text, background: Phaser.GameObjects.Rectangle }> = [];
+    if (unit.skillInstances) {
+      unit.skillInstances.forEach((skill, skillIndex) => {
+        const skillY = -panelHeight / 2 + 50 + skillIndex * 16;
+        
+        // 技能名称
+        const skillNameText = this.add.text(-panelWidth / 2 + 10, skillY, 
+          skill.config.name.slice(0, 6), {
+          fontSize: '10px',
+          color: '#cccccc'
+        });
+        container.add(skillNameText);
+
+        // CD条背景
+        const cdBarBg = this.add.rectangle(-panelWidth / 2 + 80, skillY, 60, 10, 0x333333);
+        container.add(cdBarBg);
+
+        // CD条
+        const cdBar = this.add.rectangle(-panelWidth / 2 + 50, skillY, 60, 10, 0xff8800);
+        cdBar.setOrigin(0, 0.5);
+        container.add(cdBar);
+
+        // CD文字
+        const cdText = this.add.text(panelWidth / 2 - 10, skillY, '✓', {
+          fontSize: '10px',
+          color: '#00ff00'
+        }).setOrigin(1, 0.5);
+        container.add(cdText);
+
+        skillBars.push({ bar: cdBar, text: cdText, background: cdBarBg });
+      });
+    }
+
+    // 保存面板引用
+    this.characterPanels.set(unit.character.id, {
+      container,
+      hpBar,
+      hpText,
+      skillBars
+    });
+  }
+
+  /**
+   * 更新技能冷却显示
+   */
+  private updateSkillCooldownDisplay() {
+    // 限制更新频率到每100ms
+    const now = this.time.now;
+    if (now - this.lastSkillUpdateTime < 100) return;
+    this.lastSkillUpdateTime = now;
+
+    // 更新所有角色的技能显示
+    [...this.playerUnits, ...this.enemyUnits].forEach(unit => {
+      if (!unit.isAlive || !unit.skillInstances) return;
+
+      const panel = this.characterPanels.get(unit.character.id);
+      if (!panel) return;
+
+      unit.skillInstances.forEach((skill, index) => {
+        if (index >= panel.skillBars.length) return;
+
+        const { bar, text } = panel.skillBars[index];
+        
+        if (skill.isReady) {
+          // 技能准备好
+          bar.width = 60;
+          bar.setFillStyle(0x00ff00);
+          text.setText('✓');
+          text.setColor('#00ff00');
+        } else {
+          // 技能冷却中
+          const cdPercent = 1 - (skill.currentCD / skill.config.cd);
+          bar.width = 60 * cdPercent;
+          bar.setFillStyle(0xff8800);
+          const remainingSeconds = Math.ceil(skill.currentCD);
+          text.setText(`${remainingSeconds}s`);
+          text.setColor('#ff8800');
+        }
+      });
+    });
+  }
+
+  /**
+   * 创建伤害统计面板
+   */
+  private createDamageStatsPanel() {
+    this.damageStatsText = this.add.text(600, 650, '', {
+      fontSize: '14px',
+      color: '#ffffff',
+      backgroundColor: '#000000',
+      padding: { x: 10, y: 5 }
+    }).setOrigin(0.5);
+  }
+
+  /**
+   * 更新伤害统计
+   */
+  private updateDamageStats() {
+    if (!this.damageStatsText) return;
+
+    // 计算玩家队伍的总伤害
+    let totalDealt = 0;
+    let totalReceived = 0;
+    
+    this.playerUnits.forEach(unit => {
+      totalDealt += unit.damageDealt || 0;
+      totalReceived += unit.damageReceived || 0;
+    });
+
+    // 计算每个角色的百分比
+    const dealtBreakdown: string[] = [];
+    const receivedBreakdown: string[] = [];
+
+    this.playerUnits.forEach(unit => {
+      const dealt = unit.damageDealt || 0;
+      const received = unit.damageReceived || 0;
+      const shortName = unit.character.name.replace('敌方-', '').slice(0, 4);
+      
+      if (totalDealt > 0) {
+        const dealtPercent = Math.round((dealt / totalDealt) * 100);
+        dealtBreakdown.push(`${shortName}${dealtPercent}%`);
+      }
+      
+      if (totalReceived > 0) {
+        const receivedPercent = Math.round((received / totalReceived) * 100);
+        receivedBreakdown.push(`${shortName}${receivedPercent}%`);
+      }
+    });
+
+    const statsText = `伤害统计: 造成 ${totalDealt} (${dealtBreakdown.join(' ')}) | 受到 ${totalReceived} (${receivedBreakdown.join(' ')})`;
+    this.damageStatsText.setText(statsText);
+  }
+
+  /**
+   * 显示战斗结算面板
+   */
+  private showBattleSummary(victory: boolean) {
+    // 创建半透明遮罩
+    this.add.rectangle(600, 350, 1200, 700, 0x000000, 0.8);
+    
+    // 创建结算面板
+    const summaryPanel = this.add.container(600, 350);
+    
+    // 面板背景
+    const panelBg = this.add.rectangle(0, 0, 500, 450, 0x1a1a2e, 1);
+    const panelBorder = this.add.rectangle(0, 0, 500, 450)
+      .setStrokeStyle(3, victory ? 0x4488ff : 0xff4444, 1)
+      .setFillStyle(0x000000, 0);
+    summaryPanel.add([panelBg, panelBorder]);
+    
+    // 标题
+    const title = this.add.text(0, -200, '═══════════ 战斗结算 ═══════════', {
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    summaryPanel.add(title);
+    
+    let yOffset = -160;
+    
+    // 造成伤害统计
+    const dealtTitle = this.add.text(0, yOffset, '造成伤害:', {
+      fontSize: '16px',
+      color: '#ff8800',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    summaryPanel.add(dealtTitle);
+    yOffset += 25;
+    
+    // 计算总伤害和MVP
+    let totalDealt = 0;
+    let mvpUnit: BattleUnit | null = null;
+    let mvpDamage = 0;
+    
+    this.playerUnits.forEach(unit => {
+      totalDealt += unit.damageDealt || 0;
+      if ((unit.damageDealt || 0) > mvpDamage) {
+        mvpDamage = unit.damageDealt || 0;
+        mvpUnit = unit;
+      }
+    });
+    
+    this.playerUnits.forEach(unit => {
+      const dealt = unit.damageDealt || 0;
+      const percent = totalDealt > 0 ? Math.round((dealt / totalDealt) * 100) : 0;
+      const barWidth = 200;
+      const fillWidth = (percent / 100) * barWidth;
+      
+      const shortName = unit.character.name.replace('敌方-', '').slice(0, 6);
+      
+      // 角色名称
+      const nameText = this.add.text(-200, yOffset, shortName, {
+        fontSize: '12px',
+        color: '#cccccc'
+      }).setOrigin(0, 0.5);
+      summaryPanel.add(nameText);
+      
+      // 伤害条背景
+      const barBg = this.add.rectangle(-90, yOffset, barWidth, 12, 0x333333);
+      summaryPanel.add(barBg);
+      
+      // 伤害条
+      const bar = this.add.rectangle(-190, yOffset, fillWidth, 12, 0xff8800);
+      bar.setOrigin(0, 0.5);
+      summaryPanel.add(bar);
+      
+      // 数值和百分比
+      const valueText = this.add.text(120, yOffset, `${dealt} (${percent}%)`, {
+        fontSize: '12px',
+        color: '#ffffff'
+      }).setOrigin(0, 0.5);
+      summaryPanel.add(valueText);
+      
+      yOffset += 20;
+    });
+    
+    yOffset += 15;
+    
+    // 受到伤害统计
+    const receivedTitle = this.add.text(0, yOffset, '受到伤害:', {
+      fontSize: '16px',
+      color: '#ff4444',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    summaryPanel.add(receivedTitle);
+    yOffset += 25;
+    
+    let totalReceived = 0;
+    this.playerUnits.forEach(unit => {
+      totalReceived += unit.damageReceived || 0;
+    });
+    
+    this.playerUnits.forEach(unit => {
+      const received = unit.damageReceived || 0;
+      const percent = totalReceived > 0 ? Math.round((received / totalReceived) * 100) : 0;
+      const barWidth = 200;
+      const fillWidth = (percent / 100) * barWidth;
+      
+      const shortName = unit.character.name.replace('敌方-', '').slice(0, 6);
+      
+      // 角色名称
+      const nameText = this.add.text(-200, yOffset, shortName, {
+        fontSize: '12px',
+        color: '#cccccc'
+      }).setOrigin(0, 0.5);
+      summaryPanel.add(nameText);
+      
+      // 伤害条背景
+      const barBg = this.add.rectangle(-90, yOffset, barWidth, 12, 0x333333);
+      summaryPanel.add(barBg);
+      
+      // 伤害条
+      const bar = this.add.rectangle(-190, yOffset, fillWidth, 12, 0xff4444);
+      bar.setOrigin(0, 0.5);
+      summaryPanel.add(bar);
+      
+      // 数值和百分比
+      const valueText = this.add.text(120, yOffset, `${received} (${percent}%)`, {
+        fontSize: '12px',
+        color: '#ffffff'
+      }).setOrigin(0, 0.5);
+      summaryPanel.add(valueText);
+      
+      yOffset += 20;
+    });
+    
+    yOffset += 15;
+    
+    // MVP显示
+    if (mvpUnit) {
+      const mvpText = this.add.text(0, yOffset, 
+        `MVP: ${mvpUnit.character.name.replace('敌方-', '')} 🏆`, {
+        fontSize: '18px',
+        color: '#ffd700',
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+      summaryPanel.add(mvpText);
+      yOffset += 40;
+    }
+    
+    // 继续按钮
+    const buttonBg = this.add.rectangle(0, yOffset, 120, 40, victory ? 0x4488ff : 0x666666, 1);
+    const buttonBorder = this.add.rectangle(0, yOffset, 120, 40)
+      .setStrokeStyle(2, 0xffffff, 1)
+      .setFillStyle(0x000000, 0);
+    const buttonText = this.add.text(0, yOffset, '继续', {
+      fontSize: '18px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    summaryPanel.add([buttonBg, buttonBorder, buttonText]);
+    
+    // 按钮交互
+    buttonBg.setInteractive({ useHandCursor: true });
+    buttonBorder.setInteractive({ useHandCursor: true });
+    buttonText.setInteractive({ useHandCursor: true });
+    
+    const handleClick = () => {
+      // 如果胜利，进入俘虏选择；失败则返回主页
+      useGameStore.getState().setScene('home');
+    };
+    
+    buttonBg.on('pointerdown', handleClick);
+    buttonBorder.on('pointerdown', handleClick);
+    buttonText.on('pointerdown', handleClick);
+    
+    buttonBg.on('pointerover', () => {
+      buttonBg.setFillStyle(victory ? 0x5599ff : 0x888888);
+    });
+    buttonBg.on('pointerout', () => {
+      buttonBg.setFillStyle(victory ? 0x4488ff : 0x666666);
+    });
   }
 }
 

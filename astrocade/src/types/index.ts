@@ -177,6 +177,8 @@ export interface BattleUnit {
   debuffs?: DebuffInstance[]; // Debuff列表
   buffs?: BuffInstance[]; // BUFF列表
   shield?: number; // 护盾值（土系被动等）
+  damageDealt?: number; // 本场战斗造成的总伤害
+  damageReceived?: number; // 本场战斗受到的总伤害
 }
 
 /** 阵型数据 */
