@@ -110,6 +110,7 @@ export interface LevelConfig {
   envEffect?: string;
   burnDamage?: number; // 火山关卡燃烧伤害（每秒）
   duration?: number; // 战斗时长（秒）
+  lavaBlocks?: Array<{ row: number; col: number }>; // 岩浆地块位置
 }
 
 /** 预设角色配置 */
@@ -203,6 +204,7 @@ export type {
   DebuffType,
   BuffType,
 };
+ 
  
  
  

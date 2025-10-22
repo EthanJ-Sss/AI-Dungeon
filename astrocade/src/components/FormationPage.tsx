@@ -9,29 +9,15 @@ import volcanoCharactersData from '../config/volcanoCharacters.json';
 
 const ItemType = 'CHARACTER';
 
-// 战场配置：5行×11列
+// 战场配置：5行×10列（删除中间一列）
 const BATTLEFIELD_ROWS = 5;
-const BATTLEFIELD_COLS = 11;
+const BATTLEFIELD_COLS = 10;
 
-// 玩家可放置区域：列 0-2
-const PLAYER_COLS = [0, 1, 2];
+// 玩家可放置区域：列 1-3（向右移动一格）
+const PLAYER_COLS = [1, 2, 3];
 
-// 敌方区域：列 8-10
-const ENEMY_COLS = [8, 9, 10];
-
-// 岩浆地块位置（与BattleScene完全一致）
-const LAVA_BLOCKS = [
-  { row: 2, col: 4 },  // 战场中央
-  { row: 1, col: 2 },  // 玩家左上
-  { row: 3, col: 2 },  // 玩家左下
-  { row: 1, col: 8 },  // 敌方右上
-  { row: 3, col: 8 },  // 敌方右下
-];
-
-// 检查是否是岩浆地块
-const isLavaBlock = (row: number, col: number): boolean => {
-  return LAVA_BLOCKS.some(block => block.row === row && block.col === col);
-};
+// 敌方区域：列 7-9（向左移动一格）
+const ENEMY_COLS = [7, 8, 9];
 
 // 检查是否是玩家可放置区域
 const isPlayerZone = (col: number): boolean => {
@@ -49,15 +35,16 @@ interface GridCellProps {
   character: Character | null;
   onDrop: (char: Character, row: number, col: number) => void;
   onRemove: (row: number, col: number) => void;
+  lavaBlocks: Array<{ row: number; col: number }>;
 }
 
-function GridCell({ row, col, character, onDrop, onRemove }: GridCellProps) {
+function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCellProps) {
   const isPlayer = isPlayerZone(col);
   const isEnemy = isEnemyZone(col);
-  const isLava = isLavaBlock(row, col);
+  const isLava = lavaBlocks.some(block => block.row === row && block.col === col);
   const isNeutral = !isPlayer && !isEnemy;
   
-  // 检查是否是有效的玩家放置格子（列0-2，行1-3）
+  // 检查是否是有效的玩家放置格子（列1-3，行1-3）
   const isValidPlayerCell = isPlayer && row >= 1 && row <= 3;
 
   const [{ isOver }, drop] = useDrop(() => ({
@@ -340,8 +327,8 @@ function FormationPageContent() {
           console.log(`   检查格子(${r}, ${c}): ${cell.name}, ID=${cell.id.substring(0, 20)}..., isPlayerZone=${isPlayerZone(c)}, isEnemy=${cell.id.startsWith('enemy_')}`);
         }
         if (cell && isPlayerZone(c) && !cell.id.startsWith('enemy_')) {
-          // 映射：col(0-2) -> x(0-2), row(1-3) -> y(0-2)
-          const x = c;
+          // 映射：col(1-3) -> x(0-2), row(1-3) -> y(0-2)
+          const x = c - 1;
           const y = r - 1;
           console.log(`   ✅ 保存角色: ${cell.name}, 战场位置(${r}, ${c}) -> 阵型坐标(${x}, ${y}), y范围检查: ${y >= 0 && y <= 2}`);
           if (y >= 0 && y <= 2) {
@@ -406,6 +393,7 @@ function FormationPageContent() {
                     character={cell}
                     onDrop={handleDrop}
                     onRemove={handleRemove}
+                    lavaBlocks={level.lavaBlocks || []}
                   />
                 ))}
 
@@ -432,7 +420,7 @@ function FormationPageContent() {
           <div className="flex justify-center gap-4 mt-4 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border-2 border-blue-400 bg-blue-900/30 rounded"></div>
-              <span className="text-slate-300">✅ 我方可放置 (列0-2, 行1-3)</span>
+              <span className="text-slate-300">✅ 我方可放置 (列1-3, 行1-3)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border border-blue-800/30 bg-blue-950/10 rounded"></div>
@@ -440,7 +428,7 @@ function FormationPageContent() {
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border border-gray-600 bg-gray-800/20 rounded"></div>
-              <span className="text-slate-300">中立区域</span>
+              <span className="text-slate-300">中立区域 (列4-6)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border-2 border-orange-500 bg-orange-900/60 rounded"></div>
@@ -448,7 +436,7 @@ function FormationPageContent() {
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border-2 border-red-400 bg-red-900/30 rounded"></div>
-              <span className="text-slate-300">⚔️ 敌方区域 (列8-10)</span>
+              <span className="text-slate-300">⚔️ 敌方区域 (列7-9)</span>
             </div>
           </div>
         </div>

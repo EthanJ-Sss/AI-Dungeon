@@ -8,6 +8,9 @@
     "unlocked": true,
     "duration": 30,
     "burnDamage": 6,
+    "lavaBlocks": [
+      { "row": 2, "col": 5 }
+    ],
     "enemies": [
       {
         "characterId": 101,
@@ -32,6 +35,10 @@
     "unlocked": false,
     "duration": 35,
     "burnDamage": 10,
+    "lavaBlocks": [
+      { "row": 1, "col": 4 },
+      { "row": 3, "col": 6 }
+    ],
     "enemies": [
       {
         "characterId": 104,
@@ -56,6 +63,11 @@
     "unlocked": false,
     "duration": 40,
     "burnDamage": 15,
+    "lavaBlocks": [
+      { "row": 2, "col": 4 },
+      { "row": 1, "col": 5 },
+      { "row": 3, "col": 5 }
+    ],
     "enemies": [
       {
         "characterId": 107,
@@ -80,6 +92,13 @@
     "unlocked": false,
     "duration": 45,
     "burnDamage": 22,
+    "lavaBlocks": [
+      { "row": 0, "col": 5 },
+      { "row": 1, "col": 4 },
+      { "row": 2, "col": 6 },
+      { "row": 3, "col": 4 },
+      { "row": 4, "col": 5 }
+    ],
     "enemies": [
       {
         "characterId": 110,
@@ -104,6 +123,12 @@
     "unlocked": false,
     "duration": 60,
     "burnDamage": 28,
+    "lavaBlocks": [
+      { "row": 1, "col": 5 },
+      { "row": 2, "col": 4 },
+      { "row": 2, "col": 6 },
+      { "row": 3, "col": 5 }
+    ],
     "enemies": [
       {
         "characterId": 999,

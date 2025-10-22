@@ -16,29 +16,23 @@ export default class BattleScene extends Phaser.Scene {
   private timerText?: Phaser.GameObjects.Text;
   private battleEnded: boolean = false;
   
-  // 棋盘配置：5行×11列（与布阵界面完全一致）
+  // 棋盘配置：5行×10列（删除中间一列，与布阵界面完全一致）
   private gridSize = 56;
   private gridRows = 5;
-  private gridCols = 11;
-  private gridOffsetX = 120;
+  private gridCols = 10;
+  private gridOffsetX = 150;
   private gridOffsetY = 130;
   
-  // 我方区域（左侧）：列0-2，行1-3（3×3）
-  private playerArea = { rowStart: 1, rowEnd: 3, colStart: 0, colEnd: 2 };
-  // 敌方区域（右侧）：列8-10，行1-3（3×3）
-  private enemyArea = { rowStart: 1, rowEnd: 3, colStart: 8, colEnd: 10 };
+  // 我方区域（左侧）：列1-3，行1-3（3×3，向右移动一格）
+  private playerArea = { rowStart: 1, rowEnd: 3, colStart: 1, colEnd: 3 };
+  // 敌方区域（右侧）：列7-9，行1-3（3×3，向左移动一格）
+  private enemyArea = { rowStart: 1, rowEnd: 3, colStart: 7, colEnd: 9 };
   
   // 移动速度提升
   private moveSpeedMultiplier = 5;
 
-  // 岩浆地块配置（固定5个地块）
-  private lavaBlocks = [
-    { row: 2, col: 4, offsetTime: 0 },    // 战场中央
-    { row: 1, col: 2, offsetTime: 2000 }, // 玩家左上
-    { row: 3, col: 2, offsetTime: 4000 }, // 玩家左下
-    { row: 1, col: 8, offsetTime: 6000 }, // 敌方右上
-    { row: 3, col: 8, offsetTime: 8000 }, // 敌方右下
-  ];
+  // 岩浆地块配置（从关卡配置读取，每关不同）
+  private lavaBlocks: Array<{ row: number; col: number; offsetTime: number }> = [];
   private lavaInterval = 10000; // 喷发间隔（10秒）
   private lavaWarningTime = 1500; // 警告时间（1.5秒）
   private lavaDamage = 80; // 岩浆伤害
@@ -108,6 +102,17 @@ export default class BattleScene extends Phaser.Scene {
     // 绘制战场网格
     this.drawBattleGrid();
 
+    // 从关卡配置加载岩浆地块（每关不同）
+    if (currentLevel?.lavaBlocks && currentLevel.lavaBlocks.length > 0) {
+      this.lavaBlocks = currentLevel.lavaBlocks.map((block, index) => ({
+        ...block,
+        offsetTime: index * 2000, // 每个地块间隔2秒开始喷发
+      }));
+    } else {
+      // 如果关卡没有配置岩浆，使用空数组
+      this.lavaBlocks = [];
+    }
+
     // 初始化岩浆地块标记
     this.initializeLavaBlocks();
 
@@ -175,7 +180,7 @@ export default class BattleScene extends Phaser.Scene {
   private drawBattleGrid() {
     const graphics = this.add.graphics();
     
-    // 绘制完整的5×11棋盘（灰色，细线）与布阵界面完全一致
+    // 绘制完整的5×10棋盘（灰色，细线）与布阵界面完全一致
     graphics.lineStyle(1, 0x666666, 0.3);
     for (let row = 0; row < this.gridRows; row++) {
       for (let col = 0; col < this.gridCols; col++) {
@@ -205,7 +210,7 @@ export default class BattleScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    // 高亮我方区域（蓝色背景）- 列0-2，行1-3
+    // 高亮我方区域（蓝色背景）- 列1-3，行1-3
     const playerX = this.gridOffsetX + this.playerArea.colStart * this.gridSize;
     const playerY = this.gridOffsetY + this.playerArea.rowStart * this.gridSize;
     const playerWidth = (this.playerArea.colEnd - this.playerArea.colStart + 1) * this.gridSize;
@@ -216,7 +221,7 @@ export default class BattleScene extends Phaser.Scene {
     graphics.lineStyle(2, 0x4488ff, 0.8);
     graphics.strokeRect(playerX, playerY, playerWidth, playerHeight);
 
-    // 高亮敌方区域（红色背景）- 列8-10，行1-3
+    // 高亮敌方区域（红色背景）- 列7-9，行1-3
     const enemyX = this.gridOffsetX + this.enemyArea.colStart * this.gridSize;
     const enemyY = this.gridOffsetY + this.enemyArea.rowStart * this.gridSize;
     const enemyWidth = (this.enemyArea.colEnd - this.enemyArea.colStart + 1) * this.gridSize;
