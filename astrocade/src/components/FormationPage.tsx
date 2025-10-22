@@ -266,6 +266,8 @@ function FormationPageContent() {
           moveSpeed: preset.moveSpeed,
           attackType: preset.attackType,
           role: preset.role,
+          skills: preset.skills || [],
+          passiveSkills: preset.passiveSkills || [],
           ...(preset.element && { element: preset.element }),
         } as any;
         
