@@ -105,13 +105,11 @@ function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCel
     if (isValidPlayerCell) {
       return 'border-blue-400 bg-blue-900/30';
     }
-    if (isPlayer && !isValidPlayerCell) {
-      // 玩家列但不可放置的格子（行0和行4）
-      return 'border-blue-800/30 bg-blue-950/10';
-    }
-    if (isEnemy) {
+    // 敌方可放置区域（行1-3，列7-9）
+    if (isEnemy && row >= 1 && row <= 3) {
       return 'border-red-400 bg-red-900/30';
     }
+    // 其他所有格子（包括行0、行4）都显示为灰色不可放置区域
     return 'border-gray-600 bg-gray-800/20';
   };
 
@@ -126,9 +124,9 @@ function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCel
       `}
       title={
         isLava ? '⚠️ 岩浆地块：每10秒喷发，造成80点伤害！' :
-        isValidPlayerCell ? '✅ 我方可放置区域 (行1-3)' :
-        isPlayer && !isValidPlayerCell ? '❌ 玩家列但不可放置 (行0和行4)' :
-        isEnemy ? '敌方区域' :
+        isValidPlayerCell ? '✅ 我方可放置区域 (列1-3, 行1-3)' :
+        isEnemy && row >= 1 && row <= 3 ? '敌方区域 (列7-9, 行1-3)' :
+        row === 0 || row === 4 ? '❌ 边界区域（不可放置）' :
         '中立区域'
       }
     >
@@ -142,7 +140,7 @@ function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCel
       {/* 区域标识（仅在空格子显示） */}
       {!character && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
-          {isPlayer && <div className="text-xs text-blue-300">🛡️</div>}
+          {isValidPlayerCell && <div className="text-xs text-blue-300">🛡️</div>}
           {isEnemy && <div className="text-xs text-red-300">⚔️</div>}
         </div>
       )}
@@ -428,20 +426,16 @@ function FormationPageContent() {
               <span className="text-slate-300">✅ 我方可放置 (列1-3, 行1-3)</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-4 h-4 border border-blue-800/30 bg-blue-950/10 rounded"></div>
-              <span className="text-slate-300">❌ 不可放置 (行0/4)</span>
+              <div className="w-4 h-4 border-2 border-red-400 bg-red-900/30 rounded"></div>
+              <span className="text-slate-300">⚔️ 敌方区域 (列7-9, 行1-3)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border border-gray-600 bg-gray-800/20 rounded"></div>
-              <span className="text-slate-300">中立区域 (列4-6)</span>
+              <span className="text-slate-300">❌ 不可放置区域 (行0/4 + 中立列)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border-2 border-orange-500 bg-orange-900/60 rounded"></div>
               <span className="text-slate-300">🌋 岩浆地块</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 border-2 border-red-400 bg-red-900/30 rounded"></div>
-              <span className="text-slate-300">⚔️ 敌方区域 (列7-9)</span>
             </div>
           </div>
         </div>
