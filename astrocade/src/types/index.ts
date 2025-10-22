@@ -176,6 +176,7 @@ export interface BattleUnit {
   skillInstances?: SkillInstance[]; // 新版技能实例
   debuffs?: DebuffInstance[]; // Debuff列表
   buffs?: BuffInstance[]; // BUFF列表
+  shield?: number; // 护盾值（土系被动等）
 }
 
 /** 阵型数据 */

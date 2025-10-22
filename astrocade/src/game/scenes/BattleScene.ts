@@ -3,10 +3,11 @@ import { useGameStore } from '../../store/gameStore';
 import { usePlayerStore } from '../../store/playerStore';
 import { SkillManager } from '../SkillManager';
 import { BuffManager } from '../BuffManager';
-import { calculateBurnDamage, calculateLavaDamage, calculateElementalDamage } from '../ElementManager';
+import { calculateBurnDamage, calculateLavaDamage, calculateElementalDamage, elementManager } from '../ElementManager';
+import { loadAllCharacters } from '../../utils/characterLoader';
 import type { Character, BattleUnit, Position, SkillInstance, DebuffInstance, PresetCharacter } from '../../types';
-import charactersData from '../../config/characters.json';
-import volcanoCharactersData from '../../config/volcanoCharacters.json';
+
+const allCharactersData = loadAllCharacters();
 
 export default class BattleScene extends Phaser.Scene {
   private playerUnits: BattleUnit[] = [];
@@ -15,6 +16,8 @@ export default class BattleScene extends Phaser.Scene {
   private battleTimer: number = 30;
   private timerText?: Phaser.GameObjects.Text;
   private battleEnded: boolean = false;
+  private elementManager = elementManager; // 元素管理器
+  private lastRegenTime: number = 0; // 水系被动回复计时
   
   // 棋盘配置：5行×11列（列10为刺客跳跃空白列）
   private gridSize = 56;
@@ -137,6 +140,14 @@ export default class BattleScene extends Phaser.Scene {
     this.time.addEvent({
       delay: 1000,
       callback: this.applyBurnDamage,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 启动水系被动回复系统（每5秒）
+    this.time.addEvent({
+      delay: 5000,
+      callback: this.applyWaterRegen,
       callbackScope: this,
       loop: true,
     });
@@ -282,9 +293,8 @@ export default class BattleScene extends Phaser.Scene {
     // 生成敌方单位
     if (gameState.currentLevel) {
       gameState.currentLevel.enemies.forEach((enemy, index) => {
-        // ✅ 修复：从配置文件读取敌人角色数据（支持旧角色和火山角色）
-        const allCharacters = [...charactersData, ...volcanoCharactersData];
-        const presetChar = allCharacters.find(c => c.id === enemy.characterId) as PresetCharacter;
+        // 从新的角色配置文件读取敌人角色数据
+        const presetChar = allCharactersData.find(c => c.id === enemy.characterId) as PresetCharacter;
         
         if (!presetChar) {
           console.warn(`[BattleScene] 找不到角色配置 ID: ${enemy.characterId}`);
@@ -484,25 +494,49 @@ export default class BattleScene extends Phaser.Scene {
     }).setOrigin(0.5);
     container.add(hpText);
 
+    // 应用元素被动效果
+    const characterCopy = { ...character };
+    if (character.element) {
+      const passive = this.elementManager.getElementPassive(character.element);
+      if (passive) {
+        // 土系HP加成
+        if (passive.hpBonus) {
+          characterCopy.hp = Math.floor(characterCopy.hp * passive.hpBonus);
+          characterCopy.maxHp = Math.floor(characterCopy.maxHp * passive.hpBonus);
+          console.log(`   [元素被动] ${character.name} 土系HP加成: ${character.hp} → ${characterCopy.hp}`);
+        }
+      }
+    }
+    
     // 创建技能实例
-    const skillInstances: SkillInstance[] = character.skills 
-      ? SkillManager.createSkillInstances(character.skills)
+    const skillInstances: SkillInstance[] = characterCopy.skills 
+      ? SkillManager.createSkillInstances(characterCopy.skills)
       : [];
 
     // 创建战斗单位数据
     const unit: BattleUnit = {
-      character: { ...character },
+      character: characterCopy,
       position: { x: worldX, y: worldY },
       team,
       isAlive: true,
-      currentHp: character.hp,
+      currentHp: characterCopy.hp,
       skills: [],
       skillInstances,
       debuffs: [],
+      shield: 0, // 初始护盾值
     };
 
+    // 应用土系开战护盾
+    if (character.element) {
+      const passive = this.elementManager.getElementPassive(character.element);
+      if (passive?.startShieldPercent) {
+        unit.shield = Math.floor(characterCopy.maxHp * passive.startShieldPercent);
+        console.log(`   [元素被动] ${character.name} 土系开战护盾: ${unit.shield}`);
+      }
+    }
+
     // 保存容器引用
-    this.allUnits.set(character.id, container);
+    this.allUnits.set(characterCopy.id, container);
 
     // 存储数据到容器
     (container as any).battleUnit = unit;
@@ -2775,6 +2809,56 @@ export default class BattleScene extends Phaser.Scene {
       alpha: 0,
       duration: 800,
       onComplete: () => flame.destroy(),
+    });
+  }
+
+  /**
+   * 应用水系被动回复（每5秒）
+   */
+  private applyWaterRegen() {
+    // 战斗已结束，停止回复
+    if (this.battleEnded) return;
+
+    const allUnits = [...this.playerUnits, ...this.enemyUnits];
+
+    allUnits.forEach((unit) => {
+      if (!unit.isAlive || !unit.character.element) return;
+
+      // 获取元素被动
+      const passive = this.elementManager.getElementPassive(unit.character.element);
+      if (!passive?.hpRegenPercent) return;
+
+      // 计算回复量
+      const healAmount = Math.floor(unit.character.maxHp * passive.hpRegenPercent);
+      const oldHp = unit.currentHp;
+      unit.currentHp = Math.min(unit.currentHp + healAmount, unit.character.maxHp);
+      const actualHeal = unit.currentHp - oldHp;
+
+      if (actualHeal > 0) {
+        // 显示回复数字（绿色）
+        const container = this.allUnits.get(unit.character.id);
+        if (container) {
+          const healText = this.add.text(0, -50, `+${actualHeal}💧`, {
+            fontSize: '16px',
+            color: '#00ff99',
+            fontStyle: 'bold',
+          }).setOrigin(0.5);
+
+          container.add(healText);
+
+          // 回复数字向上飘动并消失
+          this.tweens.add({
+            targets: healText,
+            y: -70,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => healText.destroy(),
+          });
+        }
+
+        // 更新HP条
+        this.updateHealthBar(unit);
+      }
     });
   }
 
