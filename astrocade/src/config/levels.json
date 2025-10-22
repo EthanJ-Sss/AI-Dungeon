@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "火山入口",
-    "description": "初入火山，感受灼热的气息。环境燃烧每秒造成6点伤害",
+    "description": "初入火山，感受灼热的气息。敌人：基础火系队伍。环境燃烧每秒造成6点伤害",
     "difficulty": "简单",
     "scene": "volcano",
     "unlocked": true,
@@ -13,15 +13,15 @@
     ],
     "enemies": [
       {
-        "characterId": 101,
+        "characterId": "char_fire_004",
         "position": { "x": 1, "y": 0 }
       },
       {
-        "characterId": 102,
+        "characterId": "char_neutral_002",
         "position": { "x": 0, "y": 1 }
       },
       {
-        "characterId": 103,
+        "characterId": "char_fire_004",
         "position": { "x": 2, "y": 2 }
       }
     ]
@@ -29,7 +29,7 @@
   {
     "id": 2,
     "name": "熔岩小径",
-    "description": "沿着熔岩小径前进，火焰愈发炽热。环境燃烧每秒造成10点伤害",
+    "description": "沿着熔岩小径前进，火焰愈发炽热。敌人：火系+土系坦克。环境燃烧每秒造成10点伤害",
     "difficulty": "中等",
     "scene": "volcano",
     "unlocked": false,
@@ -41,23 +41,23 @@
     ],
     "enemies": [
       {
-        "characterId": 104,
+        "characterId": "char_fire_003",
         "position": { "x": 0, "y": 0 }
       },
       {
-        "characterId": 105,
-        "position": { "x": 2, "y": 0 }
+        "characterId": "char_earth_002",
+        "position": { "x": 1, "y": 1 }
       },
       {
-        "characterId": 106,
-        "position": { "x": 1, "y": 2 }
+        "characterId": "char_earth_004",
+        "position": { "x": 2, "y": 0 }
       }
     ]
   },
   {
     "id": 3,
     "name": "火山通道",
-    "description": "深入火山腹地，岩浆开始周期性喷发！环境燃烧每秒造成15点伤害",
+    "description": "深入火山腹地，岩浆开始周期性喷发！敌人：火系突击队。环境燃烧每秒造成15点伤害",
     "difficulty": "中等",
     "scene": "volcano",
     "unlocked": false,
@@ -70,23 +70,23 @@
     ],
     "enemies": [
       {
-        "characterId": 107,
+        "characterId": "char_fire_002",
         "position": { "x": 1, "y": 1 }
       },
       {
-        "characterId": 108,
+        "characterId": "char_fire_003",
         "position": { "x": 0, "y": 0 }
       },
       {
-        "characterId": 109,
-        "position": { "x": 2, "y": 0 }
+        "characterId": "char_fire_004",
+        "position": { "x": 2, "y": 2 }
       }
     ]
   },
   {
     "id": 4,
     "name": "熔岩核心",
-    "description": "接近火山核心，炽热达到顶峰！环境燃烧每秒造成22点伤害",
+    "description": "接近火山核心，炽热达到顶峰！敌人：精英火系+土系坦克。环境燃烧每秒造成22点伤害",
     "difficulty": "困难",
     "scene": "volcano",
     "unlocked": false,
@@ -101,23 +101,23 @@
     ],
     "enemies": [
       {
-        "characterId": 110,
-        "position": { "x": 1, "y": 2 }
+        "characterId": "char_fire_002",
+        "position": { "x": 1, "y": 1 }
       },
       {
-        "characterId": 111,
+        "characterId": "char_earth_001",
         "position": { "x": 0, "y": 1 }
       },
       {
-        "characterId": 112,
-        "position": { "x": 2, "y": 1 }
+        "characterId": "char_fire_004",
+        "position": { "x": 2, "y": 0 }
       }
     ]
   },
   {
     "id": 5,
     "name": "炎魔之王的挑战",
-    "description": "最终决战！挑战火山之主 —— 伊格尼斯·炎魔之王！环境燃烧每秒造成28点伤害",
+    "description": "最终决战！挑战火山之主 —— 炎魔萨尔！环境燃烧每秒造成28点伤害",
     "difficulty": "Boss",
     "scene": "volcano",
     "unlocked": false,
@@ -131,7 +131,7 @@
     ],
     "enemies": [
       {
-        "characterId": 999,
+        "characterId": "char_fire_001",
         "position": { "x": 1, "y": 1 }
       }
     ]
