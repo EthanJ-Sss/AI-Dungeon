@@ -1,0 +1,51 @@
+[
+  {
+    "id": "char_ice_001",
+    "name": "冰霜女王艾莎",
+    "role": "mage",
+    "attackType": "ranged",
+    "element": "ice",
+    "hp": 300,
+    "damage": 35,
+    "moveSpeed": 30,
+    "skills": ["skill_frost_domain"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_ice_002",
+    "name": "冰霜巨人洛基",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "ice",
+    "hp": 520,
+    "damage": 28,
+    "moveSpeed": 22,
+    "skills": ["skill_frost_hammer"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_ice_003",
+    "name": "极地游侠",
+    "role": "archer",
+    "attackType": "ranged",
+    "element": "ice",
+    "hp": 320,
+    "damage": 38,
+    "moveSpeed": 35,
+    "skills": ["skill_ice_arrow"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_ice_004",
+    "name": "冰霜刺客",
+    "role": "assassin",
+    "attackType": "melee",
+    "element": "ice",
+    "hp": 280,
+    "damage": 46,
+    "moveSpeed": 44,
+    "skills": ["skill_frost_blink"],
+    "passiveSkills": []
+  }
+]
+

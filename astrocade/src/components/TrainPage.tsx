@@ -3,7 +3,9 @@ import { usePlayerStore } from '../store/playerStore';
 import { useGameStore } from '../store/gameStore';
 import type { Character, Prisoner } from '../types';
 import { getSkillsInfo, getSkillTypeIcon } from '../utils/skillUtils';
-import skillsData from '../config/skills.json';
+import { loadAllSkills } from '../utils/skillLoader';
+
+const skillsData = loadAllSkills();
 
 export default function TrainPage() {
   const characters = usePlayerStore((state) => state.characters);

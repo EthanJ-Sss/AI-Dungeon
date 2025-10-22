@@ -1,5 +1,7 @@
-import skillsData from '../config/skills.json';
+import { loadAllSkills } from './skillLoader';
 import type { SkillConfig } from '../types';
+
+const skillsData = loadAllSkills();
 
 /**
  * 根据技能ID获取技能配置

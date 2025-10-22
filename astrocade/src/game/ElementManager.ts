@@ -1,171 +1,194 @@
 /**
- * 元素系统管理器
- * 处理元素克制关系和伤害计算
+ * 元素系统管理器（重构版）
+ * 基于配置文件的元素系统，支持元素被动技能自动应用
  */
 
 import type { ElementType } from '../types/index.js';
+import elementsData from '../config/elements.json';
 
 /**
- * 元素克制关系常量
+ * 元素被动技能接口
  */
-export const ELEMENT_RELATIONS = {
-  // 冰克火：对火系敌人+30%伤害
-  ICE_VS_FIRE_BONUS: 1.3,
-  
-  // 火对冰减伤：受到冰系攻击-20%伤害
-  FIRE_VS_ICE_PENALTY: 0.8,
-  
-  // 冰系燃烧抗性：燃烧伤害-70%
-  ICE_BURN_RESISTANCE: 0.3,
-  
-  // 火系燃烧免疫：燃烧伤害-100%
-  FIRE_BURN_IMMUNITY: 0,
-  
-  // 大地系岩浆抗性：岩浆喷发伤害-40%
-  EARTH_LAVA_RESISTANCE: 0.6,
-} as const;
+export interface ElementPassive {
+  burnImmune?: boolean;              // 燃烧免疫
+  igniteChance?: number;             // 点燃几率
+  igniteDuration?: number;           // 点燃持续时间
+  igniteDamagePercent?: number;      // 点燃伤害百分比
+  hpRegenPercent?: number;           // HP回复百分比
+  hpRegenInterval?: number;          // 回复间隔
+  slowChance?: number;               // 减速几率
+  slowAmount?: number;               // 减速量
+  slowDuration?: number;             // 减速持续时间
+  hpBonus?: number;                  // HP加成
+  startShieldPercent?: number;       // 开战护盾百分比
+  shieldRegenPercent?: number;       // 护盾再生百分比
+  shieldRegenCooldown?: number;      // 护盾再生冷却
+}
 
 /**
- * 计算元素克制后的伤害
- * @param baseDamage 基础伤害
- * @param attackerElement 攻击者元素
- * @param targetElement 目标元素
- * @returns 最终伤害
+ * 元素配置接口
+ */
+export interface ElementConfig {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  passive: ElementPassive | null;
+  attackBonus: Record<string, number>;
+  burnDamageMultiplier: number;
+}
+
+/**
+ * 元素管理器类
+ */
+class ElementManager {
+  private elements: Map<string, ElementConfig>;
+
+  constructor() {
+    this.elements = new Map();
+    this.loadElements();
+  }
+
+  /**
+   * 加载元素配置
+   */
+  private loadElements() {
+    elementsData.elements.forEach((elem: any) => {
+      this.elements.set(elem.id, elem as ElementConfig);
+    });
+    console.log(`[ElementManager] 已加载 ${this.elements.size} 种元素配置`);
+  }
+
+  /**
+   * 获取元素被动技能
+   */
+  getElementPassive(element?: ElementType): ElementPassive | null {
+    if (!element) return null;
+    return this.elements.get(element)?.passive || null;
+  }
+
+  /**
+   * 获取元素配置
+   */
+  getElementConfig(element?: ElementType): ElementConfig | null {
+    if (!element) return null;
+    return this.elements.get(element) || null;
+  }
+
+  /**
+   * 计算元素克制后的伤害
+   */
+  calculateElementalDamage(
+    baseDamage: number,
+    attackerElement?: ElementType,
+    targetElement?: ElementType
+  ): number {
+    if (!attackerElement || !targetElement) {
+      return baseDamage;
+    }
+    
+    const attackerConfig = this.elements.get(attackerElement);
+    if (!attackerConfig) {
+      return baseDamage;
+    }
+    
+    const bonus = attackerConfig.attackBonus[targetElement] || 1.0;
+    const finalDamage = Math.round(baseDamage * bonus);
+    
+    if (bonus !== 1.0) {
+      console.log(`[ElementManager] ${attackerConfig.name}克制${this.elements.get(targetElement)?.name}！伤害: ${baseDamage} → ${finalDamage}`);
+    }
+    
+    return finalDamage;
+  }
+
+  /**
+   * 计算燃烧伤害（考虑元素抗性）
+   */
+  calculateBurnDamage(
+    baseBurnDamage: number,
+    targetElement?: ElementType
+  ): number {
+    if (!targetElement) {
+      return baseBurnDamage;
+    }
+    
+    const targetConfig = this.elements.get(targetElement);
+    if (!targetConfig) {
+      return baseBurnDamage;
+    }
+    
+    return Math.round(baseBurnDamage * targetConfig.burnDamageMultiplier);
+  }
+
+  /**
+   * 计算岩浆喷发伤害（考虑元素抗性）
+   * 目前岩浆伤害使用燃烧伤害系数
+   */
+  calculateLavaDamage(
+    baseLavaDamage: number,
+    targetElement?: ElementType
+  ): number {
+    // 使用相同的燃烧伤害系数
+    return this.calculateBurnDamage(baseLavaDamage, targetElement);
+  }
+}
+
+// 导出单例
+export const elementManager = new ElementManager();
+
+/**
+ * 兼容旧代码的函数导出
  */
 export function calculateElementalDamage(
   baseDamage: number,
   attackerElement?: ElementType,
   targetElement?: ElementType
 ): number {
-  let finalDamage = baseDamage;
-  
-  // 没有元素属性，返回基础伤害
-  if (!attackerElement || !targetElement) {
-    return finalDamage;
-  }
-  
-  // 冰克火：+30%伤害
-  if (attackerElement === 'ice' && targetElement === 'fire') {
-    finalDamage *= ELEMENT_RELATIONS.ICE_VS_FIRE_BONUS;
-    console.log(`[ElementManager] 冰克火！伤害: ${baseDamage} → ${finalDamage.toFixed(1)}`);
-  }
-  
-  // 火对冰减伤：-20%伤害
-  if (attackerElement === 'fire' && targetElement === 'ice') {
-    finalDamage *= ELEMENT_RELATIONS.FIRE_VS_ICE_PENALTY;
-    console.log(`[ElementManager] 火对冰减伤！伤害: ${baseDamage} → ${finalDamage.toFixed(1)}`);
-  }
-  
-  return Math.round(finalDamage);
+  return elementManager.calculateElementalDamage(baseDamage, attackerElement, targetElement);
 }
 
-/**
- * 计算燃烧伤害（考虑元素抗性）
- * @param baseBurnDamage 基础燃烧伤害
- * @param targetElement 目标元素
- * @returns 最终燃烧伤害
- */
 export function calculateBurnDamage(
   baseBurnDamage: number,
   targetElement?: ElementType
 ): number {
-  // 没有元素属性，全额承受
-  if (!targetElement || targetElement === 'neutral') {
-    return baseBurnDamage;
-  }
-  
-  // 火系完全免疫燃烧
-  if (targetElement === 'fire') {
-    return 0;
-  }
-  
-  // 冰系减伤70%
-  if (targetElement === 'ice') {
-    return Math.round(baseBurnDamage * ELEMENT_RELATIONS.ICE_BURN_RESISTANCE);
-  }
-  
-  // 大地系、水系全额承受
-  return baseBurnDamage;
+  return elementManager.calculateBurnDamage(baseBurnDamage, targetElement);
 }
 
-/**
- * 计算岩浆喷发伤害（考虑元素抗性）
- * @param baseLavaDamage 基础岩浆伤害
- * @param targetElement 目标元素
- * @returns 最终岩浆伤害
- */
 export function calculateLavaDamage(
   baseLavaDamage: number,
   targetElement?: ElementType
 ): number {
-  // 没有元素属性，全额承受
-  if (!targetElement || targetElement === 'neutral') {
-    return baseLavaDamage;
-  }
-  
-  // 大地系抗性：-40%伤害
-  if (targetElement === 'earth') {
-    return Math.round(baseLavaDamage * ELEMENT_RELATIONS.EARTH_LAVA_RESISTANCE);
-  }
-  
-  // 其他元素全额承受
-  return baseLavaDamage;
+  return elementManager.calculateLavaDamage(baseLavaDamage, targetElement);
 }
 
 /**
  * 获取元素名称（中文）
- * @param element 元素类型
- * @returns 元素中文名
  */
 export function getElementName(element?: ElementType): string {
   if (!element) return '无';
-  
-  const elementNames: Record<ElementType, string> = {
-    fire: '火',
-    ice: '冰',
-    earth: '地',
-    water: '水',
-    neutral: '无',
-  };
-  
-  return elementNames[element] || '无';
+  const config = elementManager.getElementConfig(element);
+  return config?.name || '无';
 }
 
 /**
  * 获取元素颜色
- * @param element 元素类型
- * @returns 颜色代码
  */
 export function getElementColor(element?: ElementType): number {
   if (!element) return 0xffffff;
+  const config = elementManager.getElementConfig(element);
+  if (!config) return 0xffffff;
   
-  const elementColors: Record<ElementType, number> = {
-    fire: 0xff4500,     // 橙红色
-    ice: 0x00bfff,      // 深天蓝
-    earth: 0x8b4513,    // 棕色
-    water: 0x1e90ff,    // 道奇蓝
-    neutral: 0xc0c0c0,  // 银色
-  };
-  
-  return elementColors[element] || 0xffffff;
+  // 将hex颜色字符串转换为number
+  return parseInt(config.color.replace('#', ''), 16);
 }
 
 /**
  * 获取元素图标（emoji）
- * @param element 元素类型
- * @returns 图标字符
  */
 export function getElementIcon(element?: ElementType): string {
   if (!element) return '⚪';
-  
-  const elementIcons: Record<ElementType, string> = {
-    fire: '🔥',
-    ice: '❄️',
-    earth: '🪨',
-    water: '💧',
-    neutral: '⚪',
-  };
-  
-  return elementIcons[element] || '⚪';
+  const config = elementManager.getElementConfig(element);
+  return config?.icon || '⚪';
 }
 

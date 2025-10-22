@@ -1,0 +1,51 @@
+[
+  {
+    "id": "char_fire_001",
+    "name": "炎魔萨尔",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 450,
+    "damage": 32,
+    "moveSpeed": 28,
+    "skills": ["skill_molten_armor"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_fire_002",
+    "name": "凤凰女琴·葛蕾",
+    "role": "mage",
+    "attackType": "ranged",
+    "element": "fire",
+    "hp": 280,
+    "damage": 48,
+    "moveSpeed": 32,
+    "skills": ["skill_phoenix_force"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_fire_003",
+    "name": "烈焰刺客",
+    "role": "assassin",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 300,
+    "damage": 42,
+    "moveSpeed": 45,
+    "skills": ["skill_fire_dash"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_fire_004",
+    "name": "火焰射手",
+    "role": "archer",
+    "attackType": "ranged",
+    "element": "fire",
+    "hp": 290,
+    "damage": 40,
+    "moveSpeed": 36,
+    "skills": ["skill_fire_volley"],
+    "passiveSkills": []
+  }
+]
+

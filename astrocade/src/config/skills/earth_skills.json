@@ -1,0 +1,80 @@
+[
+  {
+    "id": "skill_rock_throw",
+    "name": "岩石投射",
+    "description": "投掷巨石，造成55伤害并击退敌人",
+    "cd": 4,
+    "range": 350,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 55,
+    "knockback": true,
+    "element": "earth"
+  },
+  {
+    "id": "skill_earth_shield",
+    "name": "大地之盾",
+    "description": "获得150点护盾，持续5秒",
+    "cd": 6,
+    "range": 0,
+    "type": "buff",
+    "targetType": "self",
+    "shield": 150,
+    "duration": 5,
+    "element": "earth"
+  },
+  {
+    "id": "skill_earthquake",
+    "name": "地震猛击",
+    "description": "重击地面，造成35伤害并眩晕1秒",
+    "cd": 5,
+    "range": 150,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 35,
+    "areaRadius": 180,
+    "debuffType": "stun",
+    "debuffDuration": 1,
+    "element": "earth"
+  },
+  {
+    "id": "skill_sand_domain",
+    "name": "流沙领域",
+    "description": "在范围内创造流沙，敌人移动速度-60%",
+    "cd": 6,
+    "range": 250,
+    "type": "control",
+    "targetType": "enemy",
+    "areaRadius": 200,
+    "duration": 4,
+    "debuffType": "slow",
+    "debuffValue": 60,
+    "element": "earth"
+  },
+  {
+    "id": "skill_sand_barrier",
+    "name": "沙暴壁障",
+    "description": "给友军提供100点护盾",
+    "cd": 6,
+    "range": 300,
+    "type": "buff",
+    "targetType": "ally",
+    "shield": 100,
+    "duration": 5,
+    "element": "earth"
+  },
+  {
+    "id": "skill_life_totem",
+    "name": "生命图腾",
+    "description": "放置图腾，范围内友军每秒回复8%HP，持续4秒",
+    "cd": 6,
+    "range": 300,
+    "type": "heal",
+    "targetType": "ally",
+    "heal": 8,
+    "areaRadius": 200,
+    "duration": 4,
+    "element": "earth"
+  }
+]
+

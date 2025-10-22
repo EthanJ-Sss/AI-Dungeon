@@ -1,0 +1,51 @@
+[
+  {
+    "id": "char_earth_001",
+    "name": "泰坦石像",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "earth",
+    "hp": 600,
+    "damage": 26,
+    "moveSpeed": 18,
+    "skills": ["skill_earth_shield"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_earth_002",
+    "name": "沙漠守护者",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "earth",
+    "hp": 480,
+    "damage": 30,
+    "moveSpeed": 25,
+    "skills": ["skill_sand_domain"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_earth_003",
+    "name": "大地萨满",
+    "role": "healer",
+    "attackType": "ranged",
+    "element": "earth",
+    "hp": 380,
+    "damage": 28,
+    "moveSpeed": 28,
+    "skills": ["skill_life_totem"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_earth_004",
+    "name": "岩石射手",
+    "role": "archer",
+    "attackType": "ranged",
+    "element": "earth",
+    "hp": 420,
+    "damage": 32,
+    "moveSpeed": 30,
+    "skills": ["skill_rock_throw"],
+    "passiveSkills": []
+  }
+]
+

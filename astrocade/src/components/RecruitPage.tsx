@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePlayerStore } from '../store/playerStore';
 import { useGameStore } from '../store/gameStore';
 import type { PresetCharacter, Character } from '../types';
-import charactersData from '../config/characters.json';
-import volcanoCharactersData from '../config/volcanoCharacters.json';
+import { loadAllCharacters } from '../utils/characterLoader';
+
+const charactersData = loadAllCharacters();
 import { getSkillsInfo, getSkillTypeIcon } from '../utils/skillUtils';
 import ReplaceCharacterModal from './ReplaceCharacterModal';
 
-// 合并所有角色配置
-const allCharactersData = [...charactersData, ...volcanoCharactersData];
+// 使用新的角色配置（已按元素分类，包含所有18个新角色）
+const allCharactersData = charactersData;
 
 export default function RecruitPage() {
   const [currentCharacter, setCurrentCharacter] = useState<PresetCharacter | null>(null);

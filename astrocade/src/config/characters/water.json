@@ -1,0 +1,39 @@
+[
+  {
+    "id": "char_water_001",
+    "name": "海神波塞冬",
+    "role": "mage",
+    "attackType": "ranged",
+    "element": "water",
+    "hp": 380,
+    "damage": 36,
+    "moveSpeed": 28,
+    "skills": ["skill_tsunami"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_water_002",
+    "name": "潮汐使者",
+    "role": "healer",
+    "attackType": "ranged",
+    "element": "water",
+    "hp": 350,
+    "damage": 25,
+    "moveSpeed": 32,
+    "skills": ["skill_life_tide"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_water_003",
+    "name": "深渊刺客",
+    "role": "assassin",
+    "attackType": "melee",
+    "element": "water",
+    "hp": 290,
+    "damage": 44,
+    "moveSpeed": 42,
+    "skills": ["skill_water_stealth"],
+    "passiveSkills": []
+  }
+]
+

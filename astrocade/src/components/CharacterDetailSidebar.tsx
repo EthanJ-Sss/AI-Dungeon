@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { Character, SkillConfig } from '../types';
-import skillsData from '../config/skills.json';
+import { loadAllSkills } from '../utils/skillLoader';
+
+const skillsData = loadAllSkills();
 
 interface Props {
   character: Character | null;

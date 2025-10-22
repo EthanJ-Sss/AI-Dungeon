@@ -1,0 +1,39 @@
+[
+  {
+    "id": "char_neutral_001",
+    "name": "战术大师",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "neutral",
+    "hp": 400,
+    "damage": 35,
+    "moveSpeed": 30,
+    "skills": ["skill_tactical_command"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_neutral_002",
+    "name": "全能战士",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "neutral",
+    "hp": 400,
+    "damage": 36,
+    "moveSpeed": 32,
+    "skills": ["skill_deadly_strike"],
+    "passiveSkills": []
+  },
+  {
+    "id": "char_neutral_003",
+    "name": "神秘刺客",
+    "role": "assassin",
+    "attackType": "melee",
+    "element": "neutral",
+    "hp": 320,
+    "damage": 42,
+    "moveSpeed": 42,
+    "skills": ["skill_shadow_strike"],
+    "passiveSkills": []
+  }
+]
+
