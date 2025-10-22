@@ -16,17 +16,17 @@ export default class BattleScene extends Phaser.Scene {
   private timerText?: Phaser.GameObjects.Text;
   private battleEnded: boolean = false;
   
-  // 棋盘配置：5行×10列（删除中间一列，与布阵界面完全一致）
+  // 棋盘配置：5行×11列（在敌方右侧增加一列空白列）
   private gridSize = 56;
   private gridRows = 5;
-  private gridCols = 10;
+  private gridCols = 11;
   private gridOffsetX = 150;
   private gridOffsetY = 130;
   
-  // 我方区域（左侧）：列1-3，行1-3（3×3，向右移动一格）
+  // 我方区域（左侧）：列1-3，行1-3（3×3）
   private playerArea = { rowStart: 1, rowEnd: 3, colStart: 1, colEnd: 3 };
-  // 敌方区域（右侧）：列7-9，行1-3（3×3，向左移动一格）
-  private enemyArea = { rowStart: 1, rowEnd: 3, colStart: 7, colEnd: 9 };
+  // 敌方区域（右侧）：列8-10，行1-3（3×3，右移一格）
+  private enemyArea = { rowStart: 1, rowEnd: 3, colStart: 8, colEnd: 10 };
   
   // 移动速度提升
   private moveSpeedMultiplier = 5;
@@ -119,6 +119,9 @@ export default class BattleScene extends Phaser.Scene {
     // 生成战斗单位
     this.generateBattleUnits();
 
+    // 执行刺客背刺瞬移
+    this.executeAssassinBackstab();
+
     // 应用环境BUFF
     this.applyEnvironmentalBuffs();
 
@@ -180,7 +183,7 @@ export default class BattleScene extends Phaser.Scene {
   private drawBattleGrid() {
     const graphics = this.add.graphics();
     
-    // 绘制完整的5×10棋盘（灰色，细线）与布阵界面完全一致
+    // 绘制完整的5×11棋盘（灰色，细线）与布阵界面完全一致
     graphics.lineStyle(1, 0x666666, 0.3);
     for (let row = 0; row < this.gridRows; row++) {
       for (let col = 0; col < this.gridCols; col++) {
@@ -221,7 +224,7 @@ export default class BattleScene extends Phaser.Scene {
     graphics.lineStyle(2, 0x4488ff, 0.8);
     graphics.strokeRect(playerX, playerY, playerWidth, playerHeight);
 
-    // 高亮敌方区域（红色背景）- 列7-9，行1-3
+    // 高亮敌方区域（红色背景）- 列8-10，行1-3
     const enemyX = this.gridOffsetX + this.enemyArea.colStart * this.gridSize;
     const enemyY = this.gridOffsetY + this.enemyArea.rowStart * this.gridSize;
     const enemyWidth = (this.enemyArea.colEnd - this.enemyArea.colStart + 1) * this.gridSize;
@@ -325,6 +328,96 @@ export default class BattleScene extends Phaser.Scene {
       });
       console.log(`   总计: ${this.allUnits.size} 个容器\n`);
     });
+  }
+
+  /**
+   * 执行刺客背刺瞬移
+   * 刺客在战斗开始时瞬移到敌人身后
+   */
+  private executeAssassinBackstab() {
+    const allUnits = [...this.playerUnits, ...this.enemyUnits];
+    
+    allUnits.forEach((unit) => {
+      // 检查是否是刺客
+      if (unit.character.role !== 'assassin' || !unit.isAlive) return;
+      
+      const container = this.allUnits.get(unit.character.id);
+      if (!container) return;
+      
+      // 确定目标列（我方刺客跳到列10，敌方刺客跳到列0）
+      const targetCol = unit.team === 'player' ? 10 : 0;
+      
+      // 获取当前网格位置
+      const currentRow = Math.round((container.y - this.gridOffsetY) / this.gridSize);
+      
+      // 查找最近的空位置（如果目标位置被占用）
+      const finalCol = this.findNearestEmptyColumn(currentRow, targetCol, allUnits);
+      
+      // 计算新的世界坐标
+      const newX = this.gridOffsetX + finalCol * this.gridSize + this.gridSize / 2;
+      const newY = container.y; // 保持同一行
+      
+      // 起点瞬移特效
+      const flash = this.add.circle(container.x, container.y, 30, 0x9900ff, 0.8);
+      this.tweens.add({
+        targets: flash,
+        scaleX: 2,
+        scaleY: 2,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => flash.destroy()
+      });
+      
+      // 移动刺客
+      container.setPosition(newX, newY);
+      unit.position.x = newX;
+      unit.position.y = newY;
+      
+      // 终点瞬移特效
+      const flash2 = this.add.circle(newX, newY, 30, 0x9900ff, 0.8);
+      this.tweens.add({
+        targets: flash2,
+        scaleX: 2,
+        scaleY: 2,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => flash2.destroy()
+      });
+      
+      console.log(`🗡️ [刺客瞬移] ${unit.character.name} 跳到了敌人身后: 列${finalCol}`);
+    });
+  }
+
+  /**
+   * 查找最近的空列
+   */
+  private findNearestEmptyColumn(row: number, targetCol: number, allUnits: BattleUnit[]): number {
+    // 检查目标位置是否被占用
+    const occupiedCols = new Set<number>();
+    allUnits.forEach(unit => {
+      const container = this.allUnits.get(unit.character.id);
+      if (!container) return;
+      const unitCol = Math.round((container.x - this.gridOffsetX) / this.gridSize);
+      const unitRow = Math.round((container.y - this.gridOffsetY) / this.gridSize);
+      if (unitRow === row) {
+        occupiedCols.add(unitCol);
+      }
+    });
+    
+    if (!occupiedCols.has(targetCol)) {
+      return targetCol;
+    }
+    
+    // 查找最近的空列
+    for (let offset = 1; offset <= this.gridCols; offset++) {
+      const left = targetCol - offset;
+      const right = targetCol + offset;
+      
+      if (left >= 0 && !occupiedCols.has(left)) return left;
+      if (right < this.gridCols && !occupiedCols.has(right)) return right;
+    }
+    
+    return targetCol; // 降级方案
   }
 
   private createBattleUnit(character: Character, gridPos: Position, team: 'player' | 'enemy'): BattleUnit {
@@ -2733,6 +2826,11 @@ export default class BattleScene extends Phaser.Scene {
         callbackScope: this,
       });
     });
+    
+    console.log(`🌋 [岩浆系统] 已为${this.lavaBlocks.length}个地块设置喷发计时器`);
+    if (this.lavaBlocks.length === 0) {
+      console.warn('⚠️ [岩浆系统] 当前关卡没有配置岩浆地块');
+    }
   }
 
   /**
