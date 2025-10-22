@@ -23,7 +23,7 @@ export default class BattleScene extends Phaser.Scene {
   private gridSize = 56;
   private gridRows = 5;
   private gridCols = 11;
-  private gridOffsetX = 150;
+  private gridOffsetX = 292; // 居中：(1200 - 11*56) / 2 = 292
   private gridOffsetY = 130;
   
   // 我方区域（左侧）：列1-3，行1-3（3×3）
@@ -55,6 +55,9 @@ export default class BattleScene extends Phaser.Scene {
 
   // 伤害统计面板
   private damageStatsText?: Phaser.GameObjects.Text;
+  private damageStatsContainer?: Phaser.GameObjects.Container;
+  private damageDealtBars: Map<string, Phaser.GameObjects.Rectangle> = new Map();
+  private damageReceivedBars: Map<string, Phaser.GameObjects.Rectangle> = new Map();
   private lastSkillUpdateTime: number = 0;
 
   constructor() {
@@ -3868,14 +3871,14 @@ export default class BattleScene extends Phaser.Scene {
    * 创建角色信息面板
    */
   private createCharacterInfoPanels() {
-    // 创建玩家队伍面板（左侧）
+    // 创建玩家队伍面板（左侧）- 战场左侧留出足够空间
     this.playerUnits.forEach((unit, index) => {
       this.createCharacterPanel(unit, 50, 130 + index * 90, 'player');
     });
 
-    // 创建敌方队伍面板（右侧）
+    // 创建敌方队伍面板（右侧）- 战场右侧留出足够空间
     this.enemyUnits.forEach((unit, index) => {
-      this.createCharacterPanel(unit, 1050, 130 + index * 90, 'enemy');
+      this.createCharacterPanel(unit, 970, 130 + index * 90, 'enemy');
     });
   }
 
@@ -4013,19 +4016,82 @@ export default class BattleScene extends Phaser.Scene {
    * 创建伤害统计面板
    */
   private createDamageStatsPanel() {
-    this.damageStatsText = this.add.text(600, 650, '', {
-      fontSize: '14px',
+    const panelY = 580;
+    const panelWidth = 800;
+    
+    // 创建容器
+    this.damageStatsContainer = this.add.container(600, panelY);
+    
+    // 背景
+    const bg = this.add.rectangle(0, 0, panelWidth, 120, 0x000000, 0.7);
+    const border = this.add.rectangle(0, 0, panelWidth, 120)
+      .setStrokeStyle(2, 0xffffff, 0.5)
+      .setFillStyle(0x000000, 0);
+    this.damageStatsContainer.add([bg, border]);
+    
+    // 标题
+    const title = this.add.text(0, -50, '伤害统计', {
+      fontSize: '16px',
       color: '#ffffff',
-      backgroundColor: '#000000',
-      padding: { x: 10, y: 5 }
+      fontStyle: 'bold'
     }).setOrigin(0.5);
+    this.damageStatsContainer.add(title);
+    
+    // 造成伤害标题
+    const dealtLabel = this.add.text(-panelWidth / 2 + 10, -25, '造成伤害:', {
+      fontSize: '12px',
+      color: '#ff8800'
+    });
+    this.damageStatsContainer.add(dealtLabel);
+    
+    // 受到伤害标题
+    const receivedLabel = this.add.text(-panelWidth / 2 + 10, 10, '受到伤害:', {
+      fontSize: '12px',
+      color: '#ff4444'
+    });
+    this.damageStatsContainer.add(receivedLabel);
+    
+    // 为每个角色创建伤害条
+    const barWidth = 600;
+    const startX = -panelWidth / 2 + 120;
+    
+    this.playerUnits.forEach((unit) => {
+      // 造成伤害条背景
+      const dealtBg = this.add.rectangle(startX, -15, barWidth, 12, 0x333333);
+      dealtBg.setOrigin(0, 0.5);
+      this.damageStatsContainer?.add(dealtBg);
+      
+      // 造成伤害条
+      const dealtBar = this.add.rectangle(startX, -15, 0, 12, 0xff8800);
+      dealtBar.setOrigin(0, 0.5);
+      this.damageStatsContainer?.add(dealtBar);
+      this.damageDealtBars.set(unit.character.id, dealtBar);
+      
+      // 受到伤害条背景
+      const receivedBg = this.add.rectangle(startX, 20, barWidth, 12, 0x333333);
+      receivedBg.setOrigin(0, 0.5);
+      this.damageStatsContainer?.add(receivedBg);
+      
+      // 受到伤害条
+      const receivedBar = this.add.rectangle(startX, 20, 0, 12, 0xff4444);
+      receivedBar.setOrigin(0, 0.5);
+      this.damageStatsContainer?.add(receivedBar);
+      this.damageReceivedBars.set(unit.character.id, receivedBar);
+    });
+    
+    // 总伤害文字（将在updateDamageStats中更新）
+    this.damageStatsText = this.add.text(panelWidth / 2 - 10, -15, '', {
+      fontSize: '11px',
+      color: '#ffffff'
+    }).setOrigin(1, 0.5);
+    this.damageStatsContainer.add(this.damageStatsText);
   }
 
   /**
    * 更新伤害统计
    */
   private updateDamageStats() {
-    if (!this.damageStatsText) return;
+    if (!this.damageStatsContainer) return;
 
     // 计算玩家队伍的总伤害
     let totalDealt = 0;
@@ -4036,28 +4102,32 @@ export default class BattleScene extends Phaser.Scene {
       totalReceived += unit.damageReceived || 0;
     });
 
-    // 计算每个角色的百分比
-    const dealtBreakdown: string[] = [];
-    const receivedBreakdown: string[] = [];
+    const barWidth = 600;
 
+    // 更新每个角色的伤害条
     this.playerUnits.forEach(unit => {
       const dealt = unit.damageDealt || 0;
       const received = unit.damageReceived || 0;
-      const shortName = unit.character.name.replace('敌方-', '').slice(0, 4);
       
-      if (totalDealt > 0) {
-        const dealtPercent = Math.round((dealt / totalDealt) * 100);
-        dealtBreakdown.push(`${shortName}${dealtPercent}%`);
+      // 更新造成伤害条
+      const dealtBar = this.damageDealtBars.get(unit.character.id);
+      if (dealtBar && totalDealt > 0) {
+        const dealtPercent = dealt / totalDealt;
+        dealtBar.width = barWidth * dealtPercent;
       }
       
-      if (totalReceived > 0) {
-        const receivedPercent = Math.round((received / totalReceived) * 100);
-        receivedBreakdown.push(`${shortName}${receivedPercent}%`);
+      // 更新受到伤害条
+      const receivedBar = this.damageReceivedBars.get(unit.character.id);
+      if (receivedBar && totalReceived > 0) {
+        const receivedPercent = received / totalReceived;
+        receivedBar.width = barWidth * receivedPercent;
       }
     });
 
-    const statsText = `伤害统计: 造成 ${totalDealt} (${dealtBreakdown.join(' ')}) | 受到 ${totalReceived} (${receivedBreakdown.join(' ')})`;
-    this.damageStatsText.setText(statsText);
+    // 更新总伤害文字
+    if (this.damageStatsText) {
+      this.damageStatsText.setText(`总计: ${totalDealt}`);
+    }
   }
 
   /**
