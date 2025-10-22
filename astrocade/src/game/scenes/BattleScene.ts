@@ -542,7 +542,7 @@ export default class BattleScene extends Phaser.Scene {
     (container as any).battleUnit = unit;
     (container as any).hpText = hpText;
     (container as any).lastAttackTime = 0;
-    (container as any).attackCooldown = character.attackType === 'melee' ? 1000 : 1500;
+    (container as any).attackCooldown = character.attackType === 'melee' ? 2000 : 3000; // 节奏调整：降低攻击频率50%
 
     console.log(`✅ [角色创建] ${team === 'player' ? '🛡️' : '⚔️'} ${character.name} 生成在网格(${globalRow}, ${globalCol}) 世界坐标(${worldX.toFixed(0)}, ${worldY.toFixed(0)}) HP:${character.hp}`);
 

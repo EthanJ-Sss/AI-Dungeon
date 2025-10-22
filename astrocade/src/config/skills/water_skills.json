@@ -3,7 +3,7 @@
     "id": "skill_tsunami",
     "name": "海啸冲击",
     "description": "召唤波浪向前推进，造成50伤害并击退敌人",
-    "cd": 5,
+    "cd": 8,
     "range": 350,
     "type": "damage",
     "targetType": "enemy",
@@ -15,7 +15,7 @@
     "id": "skill_water_prison",
     "name": "水流囚笼",
     "description": "将敌人困在水球中2秒，无法移动但可攻击",
-    "cd": 6,
+    "cd": 9,
     "range": 300,
     "type": "control",
     "targetType": "enemy",
@@ -27,7 +27,7 @@
     "id": "skill_life_tide",
     "name": "生命之潮",
     "description": "治疗目标友军40%最大生命值",
-    "cd": 5,
+    "cd": 8,
     "range": 400,
     "type": "heal",
     "targetType": "ally",
@@ -38,7 +38,7 @@
     "id": "skill_purifying_rain",
     "name": "净化之雨",
     "description": "范围内友军每秒回复10%HP，持续3秒",
-    "cd": 6,
+    "cd": 9,
     "range": 300,
     "type": "heal",
     "targetType": "ally",
@@ -51,7 +51,7 @@
     "id": "skill_water_stealth",
     "name": "水遁",
     "description": "进入隐身状态1.5秒，下次攻击造成150%伤害",
-    "cd": 4,
+    "cd": 6,
     "range": 0,
     "type": "buff",
     "targetType": "self",
@@ -63,7 +63,7 @@
     "id": "skill_water_blade",
     "name": "水刃乱舞",
     "description": "快速攻击3次，每次造成25伤害",
-    "cd": 5,
+    "cd": 8,
     "range": 150,
     "type": "damage",
     "targetType": "enemy",
@@ -72,4 +72,3 @@
     "element": "water"
   }
 ]
-

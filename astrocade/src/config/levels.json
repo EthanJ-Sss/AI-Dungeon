@@ -6,7 +6,7 @@
     "difficulty": "简单",
     "scene": "volcano",
     "unlocked": true,
-    "duration": 30,
+    "duration": 45,
     "burnDamage": 6,
     "lavaBlocks": [
       { "row": 2, "col": 5 }
@@ -33,7 +33,7 @@
     "difficulty": "中等",
     "scene": "volcano",
     "unlocked": false,
-    "duration": 35,
+    "duration": 53,
     "burnDamage": 10,
     "lavaBlocks": [
       { "row": 1, "col": 4 },
@@ -61,7 +61,7 @@
     "difficulty": "中等",
     "scene": "volcano",
     "unlocked": false,
-    "duration": 40,
+    "duration": 60,
     "burnDamage": 15,
     "lavaBlocks": [
       { "row": 2, "col": 4 },
@@ -90,7 +90,7 @@
     "difficulty": "困难",
     "scene": "volcano",
     "unlocked": false,
-    "duration": 45,
+    "duration": 68,
     "burnDamage": 22,
     "lavaBlocks": [
       { "row": 1, "col": 4 },
@@ -121,7 +121,7 @@
     "difficulty": "Boss",
     "scene": "volcano",
     "unlocked": false,
-    "duration": 60,
+    "duration": 90,
     "burnDamage": 28,
     "lavaBlocks": [
       { "row": 1, "col": 5 },
