@@ -115,7 +115,7 @@ export interface LevelConfig {
 
 /** 预设角色配置 */
 export interface PresetCharacter {
-  id: number;
+  id: string | number; // 支持新旧ID格式（string: "char_fire_001", number: 1）
   name: string;
   hp: number;
   damage: number;
