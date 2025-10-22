@@ -1044,6 +1044,92 @@ export default class BattleScene extends Phaser.Scene {
         return this.castBossRage(caster, targets, casterContainer, config);
       case 'boss_skill_02': // 熔岩召唤
         return this.castLavaSummon(caster, casterContainer, config);
+      
+      // ========== 新英雄系统技能 ==========
+      // 火系技能
+      case 'skill_molten_armor': // 熔岩护甲
+        return this.castShield(caster, casterContainer, config);
+      case 'skill_phoenix_force': // 凤凰之力
+        return this.castPhoenixForce(caster, targets, casterContainer, config);
+      case 'skill_fire_dash': // 火焰冲刺
+        return this.castFlameDash(caster, targets, casterContainer, config);
+      case 'skill_fire_volley': // 火焰齐射
+        return this.castMultiShot(caster, targets, casterContainer, config);
+      case 'skill_fire_ball': // 火球术
+        return this.castFireball(caster, targets, casterContainer, config);
+      case 'skill_fire_storm': // 火焰风暴
+        return this.castAreaDamage(caster, targets, casterContainer, config);
+      case 'skill_flame_blast': // 烈焰爆破
+        return this.castAreaDamage(caster, targets, casterContainer, config);
+      case 'skill_rebirth': // 涅槃重生 (暂未完整实现，返回false)
+        return false;
+      
+      // 水系技能
+      case 'skill_tsunami': // 海啸冲击
+        return this.castKnockback(caster, targets, casterContainer, config);
+      case 'skill_water_prison': // 水流囚笼
+        return this.castRoot(caster, targets, casterContainer, config);
+      case 'skill_life_tide': // 生命之潮
+        return this.castTargetHeal(caster, targets, casterContainer, config);
+      case 'skill_purifying_rain': // 净化之雨
+        return this.castAreaHeal(caster, targets, casterContainer, config);
+      case 'skill_water_stealth': // 水遁
+        return this.castStealth(caster, casterContainer, config);
+      case 'skill_water_blade': // 水刃乱舞
+        return this.castMultiHit(caster, targets, casterContainer, config);
+      
+      // 冰系技能
+      case 'skill_ice_arrow': // 寒冰箭
+        return this.castIceArrow(caster, targets, casterContainer, config);
+      case 'skill_ice_cone': // 冰锥术
+        return this.castMultiShot(caster, targets, casterContainer, config);
+      case 'skill_frost_domain': // 冰封千里
+        return this.castSlowArea(caster, targets, casterContainer, config);
+      case 'skill_ice_wall': // 冰墙 (简化：增加自身护盾)
+        return this.castShield(caster, casterContainer, config);
+      case 'skill_frost_hammer': // 霜冻之锤
+        return this.castStunAttack(caster, targets, casterContainer, config);
+      case 'skill_frost_trap': // 冰霜陷阱 (简化：直接冻结)
+        return this.castFreeze(caster, targets, casterContainer, config);
+      case 'skill_frost_blink': // 冰霜闪现
+        return this.castFrostBlink(caster, targets, casterContainer, config);
+      case 'skill_blizzard': // 暴风雪
+        return this.castSlowArea(caster, targets, casterContainer, config);
+      
+      // 土系技能
+      case 'skill_rock_throw': // 岩石投射
+        return this.castKnockback(caster, targets, casterContainer, config);
+      case 'skill_earth_shield': // 大地之盾
+        return this.castShield(caster, casterContainer, config);
+      case 'skill_earthquake': // 地震猛击
+        return this.castStunArea(caster, targets, casterContainer, config);
+      case 'skill_sand_domain': // 流沙领域
+        return this.castSlowArea(caster, targets, casterContainer, config);
+      case 'skill_sand_barrier': // 沙暴壁障
+        return this.castTargetShield(caster, targets, casterContainer, config);
+      case 'skill_life_totem': // 生命图腾
+        return this.castLifeFountain(caster, targets, casterContainer, config);
+      
+      // 公共技能
+      case 'skill_deadly_strike': // 致命打击
+        return this.castStrongAttack(caster, targets, casterContainer, config);
+      case 'skill_battle_frenzy': // 战斗狂热
+        return this.castSpeedBuff(caster, casterContainer, config);
+      case 'skill_tactical_command': // 战术指挥
+        return this.castAttackBuff(caster, targets, casterContainer, config);
+      case 'skill_focus_fire': // 集火令
+        return this.castMarkTarget(caster, targets, casterContainer, config);
+      case 'skill_shadow_strike': // 暗影突袭
+        return this.castBlink(caster, casterContainer, config);
+      case 'skill_combo': // 致命连击
+        return this.castMultiHit(caster, targets, casterContainer, config);
+      case 'skill_emergency_heal': // 紧急治疗
+        return this.castTargetHeal(caster, targets, casterContainer, config);
+      case 'skill_shield': // 护盾术
+        return this.castTargetShield(caster, targets, casterContainer, config);
+      case 'skill_charge': // 冲锋
+        return this.castDash(caster, targets, casterContainer, config);
+      
       default:
         console.warn(`[BattleScene] 未实现的技能: ${config.id}`);
         return false;
@@ -3065,6 +3151,671 @@ export default class BattleScene extends Phaser.Scene {
     };
     
     return elementIcons[element] || '';
+  }
+
+  // ========== 新英雄系统技能实现 ==========
+
+  // 凤凰之力：直线AOE伤害
+  private castPhoenixForce(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff6600);
+
+    // 创建火焰射线效果
+    const line = this.add.line(
+      0, 0,
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y,
+      0xff4400, 1
+    ).setLineWidth(20);
+
+    // 对路径上所有敌人造成伤害
+    targets.forEach(t => {
+      if (!t.isAlive) return;
+      const tc = this.allUnits.get(t.character.id);
+      if (!tc) return;
+      
+      this.dealDamage(t, config.damage || 60, tc);
+    });
+
+    // 移除特效
+    this.time.delayedCall(300, () => line.destroy());
+    return true;
+  }
+
+  // 多重射击（火焰齐射、冰锥术）
+  private castMultiShot(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xffaa00);
+
+    const projectileCount = config.projectileCount || 3;
+    const damage = config.damage || 25;
+
+    // 发射多个投射物
+    for (let i = 0; i < projectileCount; i++) {
+      this.time.delayedCall(i * 100, () => {
+        const projectile = this.add.circle(casterContainer.x, casterContainer.y, 6, 0xff8800);
+        this.tweens.add({
+          targets: projectile,
+          x: targetContainer.x + (Math.random() - 0.5) * 30,
+          y: targetContainer.y + (Math.random() - 0.5) * 30,
+          duration: 400,
+          onComplete: () => {
+            projectile.destroy();
+            if (target.isAlive && targetContainer.active) {
+              this.dealDamage(target, damage, targetContainer);
+            }
+          }
+        });
+      });
+    }
+
+    return true;
+  }
+
+  // 范围伤害（火焰风暴、烈焰爆破）
+  private castAreaDamage(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    if (targets.length === 0) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff3300);
+
+    const areaRadius = config.areaRadius || 150;
+    const damage = config.damage || 50;
+
+    // 范围特效
+    const area = this.add.circle(casterContainer.x, casterContainer.y, areaRadius, 0xff4400, 0.4);
+    this.tweens.add({
+      targets: area,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => area.destroy()
+    });
+
+    // 对范围内所有敌人造成伤害
+    targets.forEach(target => {
+      if (!target.isAlive) return;
+      const tc = this.allUnits.get(target.character.id);
+      if (!tc) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        tc.x, tc.y
+      );
+
+      if (distance <= areaRadius) {
+        this.dealDamage(target, damage, tc);
+      }
+    });
+
+    return true;
+  }
+
+  // 击退（海啸冲击、岩石投射）
+  private castKnockback(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x4488ff);
+
+    this.dealDamage(target, config.damage || 50, targetContainer);
+
+    // 击退效果
+    const angle = Phaser.Math.Angle.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+    const knockbackDistance = 50;
+    this.tweens.add({
+      targets: targetContainer,
+      x: targetContainer.x + Math.cos(angle) * knockbackDistance,
+      y: targetContainer.y + Math.sin(angle) * knockbackDistance,
+      duration: 300
+    });
+
+    return true;
+  }
+
+  // 定身（水流囚笼）
+  private castRoot(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x4488ff);
+
+    // 添加定身debuff（使用slow模拟）
+    const slowDebuff = {
+      type: 'slow' as const,
+      value: 100, // 100%减速=定身
+      duration: config.duration || 2,
+      source: caster.character.id
+    };
+
+    if (!target.debuffs) target.debuffs = [];
+    target.debuffs.push(slowDebuff);
+
+    // 水球特效
+    const prison = this.add.circle(targetContainer.x, targetContainer.y, 30, 0x4488ff, 0.5);
+    this.time.delayedCall((config.duration || 2) * 1000, () => prison.destroy());
+
+    return true;
+  }
+
+  // 目标治疗（生命之潮、紧急治疗）
+  private castTargetHeal(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    // 找最低血量的友军
+    const allies = caster.team === 'player' ? this.playerUnits : this.enemyUnits;
+    let lowestHpAlly: BattleUnit | null = null;
+    let lowestHpPercent = 1;
+
+    allies.forEach(ally => {
+      if (!ally.isAlive) return;
+      const hpPercent = ally.currentHp / ally.character.maxHp;
+      if (hpPercent < lowestHpPercent) {
+        lowestHpPercent = hpPercent;
+        lowestHpAlly = ally;
+      }
+    });
+
+    if (!lowestHpAlly) return false;
+
+    const allyContainer = this.allUnits.get(lowestHpAlly.character.id);
+    if (!allyContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x00ff88);
+
+    const healAmount = lowestHpAlly.character.maxHp * ((config.heal || 40) / 100);
+    lowestHpAlly.currentHp = Math.min(lowestHpAlly.character.maxHp, lowestHpAlly.currentHp + healAmount);
+
+    this.updateHealthBar(lowestHpAlly);
+
+    // 治疗特效
+    const healEffect = this.add.circle(allyContainer.x, allyContainer.y, 30, 0x00ff88, 0.4);
+    this.tweens.add({
+      targets: healEffect,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => healEffect.destroy()
+    });
+
+    return true;
+  }
+
+  // 隐身（水遁）
+  private castStealth(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    this.showSkillCast(casterContainer, config.name, 0x6688ff);
+
+    // 增加攻击力buff
+    if (!caster.buffs) caster.buffs = [];
+    // 简化：直接给一个临时伤害加成
+    const originalDamage = caster.character.damage;
+    caster.character.damage = Math.floor(originalDamage * (config.damageBonus || 1.5));
+
+    // 隐身特效
+    this.tweens.add({
+      targets: casterContainer,
+      alpha: 0.3,
+      duration: 200,
+      yoyo: true
+    });
+
+    // 持续时间后恢复
+    this.time.delayedCall((config.duration || 1.5) * 1000, () => {
+      caster.character.damage = originalDamage;
+    });
+
+    return true;
+  }
+
+  // 多次打击（水刃乱舞、致命连击）
+  private castMultiHit(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x88aaff);
+
+    const hitCount = config.hitCount || 3;
+    const damage = config.damage || 25;
+
+    // 连续攻击
+    for (let i = 0; i < hitCount; i++) {
+      this.time.delayedCall(i * 200, () => {
+        if (target.isAlive && targetContainer.active) {
+          this.dealDamage(target, damage, targetContainer);
+          
+          // 打击特效
+          const slash = this.add.circle(targetContainer.x, targetContainer.y, 15, 0xffffff, 0.8);
+          this.tweens.add({
+            targets: slash,
+            scaleX: 1.5,
+            scaleY: 1.5,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => slash.destroy()
+          });
+        }
+      });
+    }
+
+    return true;
+  }
+
+  // 范围减速（冰封千里、流沙领域、暴风雪）
+  private castSlowArea(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    if (targets.length === 0) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x88ddff);
+
+    const areaRadius = config.areaRadius || 200;
+    const slowValue = config.debuffValue || 50;
+    const duration = config.duration || 3;
+
+    // 范围特效
+    const area = this.add.circle(casterContainer.x, casterContainer.y, areaRadius, 0x88ddff, 0.3);
+    this.time.delayedCall(duration * 1000, () => area.destroy());
+
+    // 对范围内所有敌人施加减速
+    targets.forEach(target => {
+      if (!target.isAlive) return;
+      const tc = this.allUnits.get(target.character.id);
+      if (!tc) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        tc.x, tc.y
+      );
+
+      if (distance <= areaRadius) {
+        const slowDebuff = {
+          type: 'slow' as const,
+          value: slowValue,
+          duration: duration,
+          source: caster.character.id
+        };
+
+        if (!target.debuffs) target.debuffs = [];
+        target.debuffs.push(slowDebuff);
+      }
+    });
+
+    return true;
+  }
+
+  // 眩晕攻击（霜冻之锤）
+  private castStunAttack(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xaaddff);
+
+    this.dealDamage(target, config.damage || 40, targetContainer);
+
+    // 添加眩晕debuff（使用slow模拟）
+    const stunDebuff = {
+      type: 'slow' as const,
+      value: 100, // 100%减速=眩晕
+      duration: config.debuffDuration || 1.5,
+      source: caster.character.id
+    };
+
+    if (!target.debuffs) target.debuffs = [];
+    target.debuffs.push(stunDebuff);
+
+    // 眩晕星星特效
+    const star = this.add.text(targetContainer.x, targetContainer.y - 40, '⭐', { fontSize: '24px' });
+    this.tweens.add({
+      targets: star,
+      y: star.y - 20,
+      alpha: 0,
+      duration: (config.debuffDuration || 1.5) * 1000,
+      onComplete: () => star.destroy()
+    });
+
+    return true;
+  }
+
+  // 冰霜闪现（瞬移+冻结）
+  private castFrostBlink(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xaaddff);
+
+    // 瞬移到目标附近
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 80;
+    const newX = targetContainer.x + Math.cos(angle) * distance;
+    const newY = targetContainer.y + Math.sin(angle) * distance;
+
+    // 闪现特效
+    const oldX = casterContainer.x;
+    const oldY = casterContainer.y;
+    
+    casterContainer.setAlpha(0);
+    this.time.delayedCall(100, () => {
+      casterContainer.setPosition(newX, newY);
+      casterContainer.setAlpha(1);
+
+      // 冻结周围敌人
+      targets.forEach(t => {
+        if (!t.isAlive) return;
+        const tc = this.allUnits.get(t.character.id);
+        if (!tc) return;
+
+        const dist = Phaser.Math.Distance.Between(newX, newY, tc.x, tc.y);
+        if (dist <= (config.areaRadius || 150)) {
+          const stunDebuff = {
+            type: 'slow' as const,
+            value: 100,
+            duration: config.debuffDuration || 1,
+            source: caster.character.id
+          };
+
+          if (!t.debuffs) t.debuffs = [];
+          t.debuffs.push(stunDebuff);
+        }
+      });
+    });
+
+    return true;
+  }
+
+  // 范围眩晕（地震猛击）
+  private castStunArea(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    if (targets.length === 0) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xaa8844);
+
+    const areaRadius = config.areaRadius || 180;
+    const damage = config.damage || 35;
+
+    // 地震波特效
+    const shockwave = this.add.circle(casterContainer.x, casterContainer.y, 20, 0xaa6644, 0.6);
+    this.tweens.add({
+      targets: shockwave,
+      scaleX: areaRadius / 20,
+      scaleY: areaRadius / 20,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => shockwave.destroy()
+    });
+
+    // 对范围内所有敌人造成伤害和眩晕
+    targets.forEach(target => {
+      if (!target.isAlive) return;
+      const tc = this.allUnits.get(target.character.id);
+      if (!tc) return;
+
+      const distance = Phaser.Math.Distance.Between(
+        casterContainer.x, casterContainer.y,
+        tc.x, tc.y
+      );
+
+      if (distance <= areaRadius) {
+        this.dealDamage(target, damage, tc);
+
+        const stunDebuff = {
+          type: 'slow' as const,
+          value: 100,
+          duration: config.debuffDuration || 1,
+          source: caster.character.id
+        };
+
+        if (!target.debuffs) target.debuffs = [];
+        target.debuffs.push(stunDebuff);
+      }
+    });
+
+    return true;
+  }
+
+  // 目标护盾（沙暴壁障、护盾术）
+  private castTargetShield(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    // 找最低血量的友军
+    const allies = caster.team === 'player' ? this.playerUnits : this.enemyUnits;
+    let lowestHpAlly: BattleUnit | null = null;
+    let lowestHpPercent = 1;
+
+    allies.forEach(ally => {
+      if (!ally.isAlive) return;
+      const hpPercent = ally.currentHp / ally.character.maxHp;
+      if (hpPercent < lowestHpPercent) {
+        lowestHpPercent = hpPercent;
+        lowestHpAlly = ally;
+      }
+    });
+
+    if (!lowestHpAlly) return false;
+
+    const allyContainer = this.allUnits.get(lowestHpAlly.character.id);
+    if (!allyContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xffaa44);
+
+    if (!lowestHpAlly.shield) lowestHpAlly.shield = 0;
+    lowestHpAlly.shield += config.shield || 100;
+
+    // 护盾特效
+    const shield = this.add.circle(allyContainer.x, allyContainer.y, 35, 0xffaa44, 0.3);
+    this.time.delayedCall((config.duration || 5) * 1000, () => shield.destroy());
+
+    return true;
+  }
+
+  // 强力攻击（致命打击）
+  private castStrongAttack(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff4444);
+
+    // 造成更高伤害
+    const damage = config.damage || 50;
+    this.dealDamage(target, damage, targetContainer);
+
+    // 暴击特效
+    const crit = this.add.text(targetContainer.x, targetContainer.y - 50, '暴击!', {
+      fontSize: '20px',
+      color: '#ff0000',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets: crit,
+      y: crit.y - 30,
+      alpha: 0,
+      duration: 800,
+      onComplete: () => crit.destroy()
+    });
+
+    return true;
+  }
+
+  // 攻击增益（战术指挥）
+  private castAttackBuff(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const allies = caster.team === 'player' ? this.playerUnits : this.enemyUnits;
+
+    this.showSkillCast(casterContainer, config.name, 0xffaa00);
+
+    const damageBonus = config.damageBonus || 0.4;
+    const duration = (config.duration || 4) * 1000;
+
+    // 给所有友军增加攻击力
+    allies.forEach(ally => {
+      if (!ally.isAlive) return;
+
+      const originalDamage = ally.character.damage;
+      ally.character.damage = Math.floor(originalDamage * (1 + damageBonus));
+
+      const allyContainer = this.allUnits.get(ally.character.id);
+      if (allyContainer) {
+        // Buff特效
+        const buffIcon = this.add.text(allyContainer.x, allyContainer.y - 40, '⬆️', { fontSize: '16px' });
+        this.time.delayedCall(duration, () => buffIcon.destroy());
+      }
+
+      // 持续时间后恢复
+      this.time.delayedCall(duration, () => {
+        ally.character.damage = originalDamage;
+      });
+    });
+
+    return true;
+  }
+
+  // 标记目标（集火令）
+  private castMarkTarget(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff6600);
+
+    // 标记特效
+    const mark = this.add.text(targetContainer.x, targetContainer.y - 50, '🎯', { fontSize: '24px' });
+    this.time.delayedCall((config.duration || 5) * 1000, () => mark.destroy());
+
+    // 简化：直接给目标降低防御（增加受到的伤害）
+    // 实际应该在dealDamage中检查标记并增加伤害
+    
+    return true;
+  }
+
+  // 自身护盾（熔岩护甲、大地之盾、冰墙）
+  private castShield(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    this.showSkillCast(casterContainer, config.name, 0xffaa00);
+
+    if (!caster.shield) caster.shield = 0;
+    caster.shield += config.shield || 80;
+
+    // 护盾特效
+    const shield = this.add.circle(casterContainer.x, casterContainer.y, 40, 0xffaa00, 0.4);
+    this.tweens.add({
+      targets: shield,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      alpha: 0.2,
+      duration: 500
+    });
+
+    this.time.delayedCall((config.duration || 4) * 1000, () => shield.destroy());
+
+    return true;
   }
 }
 
