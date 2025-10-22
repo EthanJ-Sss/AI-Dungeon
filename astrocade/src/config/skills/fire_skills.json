@@ -37,13 +37,13 @@
   {
     "id": "skill_fire_volley",
     "name": "火焰齐射",
-    "description": "射出5支火焰箭，每支造成30伤害",
+    "description": "射出4支火焰箭，每支造成25伤害",
     "cd": 8,
     "range": 350,
     "type": "damage",
     "targetType": "enemy",
-    "damage": 30,
-    "projectileCount": 5,
+    "damage": 25,
+    "projectileCount": 4,
     "element": "fire"
   },
   {
