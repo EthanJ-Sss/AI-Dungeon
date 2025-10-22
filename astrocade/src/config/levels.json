@@ -14,11 +14,11 @@
     "enemies": [
       {
         "characterId": 101,
-        "position": { "x": 0, "y": 0 }
+        "position": { "x": 1, "y": 0 }
       },
       {
         "characterId": 102,
-        "position": { "x": 1, "y": 1 }
+        "position": { "x": 0, "y": 1 }
       },
       {
         "characterId": 103,
@@ -42,15 +42,15 @@
     "enemies": [
       {
         "characterId": 104,
-        "position": { "x": 0, "y": 1 }
+        "position": { "x": 0, "y": 0 }
       },
       {
         "characterId": 105,
-        "position": { "x": 1, "y": 0 }
+        "position": { "x": 2, "y": 0 }
       },
       {
         "characterId": 106,
-        "position": { "x": 2, "y": 2 }
+        "position": { "x": 1, "y": 2 }
       }
     ]
   },
@@ -71,15 +71,15 @@
     "enemies": [
       {
         "characterId": 107,
-        "position": { "x": 0, "y": 0 }
-      },
-      {
-        "characterId": 108,
         "position": { "x": 1, "y": 1 }
       },
       {
+        "characterId": 108,
+        "position": { "x": 0, "y": 0 }
+      },
+      {
         "characterId": 109,
-        "position": { "x": 2, "y": 2 }
+        "position": { "x": 2, "y": 0 }
       }
     ]
   },
@@ -93,24 +93,24 @@
     "duration": 45,
     "burnDamage": 22,
     "lavaBlocks": [
-      { "row": 0, "col": 5 },
       { "row": 1, "col": 4 },
-      { "row": 2, "col": 6 },
+      { "row": 1, "col": 6 },
+      { "row": 2, "col": 5 },
       { "row": 3, "col": 4 },
-      { "row": 4, "col": 5 }
+      { "row": 3, "col": 6 }
     ],
     "enemies": [
       {
         "characterId": 110,
-        "position": { "x": 0, "y": 1 }
+        "position": { "x": 1, "y": 2 }
       },
       {
         "characterId": 111,
-        "position": { "x": 1, "y": 0 }
+        "position": { "x": 0, "y": 1 }
       },
       {
         "characterId": 112,
-        "position": { "x": 2, "y": 2 }
+        "position": { "x": 2, "y": 1 }
       }
     ]
   },

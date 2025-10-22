@@ -333,6 +333,15 @@ export default class BattleScene extends Phaser.Scene {
     const globalCol = area.colStart + gridPos.x;
     const globalRow = area.rowStart + gridPos.y;
     
+    // 验证：确保角色不在行0和行4
+    if (globalRow < 1 || globalRow > 3) {
+      console.error(`[BattleScene] ❌ 角色位置无效: ${character.name}, row=${globalRow}, col=${globalCol}`);
+      console.error(`   本地坐标: (${gridPos.x}, ${gridPos.y}), 阵营: ${team}`);
+      // 强制修正到有效范围
+      const correctedRow = Math.max(1, Math.min(3, globalRow));
+      console.warn(`   已修正为: row=${correctedRow}`);
+    }
+    
     // 计算世界坐标（像素位置）
     const worldX = this.gridOffsetX + globalCol * this.gridSize + this.gridSize / 2;
     const worldY = this.gridOffsetY + globalRow * this.gridSize + this.gridSize / 2;

@@ -257,11 +257,16 @@ function FormationPageContent() {
           ...(preset.element && { element: preset.element }),
         } as any;
         
-        // 敌方位置映射：x(0-2) -> col(8-10), y(0-2) -> row(1-3)
-        const col = 8 + enemy.position.x;
+        // 敌方位置映射：x(0-2) -> col(7-9), y(0-2) -> row(1-3)
+        const col = 7 + enemy.position.x;
         const row = 1 + enemy.position.y;
         
-        grid[row][col] = enemyChar;
+        // 验证：确保敌方也不在行0和行4
+        if (row >= 1 && row <= 3 && col >= 7 && col <= 9) {
+          grid[row][col] = enemyChar;
+        } else {
+          console.error(`[FormationPage] 敌方角色位置无效: row=${row}, col=${col}, characterId=${enemy.characterId}`);
+        }
       }
     });
 
