@@ -6,6 +6,7 @@ import { useGameStore } from '../store/gameStore';
 import type { Character, Formation, Position } from '../types';
 import levelsData from '../config/levels.json';
 import volcanoCharactersData from '../config/volcanoCharacters.json';
+import { CharacterDetailSidebar } from './CharacterDetailSidebar';
 
 const ItemType = 'CHARACTER';
 
@@ -36,9 +37,10 @@ interface GridCellProps {
   onDrop: (char: Character, row: number, col: number) => void;
   onRemove: (row: number, col: number) => void;
   lavaBlocks: Array<{ row: number; col: number }>;
+  onEnemyClick?: (character: Character) => void;
 }
 
-function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCellProps) {
+function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks, onEnemyClick }: GridCellProps) {
   const isPlayer = isPlayerZone(col);
   const isEnemy = isEnemyZone(col);
   const isLava = lavaBlocks.some(block => block.row === row && block.col === col);
@@ -83,6 +85,14 @@ function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCel
   const attachDragRef = (el: HTMLDivElement | null) => {
     if (isValidPlayerCell && el && character) {
       drag(el);
+    }
+  };
+
+  const handleCharacterClick = () => {
+    if (isEnemy && character && onEnemyClick) {
+      onEnemyClick(character);
+    } else if (isPlayer) {
+      onRemove(row, col);
     }
   };
 
@@ -150,10 +160,11 @@ function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCel
       {character && (
         <div
           ref={attachDragRef}
-          onClick={() => isPlayer && onRemove(row, col)}
+          onClick={handleCharacterClick}
           className={`
             w-full h-full flex flex-col items-center justify-center text-white text-xs p-1 relative z-10
             ${isPlayer && 'cursor-move hover:scale-110'}
+            ${isEnemy && 'cursor-pointer hover:scale-105 transition-transform'}
             ${isDragging && 'opacity-50'}
           `}
         >
@@ -301,6 +312,21 @@ function FormationPageContent() {
     });
   }, []);
 
+  // Enemy character detail sidebar state
+  const [selectedEnemy, setSelectedEnemy] = useState<Character | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  const handleEnemyClick = (character: Character) => {
+    setSelectedEnemy(character);
+    setShowSidebar(true);
+  };
+
+  const handleCloseSidebar = () => {
+    setShowSidebar(false);
+    // Delay clearing to allow slide-out animation
+    setTimeout(() => setSelectedEnemy(null), 300);
+  };
+
   const getPlacedCharacterIds = () => {
     const ids = new Set<string>();
     battlefield.forEach(row => {
@@ -398,6 +424,7 @@ function FormationPageContent() {
                     onDrop={handleDrop}
                     onRemove={handleRemove}
                     lavaBlocks={level.lavaBlocks || []}
+                    onEnemyClick={handleEnemyClick}
                   />
                 ))}
 
@@ -552,6 +579,13 @@ function FormationPageContent() {
           </button>
         </div>
       </div>
+
+      {/* Character Detail Sidebar */}
+      <CharacterDetailSidebar
+        character={selectedEnemy}
+        isOpen={showSidebar}
+        onClose={handleCloseSidebar}
+      />
     </div>
   );
 }
