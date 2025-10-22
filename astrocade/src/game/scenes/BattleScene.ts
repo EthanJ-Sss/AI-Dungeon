@@ -16,7 +16,7 @@ export default class BattleScene extends Phaser.Scene {
   private timerText?: Phaser.GameObjects.Text;
   private battleEnded: boolean = false;
   
-  // 棋盘配置：5行×11列（在敌方右侧增加一列空白列）
+  // 棋盘配置：5行×11列（列10为刺客跳跃空白列）
   private gridSize = 56;
   private gridRows = 5;
   private gridCols = 11;
@@ -25,8 +25,8 @@ export default class BattleScene extends Phaser.Scene {
   
   // 我方区域（左侧）：列1-3，行1-3（3×3）
   private playerArea = { rowStart: 1, rowEnd: 3, colStart: 1, colEnd: 3 };
-  // 敌方区域（右侧）：列8-10，行1-3（3×3，右移一格）
-  private enemyArea = { rowStart: 1, rowEnd: 3, colStart: 8, colEnd: 10 };
+  // 敌方区域（右侧）：列7-9，行1-3（3×3）
+  private enemyArea = { rowStart: 1, rowEnd: 3, colStart: 7, colEnd: 9 };
   
   // 移动速度提升
   private moveSpeedMultiplier = 5;
@@ -224,7 +224,7 @@ export default class BattleScene extends Phaser.Scene {
     graphics.lineStyle(2, 0x4488ff, 0.8);
     graphics.strokeRect(playerX, playerY, playerWidth, playerHeight);
 
-    // 高亮敌方区域（红色背景）- 列8-10，行1-3
+    // 高亮敌方区域（红色背景）- 列7-9，行1-3
     const enemyX = this.gridOffsetX + this.enemyArea.colStart * this.gridSize;
     const enemyY = this.gridOffsetY + this.enemyArea.rowStart * this.gridSize;
     const enemyWidth = (this.enemyArea.colEnd - this.enemyArea.colStart + 1) * this.gridSize;

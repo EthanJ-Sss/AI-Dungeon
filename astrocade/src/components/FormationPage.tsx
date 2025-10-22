@@ -9,15 +9,15 @@ import volcanoCharactersData from '../config/volcanoCharacters.json';
 
 const ItemType = 'CHARACTER';
 
-// 战场配置：5行×11列（在敌方右侧增加一列空白列）
+// 战场配置：5行×11列（列10为刺客跳跃空白列）
 const BATTLEFIELD_ROWS = 5;
 const BATTLEFIELD_COLS = 11;
 
 // 玩家可放置区域：列 1-3
 const PLAYER_COLS = [1, 2, 3];
 
-// 敌方区域：列 8-10（向右移动一格）
-const ENEMY_COLS = [8, 9, 10];
+// 敌方区域：列 7-9
+const ENEMY_COLS = [7, 8, 9];
 
 // 检查是否是玩家可放置区域
 const isPlayerZone = (col: number): boolean => {
@@ -105,7 +105,7 @@ function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCel
     if (isValidPlayerCell) {
       return 'border-blue-400 bg-blue-900/30';
     }
-    // 敌方可放置区域（行1-3，列8-10）
+    // 敌方可放置区域（行1-3，列7-9）
     if (isEnemy && row >= 1 && row <= 3) {
       return 'border-red-400 bg-red-900/30';
     }
@@ -125,8 +125,9 @@ function GridCell({ row, col, character, onDrop, onRemove, lavaBlocks }: GridCel
       title={
         isLava ? '⚠️ 岩浆地块：每10秒喷发，造成80点伤害！' :
         isValidPlayerCell ? '✅ 我方可放置区域 (列1-3, 行1-3)' :
-        isEnemy && row >= 1 && row <= 3 ? '敌方区域 (列8-10, 行1-3)' :
+        isEnemy && row >= 1 && row <= 3 ? '敌方区域 (列7-9, 行1-3)' :
         row === 0 || row === 4 ? '❌ 边界区域（不可放置）' :
+        col === 10 ? '刺客跳跃区域 (列10)' :
         '中立区域'
       }
     >
@@ -255,12 +256,12 @@ function FormationPageContent() {
           ...(preset.element && { element: preset.element }),
         } as any;
         
-        // 敌方位置映射：x(0-2) -> col(8-10), y(0-2) -> row(1-3)
-        const col = 8 + enemy.position.x;
+        // 敌方位置映射：x(0-2) -> col(7-9), y(0-2) -> row(1-3)
+        const col = 7 + enemy.position.x;
         const row = 1 + enemy.position.y;
         
         // 验证：确保敌方也不在行0和行4
-        if (row >= 1 && row <= 3 && col >= 8 && col <= 10) {
+        if (row >= 1 && row <= 3 && col >= 7 && col <= 9) {
           grid[row][col] = enemyChar;
         } else {
           console.error(`[FormationPage] 敌方角色位置无效: row=${row}, col=${col}, characterId=${enemy.characterId}`);
@@ -427,15 +428,19 @@ function FormationPageContent() {
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border-2 border-red-400 bg-red-900/30 rounded"></div>
-              <span className="text-slate-300">⚔️ 敌方区域 (列8-10, 行1-3)</span>
+              <span className="text-slate-300">⚔️ 敌方区域 (列7-9, 行1-3)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border border-gray-600 bg-gray-800/20 rounded"></div>
-              <span className="text-slate-300">❌ 不可放置区域 (行0/4 + 中立列4-7)</span>
+              <span className="text-slate-300">❌ 不可放置区域 (行0/4 + 中立列)</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 border-2 border-orange-500 bg-orange-900/60 rounded"></div>
               <span className="text-slate-300">🌋 岩浆地块</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 border-2 border-purple-500 bg-purple-900/30 rounded"></div>
+              <span className="text-slate-300">🗡️ 列10：刺客跳跃区</span>
             </div>
           </div>
         </div>
