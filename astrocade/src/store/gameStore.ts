@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Formation, LevelConfig, Character, RarityProbability, PitySystem, RecruitRecord, BattleResultData } from '../types';
+import { recruitSystem } from '../utils/recruitSystem';
+import { usePlayerStore } from './playerStore';
 
 type GameScene = 'home' | 'recruit' | 'formation' | 'battle' | 'train' | 'result' | 'levelSelect' | 'start' | 'settings' | 'victory' | 'battleResult';
 
@@ -161,30 +163,24 @@ export const useGameStore = create<GameState>()(
       // 招募系统方法
       updateRecruitProbabilities: () => {
         const state = get();
-        const levelProgress = state.completedLevels.length;
+        // 使用playerStore中的maxClearedLevel
+        const maxClearedLevel = usePlayerStore.getState().maxClearedLevel || 0;
         
-        // 基础概率
-        const baseCommon = 80;
-        const baseRare = 15;
-        const baseEpic = 5;
-        
-        // 根据关卡进度调整（每通过1关）
-        const levelBonus = Math.min(levelProgress, 10); // 最多10关的加成
-        
-        const common = Math.max(baseCommon - (levelBonus * 4), 25);
-        const rare = Math.min(baseRare + (levelBonus * 2.5), 45);
-        const epic = Math.min(baseEpic + (levelBonus * 1.5), 30);
-        
-        // 归一化
-        const total = common + rare + epic;
+        // 使用recruitSystem计算概率
+        const baseProbabilities = recruitSystem.calculateBaseProbabilities(maxClearedLevel);
+        const finalProbabilities = recruitSystem.applyPitySystem(
+          baseProbabilities,
+          state.recruitSystem.pitySystem,
+          maxClearedLevel
+        );
         
         set((state) => ({
           recruitSystem: {
             ...state.recruitSystem,
             currentProbabilities: {
-              common: (common / total) * 100,
-              rare: (rare / total) * 100,
-              epic: (epic / total) * 100,
+              common: finalProbabilities.common,
+              rare: finalProbabilities.rare,
+              epic: finalProbabilities.epic,
             },
           },
         }));

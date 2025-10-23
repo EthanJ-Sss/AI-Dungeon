@@ -51,9 +51,9 @@ export default function RecruitPage() {
     // 获取已拥有角色的ID列表
     const ownedCharacterIds = characters.map(c => String(c.name)); // 使用名称作为唯一标识
     
-    // 使用招募系统进行抽取
+    // 使用招募系统进行抽取（使用maxClearedLevel而不是completedLevels.length）
     const result = recruitSystem.recruit(
-      completedLevels.length,
+      maxClearedLevel,
       recruitSystemState.pitySystem,
       ownedCharacterIds
     );
@@ -65,7 +65,7 @@ export default function RecruitPage() {
     }
     
     return { character: result.character, rarity: result.rarity };
-  }, [characters, completedLevels, recruitSystemState.pitySystem, updateRecruitProbabilities]);
+  }, [characters, maxClearedLevel, recruitSystemState.pitySystem, updateRecruitProbabilities]);
 
   // 初始化：随机一个角色
   useEffect(() => {
