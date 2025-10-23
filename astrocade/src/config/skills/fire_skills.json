@@ -94,5 +94,30 @@
     "damage": 80,
     "areaRadius": 200,
     "element": "fire"
+  },
+  {
+    "id": "skill_fire_shield",
+    "name": "烈焰之盾",
+    "description": "获得60点护盾，持续3秒，护盾存在期间反弹10伤害",
+    "cd": 7,
+    "range": 0,
+    "type": "buff",
+    "targetType": "self",
+    "shield": 60,
+    "duration": 3,
+    "reflectDamage": 10,
+    "element": "fire"
+  },
+  {
+    "id": "skill_warmth_flame",
+    "name": "温暖之焰",
+    "description": "治疗目标友军35%最大生命值并给予护盾",
+    "cd": 8,
+    "range": 350,
+    "type": "heal",
+    "targetType": "ally",
+    "heal": 35,
+    "shield": 30,
+    "element": "fire"
   }
 ]

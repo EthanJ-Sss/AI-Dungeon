@@ -7,6 +7,7 @@ import LevelSelectPage from './components/LevelSelectPage';
 import StartPage from './components/StartPage';
 import SettingsPage from './components/SettingsPage';
 import VictoryPage from './components/VictoryPage';
+import BattleResultPage from './components/BattleResultPage';
 import PhaserGame from './components/PhaserGame';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
       {currentScene === 'formation' && <FormationPage />}
       {currentScene === 'settings' && <SettingsPage />}
       {currentScene === 'victory' && <VictoryPage />}
+      {currentScene === 'battleResult' && <BattleResultPage />}
       {currentScene === 'battle' && (
         <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center">
           <PhaserGame onGameEnd={handleBattleEnd} />

@@ -1,0 +1,97 @@
+# ========================================
+# 手动部署命令（逐条复制执行）
+# ========================================
+# 密码: MTc1MjA0NDQ0MQ
+
+# 方法1: 通过SSH一次性执行部署
+# -----------------------------------
+ssh ubuntu@43.173.170.5
+# 输入密码后，在服务器上执行：
+
+cd /home/ubuntu
+chmod +x 部署脚本.sh
+sudo bash 部署脚本.sh
+
+# 开放防火墙端口
+sudo ufw allow 8888/tcp
+sudo ufw reload
+
+# 验证部署
+sudo systemctl status nginx
+sudo netstat -tlnp | grep :8888
+curl -I http://localhost:8888
+
+# 退出服务器
+exit
+
+
+# 方法2: 如果部署脚本有问题，手动执行每一步
+# -----------------------------------
+ssh ubuntu@43.173.170.5
+# 输入密码: MTc1MjA0NDQ0MQ
+
+# 创建部署目录
+sudo mkdir -p /var/www/astrocade
+sudo chown -R ubuntu:ubuntu /var/www/astrocade
+
+# 复制文件
+cp -r /home/ubuntu/dist/* /var/www/astrocade/
+
+# 验证文件已复制
+ls -la /var/www/astrocade/
+
+# 创建 Nginx 配置
+sudo bash -c 'cat > /etc/nginx/sites-available/astrocade << "EOF"
+server {
+    listen 8888;
+    server_name _;
+    
+    root /var/www/astrocade;
+    index index.html;
+    
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 1000;
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+}
+EOF'
+
+# 启用站点配置
+sudo ln -sf /etc/nginx/sites-available/astrocade /etc/nginx/sites-enabled/astrocade
+
+# 测试 Nginx 配置
+sudo nginx -t
+
+# 重启 Nginx
+sudo systemctl reload nginx
+
+# 开放防火墙
+sudo ufw allow 8888/tcp
+sudo ufw reload
+
+# 检查状态
+sudo systemctl status nginx
+sudo netstat -tlnp | grep :8888
+
+# 本地测试
+curl -I http://localhost:8888
+
+# 退出
+exit
+
+# ========================================
+# 完成后访问: http://43.173.170.5:8888
+# ========================================
+

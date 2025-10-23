@@ -1,5 +1,18 @@
 [
   {
+    "id": "monster_weak_crawler",
+    "name": "幼年爬行者",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 180,
+    "damage": 18,
+    "moveSpeed": 25,
+    "skills": ["monster_skill_weak_claw"],
+    "passiveSkills": [],
+    "description": "刚孵化不久的幼年爬行生物，战斗力很弱"
+  },
+  {
     "id": "monster_lava_crawler_001",
     "name": "火山爬行者·甲",
     "role": "warrior",
@@ -148,17 +161,15 @@
     "role": "boss",
     "attackType": "melee",
     "element": "fire",
-    "hp": 1200,
-    "damage": 55,
+    "hp": 1000,
+    "damage": 48,
     "moveSpeed": 32,
     "skills": [
       "boss_skill_inferno_wave",
-      "boss_skill_lava_pillar",
-      "boss_skill_volcanic_rage",
-      "boss_skill_meteor_strike"
+      "boss_skill_lava_pillar"
     ],
     "passiveSkills": [],
-    "description": "火山之主，掌控着火山的所有力量，拥有多种毁灭性技能"
+    "description": "火山之主，掌控着火山的所有力量。拥有炼狱波动和熔岩柱两大技能"
   },
   {
     "id": "monster_lava_elemental",
@@ -172,6 +183,84 @@
     "skills": ["monster_skill_volcanic_burst"],
     "passiveSkills": [],
     "description": "被Boss召唤出的岩浆生物"
+  },
+  {
+    "id": "monster_fire_tank",
+    "name": "烈焰卫士",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 500,
+    "damage": 28,
+    "moveSpeed": 24,
+    "skills": ["monster_skill_magma_shield"],
+    "passiveSkills": [],
+    "description": "火元素肉盾，拥有熔岩护盾"
+  },
+  {
+    "id": "monster_fire_healer",
+    "name": "火焰祭司",
+    "role": "healer",
+    "attackType": "ranged",
+    "element": "fire",
+    "hp": 320,
+    "damage": 25,
+    "moveSpeed": 28,
+    "skills": ["monster_skill_fire_heal"],
+    "passiveSkills": [],
+    "description": "火元素治疗者，能够治疗友军"
+  },
+  {
+    "id": "monster_fire_mage",
+    "name": "火焰法师",
+    "role": "mage",
+    "attackType": "ranged",
+    "element": "fire",
+    "hp": 300,
+    "damage": 42,
+    "moveSpeed": 30,
+    "skills": ["monster_skill_flame_nova"],
+    "passiveSkills": [],
+    "description": "火元素法师，释放范围火焰新星"
+  },
+  {
+    "id": "monster_fire_charger_001",
+    "name": "烈焰冲锋者·甲",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 360,
+    "damage": 38,
+    "moveSpeed": 40,
+    "skills": ["monster_skill_flame_charge"],
+    "passiveSkills": [],
+    "description": "快速突进的火元素战士"
+  },
+  {
+    "id": "monster_fire_charger_002",
+    "name": "烈焰冲锋者·乙",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 360,
+    "damage": 38,
+    "moveSpeed": 40,
+    "skills": ["monster_skill_flame_charge"],
+    "passiveSkills": [],
+    "description": "快速突进的火元素战士"
+  },
+  {
+    "id": "monster_fire_charger_003",
+    "name": "烈焰冲锋者·丙",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 360,
+    "damage": 38,
+    "moveSpeed": 40,
+    "skills": ["monster_skill_flame_charge"],
+    "passiveSkills": [],
+    "description": "快速突进的火元素战士"
   }
 ]
 

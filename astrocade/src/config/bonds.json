@@ -1,0 +1,1096 @@
+[
+  {
+    "id": "bond_fire_alliance",
+    "name": "火焰同盟",
+    "type": "element",
+    "description": "火系角色的羁绊，提升火系伤害和爆发能力",
+    "activation": {
+      "requiredTags": ["fire"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "element_damage",
+            "target": "all",
+            "value": 15,
+            "description": "全队火系伤害 +15%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 25,
+            "description": "灼烧效果持续时间 +25%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "element_damage",
+            "target": "all",
+            "value": 30,
+            "description": "全队火系伤害 +30%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 40,
+            "description": "灼烧效果持续时间 +40%"
+          },
+          {
+            "type": "crit_rate",
+            "target": "all",
+            "value": 8,
+            "description": "暴击率 +8%"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🔥",
+      "color": "#ef4444",
+      "priority": 100
+    }
+  },
+  {
+    "id": "bond_water_covenant",
+    "name": "水之誓约",
+    "type": "element",
+    "description": "水系角色的羁绊，强化生存和持续作战能力",
+    "activation": {
+      "requiredTags": ["water"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "heal_effect",
+            "target": "all",
+            "value": 20,
+            "description": "全队治疗效果 +20%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 25,
+            "description": "减速效果强度 +25%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "heal_effect",
+            "target": "all",
+            "value": 35,
+            "description": "全队治疗效果 +35%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 40,
+            "description": "减速效果强度 +40%"
+          },
+          {
+            "type": "hp_regen",
+            "target": "all",
+            "value": 3,
+            "description": "每4秒恢复全队3%最大HP"
+          },
+          {
+            "type": "damage_reduction",
+            "target": "all",
+            "value": 15,
+            "description": "全队获得15%减伤"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "💧",
+      "color": "#3b82f6",
+      "priority": 99
+    }
+  },
+  {
+    "id": "bond_ice_alliance",
+    "name": "冰霜联盟",
+    "type": "element",
+    "description": "冰系角色的羁绊，强化控制和减速能力",
+    "activation": {
+      "requiredTags": ["ice"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "element_damage",
+            "target": "all",
+            "value": 15,
+            "description": "全队冰系伤害 +15%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 12,
+            "description": "冰冻概率 +12%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "element_damage",
+            "target": "all",
+            "value": 30,
+            "description": "全队冰系伤害 +30%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 25,
+            "description": "冰冻概率 +25%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 40,
+            "description": "冰冻持续时间 +40%"
+          },
+          {
+            "type": "move_speed",
+            "target": "all",
+            "value": -20,
+            "description": "敌方移动速度 -20%（全场环境效果）"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "❄️",
+      "color": "#06b6d4",
+      "priority": 98
+    }
+  },
+  {
+    "id": "bond_earth_guardian",
+    "name": "大地守护",
+    "type": "element",
+    "description": "土系角色的羁绊，强化防御和坦度",
+    "activation": {
+      "requiredTags": ["earth"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "hp_percent",
+            "target": "all",
+            "value": 15,
+            "description": "全队最大HP +15%"
+          },
+          {
+            "type": "damage_reduction",
+            "target": "all",
+            "value": 8,
+            "description": "受到伤害减少8%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "hp_percent",
+            "target": "all",
+            "value": 30,
+            "description": "全队最大HP +30%"
+          },
+          {
+            "type": "damage_reduction",
+            "target": "all",
+            "value": 15,
+            "description": "受到伤害减少15%"
+          },
+          {
+            "type": "shield",
+            "target": "all",
+            "value": 20,
+            "description": "战斗开始获得护盾（最大HP的20%）"
+          },
+          {
+            "type": "counter_attack",
+            "target": "all",
+            "value": 8,
+            "description": "每受到8次攻击，获得1次反击机会"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🪨",
+      "color": "#84cc16",
+      "priority": 97
+    }
+  },
+  {
+    "id": "bond_iron_wall",
+    "name": "铁壁防线",
+    "type": "class",
+    "description": "战士职业的羁绊，提升生存能力",
+    "activation": {
+      "requiredTags": ["warrior"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "hp_percent",
+            "target": "tagged",
+            "value": 20,
+            "description": "战士HP +20%"
+          },
+          {
+            "type": "damage_reduction",
+            "target": "tagged",
+            "value": 12,
+            "description": "战士受到的伤害 -12%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "hp_percent",
+            "target": "tagged",
+            "value": 35,
+            "description": "战士HP +35%"
+          },
+          {
+            "type": "damage_reduction",
+            "target": "tagged",
+            "value": 20,
+            "description": "战士受到的伤害 -20%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "tagged",
+            "value": 40,
+            "description": "战士死亡时，其他战士获得10秒狂怒（攻击+40%）"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "⚔️",
+      "color": "#d97706",
+      "priority": 90
+    }
+  },
+  {
+    "id": "bond_deadly_strike",
+    "name": "致命打击",
+    "type": "class",
+    "description": "刺客职业的羁绊，提升暴击和爆发伤害",
+    "activation": {
+      "requiredTags": ["assassin"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "crit_rate",
+            "target": "tagged",
+            "value": 18,
+            "description": "刺客暴击率 +18%"
+          },
+          {
+            "type": "crit_damage",
+            "target": "tagged",
+            "value": 25,
+            "description": "刺客暴击伤害 +25%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "crit_rate",
+            "target": "tagged",
+            "value": 30,
+            "description": "刺客暴击率 +30%"
+          },
+          {
+            "type": "crit_damage",
+            "target": "tagged",
+            "value": 45,
+            "description": "刺客暴击伤害 +45%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "tagged",
+            "value": 35,
+            "description": "攻击低于40%血量敌人，额外伤害+35%"
+          },
+          {
+            "type": "skill_cd_reduction",
+            "target": "tagged",
+            "value": 100,
+            "description": "击杀敌人后，刷新主技能CD"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🗡️",
+      "color": "#8b5cf6",
+      "priority": 89
+    }
+  },
+  {
+    "id": "bond_precision_shot",
+    "name": "精准射击",
+    "type": "class",
+    "description": "射手职业的羁绊，提升攻速和射程",
+    "activation": {
+      "requiredTags": ["archer"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "attack_speed",
+            "target": "tagged",
+            "value": 20,
+            "description": "射手攻击速度 +20%"
+          },
+          {
+            "type": "skill_range",
+            "target": "tagged",
+            "value": 15,
+            "description": "射手射程 +15%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "attack_speed",
+            "target": "tagged",
+            "value": 35,
+            "description": "射手攻击速度 +35%"
+          },
+          {
+            "type": "skill_range",
+            "target": "tagged",
+            "value": 25,
+            "description": "射手射程 +25%"
+          },
+          {
+            "type": "dodge",
+            "target": "tagged",
+            "value": 100,
+            "description": "攻击必定命中，无视闪避"
+          },
+          {
+            "type": "damage_percent",
+            "target": "tagged",
+            "value": 40,
+            "description": "每第3次攻击造成140%伤害"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🏹",
+      "color": "#10b981",
+      "priority": 88
+    }
+  },
+  {
+    "id": "bond_arcane_resonance",
+    "name": "奥术共鸣",
+    "type": "class",
+    "description": "法师职业的羁绊，强化技能伤害",
+    "activation": {
+      "requiredTags": ["mage"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "skill_damage",
+            "target": "tagged",
+            "value": 20,
+            "description": "法师技能伤害 +20%"
+          },
+          {
+            "type": "skill_cd_reduction",
+            "target": "tagged",
+            "value": 12,
+            "description": "法师技能CD -12%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "skill_damage",
+            "target": "tagged",
+            "value": 35,
+            "description": "法师技能伤害 +35%"
+          },
+          {
+            "type": "skill_cd_reduction",
+            "target": "tagged",
+            "value": 20,
+            "description": "法师技能CD -20%"
+          },
+          {
+            "type": "skill_range",
+            "target": "tagged",
+            "value": 25,
+            "description": "法师技能范围 +25%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "tagged",
+            "value": 25,
+            "description": "法师施法时，有25%概率触发二次施法"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🔮",
+      "color": "#6366f1",
+      "priority": 87
+    }
+  },
+  {
+    "id": "bond_light_of_life",
+    "name": "生命之光",
+    "type": "class",
+    "description": "治疗职业的羁绊，强化治疗能力",
+    "activation": {
+      "requiredTags": ["healer"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "heal_effect",
+            "target": "tagged",
+            "value": 25,
+            "description": "治疗效果 +25%"
+          },
+          {
+            "type": "skill_cd_reduction",
+            "target": "tagged",
+            "value": 18,
+            "description": "治疗技能CD -18%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "heal_effect",
+            "target": "tagged",
+            "value": 45,
+            "description": "治疗效果 +45%"
+          },
+          {
+            "type": "skill_cd_reduction",
+            "target": "tagged",
+            "value": 30,
+            "description": "治疗技能CD -30%"
+          },
+          {
+            "type": "shield",
+            "target": "all",
+            "value": 6,
+            "description": "治疗溢出部分转化为护盾（持续6秒）"
+          },
+          {
+            "type": "revive_chance",
+            "target": "all",
+            "value": 25,
+            "description": "队友死亡时，有25%概率复活（40%HP）"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "✨",
+      "color": "#f59e0b",
+      "priority": 86
+    }
+  },
+  {
+    "id": "bond_royal_guard",
+    "name": "王国卫队",
+    "type": "faction",
+    "description": "王国阵营的羁绊",
+    "activation": {
+      "requiredTags": ["kingdom"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "defense_percent",
+            "target": "all",
+            "value": 12,
+            "description": "全队防御 +12%"
+          },
+          {
+            "type": "shield",
+            "target": "all",
+            "value": 15,
+            "description": "HP低于50%时，获得护盾（最大HP的15%）"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "defense_percent",
+            "target": "all",
+            "value": 20,
+            "description": "全队防御 +20%"
+          },
+          {
+            "type": "hp_percent",
+            "target": "all",
+            "value": 15,
+            "description": "全队HP +15%"
+          },
+          {
+            "type": "shield",
+            "target": "all",
+            "value": 25,
+            "description": "HP低于50%时，获得护盾（最大HP的25%）"
+          },
+          {
+            "type": "attack_percent",
+            "target": "all",
+            "value": 4,
+            "description": "每个存活队友，全队攻击+4%"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🛡️",
+      "color": "#fbbf24",
+      "priority": 80
+    }
+  },
+  {
+    "id": "bond_wilderness_rangers",
+    "name": "荒野游侠",
+    "type": "faction",
+    "description": "荒野阵营的羁绊",
+    "activation": {
+      "requiredTags": ["wilderness"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "move_speed",
+            "target": "all",
+            "value": 18,
+            "description": "全队移动速度 +18%"
+          },
+          {
+            "type": "dodge",
+            "target": "all",
+            "value": 12,
+            "description": "全队闪避率 +12%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "move_speed",
+            "target": "all",
+            "value": 30,
+            "description": "全队移动速度 +30%"
+          },
+          {
+            "type": "dodge",
+            "target": "all",
+            "value": 20,
+            "description": "全队闪避率 +20%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 80,
+            "description": "首次攻击造成180%伤害"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 18,
+            "description": "攻击有18%概率造成流血（持续5秒，每秒损失3%最大HP）"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🏕️",
+      "color": "#059669",
+      "priority": 79
+    }
+  },
+  {
+    "id": "bond_shadow_council",
+    "name": "暗影议会",
+    "type": "faction",
+    "description": "暗影阵营的羁绊",
+    "activation": {
+      "requiredTags": ["shadow"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "crit_rate",
+            "target": "all",
+            "value": 12,
+            "description": "全队暴击率 +12%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 18,
+            "description": "对低于50%HP的敌人伤害+18%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "crit_rate",
+            "target": "all",
+            "value": 25,
+            "description": "全队暴击率 +25%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 35,
+            "description": "对低于50%HP敌人伤害+35%"
+          },
+          {
+            "type": "hp_regen",
+            "target": "all",
+            "value": 20,
+            "description": "击杀敌人回复20%最大HP"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 150,
+            "description": "战斗开始时隐身4秒（首次攻击伤害250%）"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🌑",
+      "color": "#6b21a8",
+      "priority": 78
+    }
+  },
+  {
+    "id": "bond_elemental_temple",
+    "name": "元素圣殿",
+    "type": "faction",
+    "description": "多元素角色的羁绊",
+    "activation": {
+      "requiredTags": ["fire", "water", "ice", "earth"],
+      "minCount": 3
+    },
+    "levels": [
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "element_damage",
+            "target": "all",
+            "value": 15,
+            "description": "全队元素伤害 +15%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 25,
+            "description": "元素反应伤害 +25%"
+          }
+        ]
+      },
+      {
+        "level": 4,
+        "requiredCount": 4,
+        "effects": [
+          {
+            "type": "element_damage",
+            "target": "all",
+            "value": 25,
+            "description": "全队元素伤害 +25%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "all",
+            "value": 40,
+            "description": "元素反应伤害 +40%"
+          },
+          {
+            "type": "hp_regen",
+            "target": "all",
+            "value": 3,
+            "description": "触发元素反应时，恢复全队3%最大HP"
+          },
+          {
+            "type": "skill_range",
+            "target": "all",
+            "value": 30,
+            "description": "元素反应范围 +30%"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "🌟",
+      "color": "#a855f7",
+      "priority": 77
+    }
+  },
+  {
+    "id": "bond_free_mercenaries",
+    "name": "自由佣兵",
+    "type": "faction",
+    "description": "多阵营角色的羁绊",
+    "activation": {
+      "requiredTags": ["kingdom", "wilderness", "shadow", "temple", "mercenary"],
+      "minCount": 3
+    },
+    "levels": [
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "exp_bonus",
+            "target": "all",
+            "value": 25,
+            "description": "全队经验获取 +25%"
+          },
+          {
+            "type": "gold_bonus",
+            "target": "all",
+            "value": 15,
+            "description": "战斗结束后额外获得15%金币"
+          },
+          {
+            "type": "attack_percent",
+            "target": "all",
+            "value": 3,
+            "description": "全队全属性 +3%"
+          }
+        ]
+      },
+      {
+        "level": 4,
+        "requiredCount": 4,
+        "effects": [
+          {
+            "type": "exp_bonus",
+            "target": "all",
+            "value": 40,
+            "description": "全队经验获取 +40%"
+          },
+          {
+            "type": "gold_bonus",
+            "target": "all",
+            "value": 25,
+            "description": "战斗结束后额外获得25%金币"
+          },
+          {
+            "type": "attack_percent",
+            "target": "all",
+            "value": 8,
+            "description": "全队全属性 +8%"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "⚡",
+      "color": "#14b8a6",
+      "priority": 76
+    }
+  },
+  {
+    "id": "bond_elite_squad",
+    "name": "精英小队",
+    "type": "rarity",
+    "description": "精英角色的羁绊",
+    "activation": {
+      "requiredTags": ["epic"],
+      "minCount": 2
+    },
+    "levels": [
+      {
+        "level": 2,
+        "requiredCount": 2,
+        "effects": [
+          {
+            "type": "attack_percent",
+            "target": "tagged",
+            "value": 15,
+            "description": "精英角色全属性 +15%"
+          },
+          {
+            "type": "skill_cd_reduction",
+            "target": "tagged",
+            "value": 12,
+            "description": "精英角色技能CD -12%"
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "attack_percent",
+            "target": "tagged",
+            "value": 30,
+            "description": "精英角色全属性 +30%"
+          },
+          {
+            "type": "skill_cd_reduction",
+            "target": "tagged",
+            "value": 25,
+            "description": "精英角色技能CD -25%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "tagged",
+            "value": 60,
+            "description": "精英角色死亡时，给其他精英角色30秒【复仇】buff（伤害+60%）"
+          },
+          {
+            "type": "shield",
+            "target": "tagged",
+            "value": 100,
+            "description": "战斗开始时，所有精英角色获得【荣耀】（免疫首次致命伤害）"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "👑",
+      "color": "#a855f7",
+      "priority": 70
+    }
+  },
+  {
+    "id": "bond_rare_team",
+    "name": "稀有战队",
+    "type": "rarity",
+    "description": "稀有角色的羁绊",
+    "activation": {
+      "requiredTags": ["rare"],
+      "minCount": 3
+    },
+    "levels": [
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "attack_percent",
+            "target": "tagged",
+            "value": 20,
+            "description": "稀有角色攻击 +20%"
+          },
+          {
+            "type": "hp_percent",
+            "target": "tagged",
+            "value": 20,
+            "description": "稀有角色HP +20%"
+          }
+        ]
+      },
+      {
+        "level": 4,
+        "requiredCount": 4,
+        "effects": [
+          {
+            "type": "attack_percent",
+            "target": "tagged",
+            "value": 35,
+            "description": "稀有角色攻击 +35%"
+          },
+          {
+            "type": "hp_percent",
+            "target": "tagged",
+            "value": 35,
+            "description": "稀有角色HP +35%"
+          },
+          {
+            "type": "element_damage",
+            "target": "tagged",
+            "value": 40,
+            "description": "稀有角色元素反应伤害 +40%"
+          },
+          {
+            "type": "attack_speed",
+            "target": "all",
+            "value": 5,
+            "description": "每击败1个敌人，全队获得5%攻速（最多叠加3层）"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "💎",
+      "color": "#3b82f6",
+      "priority": 69
+    }
+  },
+  {
+    "id": "bond_ragtag_team",
+    "name": "杂牌军",
+    "type": "rarity",
+    "description": "普通角色的羁绊",
+    "activation": {
+      "requiredTags": ["common"],
+      "minCount": 3
+    },
+    "levels": [
+      {
+        "level": 3,
+        "requiredCount": 3,
+        "effects": [
+          {
+            "type": "attack_percent",
+            "target": "tagged",
+            "value": 25,
+            "description": "普通角色攻击 +25%"
+          },
+          {
+            "type": "hp_percent",
+            "target": "tagged",
+            "value": 25,
+            "description": "普通角色HP +25%"
+          }
+        ]
+      },
+      {
+        "level": 4,
+        "requiredCount": 4,
+        "effects": [
+          {
+            "type": "attack_percent",
+            "target": "tagged",
+            "value": 45,
+            "description": "普通角色攻击 +45%"
+          },
+          {
+            "type": "hp_percent",
+            "target": "tagged",
+            "value": 45,
+            "description": "普通角色HP +45%"
+          },
+          {
+            "type": "damage_percent",
+            "target": "tagged",
+            "value": 60,
+            "description": "血量低于30%时，伤害+60%"
+          },
+          {
+            "type": "hp_regen",
+            "target": "tagged",
+            "value": 40,
+            "description": "击杀敌人后立即回复40%HP"
+          }
+        ]
+      }
+    ],
+    "ui": {
+      "icon": "⭐",
+      "color": "#9ca3af",
+      "priority": 68
+    }
+  }
+]
+

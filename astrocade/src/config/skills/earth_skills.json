@@ -75,5 +75,57 @@
     "areaRadius": 200,
     "duration": 4,
     "element": "earth"
+  },
+  {
+    "id": "skill_stone_volley",
+    "name": "岩石齐射",
+    "description": "射出4块岩石，每块造成28伤害",
+    "cd": 7,
+    "range": 350,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 28,
+    "projectileCount": 4,
+    "element": "earth"
+  },
+  {
+    "id": "skill_earth_renewal",
+    "name": "大地复苏",
+    "description": "治疗目标友军38%最大生命值并提供护盾",
+    "cd": 8,
+    "range": 350,
+    "type": "heal",
+    "targetType": "ally",
+    "heal": 38,
+    "shield": 40,
+    "element": "earth"
+  },
+  {
+    "id": "skill_rock_strike",
+    "name": "碎岩打击",
+    "description": "强力攻击造成65伤害并降低敌人30%移速",
+    "cd": 7,
+    "range": 150,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 65,
+    "debuffType": "slow",
+    "debuffValue": 30,
+    "debuffDuration": 2,
+    "element": "earth"
+  },
+  {
+    "id": "skill_stone_dash",
+    "name": "岩石冲刺",
+    "description": "向前冲刺并留下岩石轨迹，造成40伤害并眩晕0.8秒",
+    "cd": 6,
+    "range": 220,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 40,
+    "teleportDistance": 220,
+    "debuffType": "stun",
+    "debuffDuration": 0.8,
+    "element": "earth"
   }
 ]

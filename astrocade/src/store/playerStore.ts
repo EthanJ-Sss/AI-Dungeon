@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Character, Prisoner } from '../types';
+import type { Character, Prisoner, CharacterRarity } from '../types';
 import levelConfigData from '../config/levelConfig.json';
 
 interface PlayerState {
@@ -10,6 +10,10 @@ interface PlayerState {
   prisoners: Prisoner[];
   // 当前金币（预留）
   gold: number;
+  // 道具背包
+  items: Record<string, number>;
+  // 最高通关关卡数（0=未通关任何关卡）
+  maxClearedLevel: number;
   
   // Actions
   addCharacter: (character: Character) => void;
@@ -21,14 +25,28 @@ interface PlayerState {
   gainExp: (characterId: string, exp: number) => void;
   levelUp: (characterId: string) => void;
   clearAll: () => void;
+  
+  // 道具系统Actions
+  addItem: (itemId: string, amount: number) => void;
+  removeItem: (itemId: string, amount: number) => boolean;
+  getItemCount: (itemId: string) => number;
+  hasItem: (itemId: string, required: number) => boolean;
+  
+  // 进度系统Actions
+  updateMaxClearedLevel: (level: number) => void;
+  getUnlockedRarities: () => CharacterRarity[];
 }
 
 export const usePlayerStore = create<PlayerState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       characters: [],
       prisoners: [],
       gold: 0,
+      items: {
+        'item_recruit_ticket': 3, // 初始赠送3张招募券
+      },
+      maxClearedLevel: 0, // 初始未通关任何关卡
 
       addCharacter: (character) =>
         set((state) => ({
@@ -168,7 +186,69 @@ export const usePlayerStore = create<PlayerState>()(
           characters: [],
           prisoners: [],
           gold: 0,
+          items: {
+            'item_recruit_ticket': 3, // 重置时也给3张招募券
+          },
+          maxClearedLevel: 0, // 重置通关进度
         }),
+
+      // 道具系统方法
+      addItem: (itemId, amount) =>
+        set((state) => ({
+          items: {
+            ...state.items,
+            [itemId]: (state.items[itemId] || 0) + amount,
+          },
+        })),
+
+      removeItem: (itemId, amount) => {
+        const state = get();
+        const currentAmount = state.items[itemId] || 0;
+        
+        if (currentAmount < amount) {
+          return false; // 道具不足
+        }
+        
+        set((state) => ({
+          items: {
+            ...state.items,
+            [itemId]: currentAmount - amount,
+          },
+        }));
+        
+        return true;
+      },
+
+      getItemCount: (itemId) => {
+        const state = get();
+        return state.items[itemId] || 0;
+      },
+
+      hasItem: (itemId, required) => {
+        const state = get();
+        return (state.items[itemId] || 0) >= required;
+      },
+
+      // 进度系统方法
+      updateMaxClearedLevel: (level) =>
+        set((state) => ({
+          maxClearedLevel: Math.max(state.maxClearedLevel, level),
+        })),
+
+      getUnlockedRarities: () => {
+        const state = get();
+        const maxCleared = state.maxClearedLevel;
+        const unlockedRarities: CharacterRarity[] = ['common'];
+        
+        if (maxCleared >= 2) {
+          unlockedRarities.push('rare');
+        }
+        if (maxCleared >= 3) {
+          unlockedRarities.push('epic');
+        }
+        
+        return unlockedRarities;
+      },
     }),
     {
       name: 'player-storage',

@@ -1,5 +1,16 @@
 [
   {
+    "id": "monster_skill_weak_claw",
+    "name": "弱爪击",
+    "description": "轻轻挥动利爪，造成20伤害",
+    "cd": 5,
+    "range": 80,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 20,
+    "element": "fire"
+  },
+  {
     "id": "monster_skill_claw_strike",
     "name": "利爪突袭",
     "description": "快速挥动利爪，造成28伤害",
@@ -215,6 +226,29 @@
     "targetType": "ground",
     "damage": 150,
     "areaRadius": 180,
+    "element": "fire"
+  },
+  {
+    "id": "monster_skill_fire_heal",
+    "name": "火焰治疗",
+    "description": "用火焰能量治疗友军，恢复80点生命值",
+    "cd": 8,
+    "range": 300,
+    "type": "heal",
+    "targetType": "ally",
+    "heal": 80,
+    "element": "fire"
+  },
+  {
+    "id": "monster_skill_flame_charge",
+    "name": "烈焰冲锋",
+    "description": "向前冲锋并造成45伤害，快速接近敌人",
+    "cd": 6,
+    "range": 250,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 45,
+    "teleportDistance": 200,
     "element": "fire"
   }
 ]

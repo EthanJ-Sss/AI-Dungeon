@@ -108,5 +108,60 @@
     "debuffType": "slow",
     "debuffValue": 40,
     "element": "ice"
+  },
+  {
+    "id": "skill_ice_counter",
+    "name": "冰霜反击",
+    "description": "受到攻击时有30%几率冻结攻击者1秒",
+    "cd": 8,
+    "range": 0,
+    "type": "buff",
+    "targetType": "self",
+    "duration": 5,
+    "counterChance": 0.3,
+    "debuffType": "stun",
+    "debuffDuration": 1,
+    "element": "ice"
+  },
+  {
+    "id": "skill_frost_blessing",
+    "name": "冰霜祝福",
+    "description": "治疗目标友军30%最大生命值并提升10%移速",
+    "cd": 7,
+    "range": 350,
+    "type": "heal",
+    "targetType": "ally",
+    "heal": 30,
+    "speedBonus": 1.1,
+    "duration": 3,
+    "element": "ice"
+  },
+  {
+    "id": "skill_ice_spear",
+    "name": "寒冰长矛",
+    "description": "发射冰矛造成60伤害并冻结敌人1.5秒",
+    "cd": 8,
+    "range": 400,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 60,
+    "debuffType": "stun",
+    "debuffDuration": 1.5,
+    "element": "ice"
+  },
+  {
+    "id": "skill_frost_rain",
+    "name": "冰霜箭雨",
+    "description": "射出5支冰霜箭，每支造成30伤害并减速",
+    "cd": 9,
+    "range": 350,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 30,
+    "projectileCount": 5,
+    "debuffType": "slow",
+    "debuffValue": 40,
+    "debuffDuration": 2,
+    "element": "ice"
   }
 ]

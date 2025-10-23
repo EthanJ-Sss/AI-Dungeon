@@ -3,9 +3,11 @@ import { useGameStore } from '../../store/gameStore';
 import { usePlayerStore } from '../../store/playerStore';
 import { SkillManager } from '../SkillManager';
 import { BuffManager } from '../BuffManager';
+// import { BondManager } from '../BondManager';
 import { calculateBurnDamage, calculateLavaDamage, calculateElementalDamage, elementManager } from '../ElementManager';
 import { loadAllCharacters } from '../../utils/characterLoader';
-import type { Character, BattleUnit, Position, SkillInstance, DebuffInstance, PresetCharacter } from '../../types';
+import type { Character, BattleUnit, Position, SkillInstance, DebuffInstance, PresetCharacter, DamageSource } from '../../types';
+import { generateVictoryStats, generateDefeatStats } from '../../utils/battleStatsUtils';
 
 const allCharactersData = loadAllCharacters();
 
@@ -17,6 +19,7 @@ export default class BattleScene extends Phaser.Scene {
   private timerText?: Phaser.GameObjects.Text;
   private battleEnded: boolean = false;
   private elementManager = elementManager; // 元素管理器
+  // private bondManager!: BondManager; // 羁绊管理器（暂时注释）
   private lastRegenTime: number = 0; // 水系被动回复计时
   
   // 棋盘配置：5行×11列（列10为刺客跳跃空白列）
@@ -60,6 +63,10 @@ export default class BattleScene extends Phaser.Scene {
   private damageReceivedBars: Map<string, Phaser.GameObjects.Rectangle> = new Map();
   private lastSkillUpdateTime: number = 0;
 
+  // 伤害来源追踪（用于失败统计）
+  private damageSourceStats: Map<string, DamageSource> = new Map();
+  private battleStartTime: number = 0;
+
   constructor() {
     super({ key: 'BattleScene' });
   }
@@ -71,6 +78,8 @@ export default class BattleScene extends Phaser.Scene {
     this.enemyUnits = [];
     this.allUnits.clear();
     this.characterPanels.clear();
+    this.damageSourceStats.clear();
+    this.battleStartTime = Date.now();
     
     // 检测是否为Boss关卡
     const currentLevel = useGameStore.getState().currentLevel;
@@ -84,6 +93,9 @@ export default class BattleScene extends Phaser.Scene {
     
     // 初始化BUFF管理器
     BuffManager.init();
+    
+    // 初始化羁绊管理器（暂时注释）
+    // this.bondManager = new BondManager(this);
     
     // 添加背景（火山场景为深红色）
     const isVolcano = currentLevel?.scene === 'volcano';
@@ -361,6 +373,18 @@ export default class BattleScene extends Phaser.Scene {
     
     console.log(`\n================================\n`);
     
+    // 初始化羁绊系统（暂时注释）
+    // const playerCharacters = this.playerUnits.map(unit => unit.character);
+    // this.bondManager.initialize(playerCharacters);
+    
+    // console.log(`\n🔗 [羁绊系统] 已激活 ${this.bondManager.getActivatedBonds().length} 个羁绊`);
+    // this.bondManager.getActivatedBonds().forEach(bond => {
+    //   console.log(`   ${bond.bond.ui.icon} ${bond.bond.name} Lv.${bond.level}`);
+    //   bond.effects.forEach(effect => {
+    //     console.log(`      ✓ ${effect.effect.description}`);
+    //   });
+    // });
+    
     // 延迟检查角色容器状态（战斗开始0.5秒后）
     this.time.delayedCall(500, () => {
       console.log(`\n🔍 [容器检查] 战斗开始0.5秒后，检查所有角色容器状态:`);
@@ -558,8 +582,17 @@ export default class BattleScene extends Phaser.Scene {
       skillInstances,
       debuffs: [],
       shield: 0, // 初始护盾值
-      damageDealt: 0, // 造成的伤害
-      damageReceived: 0, // 受到的伤害
+      damageDealt: 0, // 造成的伤害（旧版，保留兼容）
+      damageReceived: 0, // 受到的伤害（旧版，保留兼容）
+      stats: {
+        totalDamageDealt: 0,
+        totalDamageTaken: 0,
+        totalHealDone: 0,
+        killCount: 0,
+        skillUsedCount: 0,
+        surviveTime: 0,
+        deathTime: undefined,
+      },
     };
 
     // 应用土系开战护盾
@@ -725,14 +758,39 @@ export default class BattleScene extends Phaser.Scene {
       yoyo: true,
     });
 
+    // 计算最终伤害（羁绊加成暂时注释）
+    let finalDamage = attacker.character.damage;
+    
+    // // 应用羁绊伤害加成
+    // if (attacker.team === 'player') {
+    //   finalDamage = this.bondManager.applyDamageBonus(attacker.character, finalDamage);
+    //   
+    //   // 检查暴击
+    //   if (this.bondManager.checkCritical(attacker.character)) {
+    //     finalDamage = this.bondManager.applyCriticalDamage(attacker.character, finalDamage);
+    //     console.log(`💥 [暴击] ${attacker.character.name} 造成 ${finalDamage} 伤害！`);
+    //   }
+    //   
+    //   // 检查闪避
+    //   if (target.team === 'enemy' && this.bondManager.checkDodge(target.character)) {
+    //     console.log(`💨 [闪避] ${target.character.name} 闪避了攻击！`);
+    //     return; // 闪避成功，不造成伤害
+    //   }
+    // }
+    // 
+    // // 应用伤害减免（如果目标是玩家）
+    // if (target.team === 'player') {
+    //   finalDamage = this.bondManager.applyDamageReduction(target.character, finalDamage);
+    // }
+    
     // 如果是远程攻击，发射子弹
     if (attacker.character.attackType === 'ranged') {
       this.fireProjectile(attackerContainer, targetContainer, () => {
-        this.dealDamage(target, attacker.character.damage, targetContainer, attacker);
+        this.dealDamage(target, Math.floor(finalDamage), targetContainer, attacker);
       });
     } else {
       // 近战直接造成伤害
-      this.dealDamage(target, attacker.character.damage, targetContainer, attacker);
+      this.dealDamage(target, Math.floor(finalDamage), targetContainer, attacker);
     }
   }
 
@@ -755,13 +813,51 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * 记录伤害来源统计
+   */
+  private recordDamageSource(
+    sourceName: string,
+    sourceType: 'enemy' | 'environment' | 'skill' | 'boss_skill',
+    damage: number,
+    target: BattleUnit,
+    attacker?: BattleUnit
+  ) {
+    const sourceId = attacker ? attacker.character.id : `env_${sourceName}`;
+    
+    let source = this.damageSourceStats.get(sourceId);
+    if (!source) {
+      source = {
+        sourceId,
+        sourceName,
+        sourceType,
+        totalDamageDealt: 0,
+        damagePercent: 0,
+        killCount: 0,
+        killedCharacters: [],
+        element: attacker?.character.element,
+      };
+      this.damageSourceStats.set(sourceId, source);
+    }
+    
+    source.totalDamageDealt += damage;
+    
+    // 检查是否造成击杀
+    if (target.currentHp - damage <= 0) {
+      source.killCount++;
+      source.killedCharacters.push(target.character.name);
+    }
+  }
+
   private dealDamage(
     target: BattleUnit,
     damage: number,
     targetContainer: Phaser.GameObjects.Container,
-    attacker?: BattleUnit
+    attacker?: BattleUnit,
+    sourceName?: string,
+    sourceType?: 'enemy' | 'environment' | 'skill' | 'boss_skill'
   ) {
-    // 记录伤害统计
+    // 记录伤害统计（旧版，保留兼容）
     if (attacker && attacker.damageDealt !== undefined) {
       attacker.damageDealt += damage;
     }
@@ -769,8 +865,49 @@ export default class BattleScene extends Phaser.Scene {
       target.damageReceived += damage;
     }
 
+    // 记录新版统计
+    if (target.stats) {
+      target.stats.totalDamageTaken += damage;
+    }
+    
+    if (attacker && attacker.stats) {
+      attacker.stats.totalDamageDealt += damage;
+    }
+    
+    // 记录伤害来源（用于失败统计）
+    if (target.team === 'player') {
+      // 如果有显式指定来源，使用指定的
+      if (sourceName && sourceType) {
+        this.recordDamageSource(sourceName, sourceType, damage, target, attacker);
+      }
+      // 否则，如果有攻击者且是敌人，自动记录敌人伤害
+      else if (attacker && attacker.team === 'enemy') {
+        this.recordDamageSource(
+          attacker.character.name,
+          'enemy',
+          damage,
+          target,
+          attacker
+        );
+      }
+    }
+
     // 扣除血量
+    const willDie = target.currentHp - damage <= 0;
     target.currentHp = Math.max(0, target.currentHp - damage);
+    
+    // 记录击杀
+    if (willDie && attacker && attacker.stats) {
+      attacker.stats.killCount++;
+      if (target.stats) {
+        target.stats.deathTime = Date.now() - this.battleStartTime;
+      }
+      
+      // 触发羁绊的击杀效果（暂时注释）
+      // if (attacker.team === 'player') {
+      //   this.bondManager.onKillEnemy(attacker.character, target.character);
+      // }
+    }
 
     // 受击触发技能CD-0.5秒
     if (target.skillInstances) {
@@ -855,6 +992,9 @@ export default class BattleScene extends Phaser.Scene {
     // 停止所有事件
     this.time.removeAllEvents();
 
+    const currentLevel = useGameStore.getState().currentLevel;
+    const battleTime = currentLevel ? (currentLevel.duration || 30) - this.battleTimer : 0;
+
     // 如果胜利，保存被击败的敌人数据（用于俘虏选择）并给予经验值
     if (result === 'win') {
       const defeatedEnemies = this.enemyUnits.map(unit => unit.character);
@@ -864,8 +1004,21 @@ export default class BattleScene extends Phaser.Scene {
       // 战斗统计计数
       useGameStore.getState().incrementStat('battleCount');
 
+      // 生成胜利统计数据
+      const resultData = generateVictoryStats(
+        this.playerUnits,
+        battleTime,
+        currentLevel?.id || 1
+      );
+      
+      // 保存结算数据
+      useGameStore.getState().setBattleResultData(resultData);
+      
+      // 发放招募券
+      usePlayerStore.getState().addItem('item_recruit_ticket', 1);
+      console.log(`[BattleScene] 发放招募券 x1`);
+
       // 给予所有参战角色经验值
-      const currentLevel = useGameStore.getState().currentLevel;
       const baseExp = 50;
       let expMultiplier = 1;
 
@@ -897,6 +1050,10 @@ export default class BattleScene extends Phaser.Scene {
         // 标记当前关卡为已完成
         useGameStore.getState().completeLevel(currentLevel.id);
         
+        // 更新最高通关关卡数（用于招募系统进度解锁）
+        usePlayerStore.getState().updateMaxClearedLevel(currentLevel.id);
+        console.log(`[BattleScene] ✅ 更新最高通关进度: ${currentLevel.id}`);
+        
         // 解锁下一关（如果存在）
         // 火山关卡有 1-5 关
         if (nextLevelId <= 5) {
@@ -910,22 +1067,36 @@ export default class BattleScene extends Phaser.Scene {
       // 检测是否击败了Boss（第5关）
       if (currentLevel?.id === 5) {
         console.log('[BattleScene] 🎉 恭喜！击败了火山Boss - 炎魔之王！');
-        // 延迟跳转到胜利界面
-        this.time.delayedCall(3000, () => {
-          useGameStore.getState().setScene('victory');
-        });
-        return; // 不显示常规战斗结果，直接返回
+        // Boss关卡也使用新的结算界面，但延迟更长以显示庆祝效果
+        // 可以在结算界面后再跳转到特殊的胜利界面
       }
+    } else {
+      // 失败时生成统计数据
+      const remainingEnemies = this.enemyUnits.filter(u => u.isAlive).length;
+      const resultData = generateDefeatStats(
+        this.damageSourceStats,
+        battleTime,
+        currentLevel?.id || 1,
+        remainingEnemies
+      );
+      
+      // 保存结算数据
+      useGameStore.getState().setBattleResultData(resultData);
+      console.log(`[BattleScene] 战斗失败，剩余敌人: ${remainingEnemies}`);
     }
 
-    // 显示战斗结算面板
-    this.showBattleSummary(result === 'win');
-    
     // 设置战斗结果
     useGameStore.getState().setBattleResult(result);
 
     // 触发游戏结束事件
     this.game.events.emit('battle-end', result);
+    
+    // 延迟跳转到新的战斗结算界面
+    console.log(`[BattleScene] 准备跳转到战斗结算界面，结果: ${result}`);
+    this.time.delayedCall(1500, () => {
+      console.log(`[BattleScene] 跳转到 battleResult 场景`);
+      useGameStore.getState().setScene('battleResult');
+    });
   }
 
   private updateSkillCD() {
@@ -1159,9 +1330,69 @@ export default class BattleScene extends Phaser.Scene {
       case 'skill_charge': // 冲锋
         return this.castDash(caster, targets, casterContainer, config);
       
+      // ========== 怪物技能 ==========
+      case 'monster_skill_weak_claw': // 弱爪击
+      case 'monster_skill_claw_strike': // 利爪突袭
+      case 'monster_skill_rock_throw': // 投掷岩石
+      case 'monster_skill_flame_arrow': // 烈焰箭
+      case 'monster_skill_volcanic_burst': // 火山爆裂
+      case 'monster_skill_earth_spike': // 地刺突起
+        return this.castGenericDamage(caster, targets, casterContainer, config);
+      
+      case 'monster_skill_magma_shield': // 熔岩之盾
+      case 'monster_skill_titan_shield': // 泰坦之盾
+        return this.castShield(caster, casterContainer, config);
+      
+      case 'monster_skill_lava_jump': // 岩浆跳跃
+        return this.castDash(caster, targets, casterContainer, config);
+      
+      case 'monster_skill_shadow_strike': // 暗影突袭
+        return this.castBlink(caster, casterContainer, config);
+      
+      case 'monster_skill_flame_nova': // 烈焰新星
+        return this.castAreaDamage(caster, targets, casterContainer, config);
+      
+      case 'monster_skill_fire_rain': // 火焰流星雨
+        return this.castAreaDamage(caster, targets, casterContainer, config);
+      
+      case 'monster_skill_stone_skin': // 石肤术
+        return this.castShield(caster, casterContainer, config);
+      
+      case 'boss_skill_inferno_wave': // 炼狱波动
+      case 'boss_skill_lava_pillar': // 熔岩柱
+        return this.castAreaDamage(caster, targets, casterContainer, config);
+      
+      case 'monster_skill_fire_heal': // 火焰治疗
+        return this.castAllyHeal(caster, casterContainer, config);
+      
+      case 'monster_skill_flame_charge': // 烈焰冲锋
+        return this.castChargeAttack(caster, targets, casterContainer, config);
+      
       default:
-        console.warn(`[BattleScene] 未实现的技能: ${config.id}`);
-        return false;
+        // 通用技能类型分派
+        console.log(`[BattleScene] 使用通用处理: ${config.id}, type: ${config.type}`);
+        
+        switch (config.type) {
+          case 'damage':
+            if (config.areaRadius) {
+              return this.castAreaDamage(caster, targets, casterContainer, config);
+            } else {
+              return this.castGenericDamage(caster, targets, casterContainer, config);
+            }
+          case 'heal':
+            if (config.targetType === 'ally') {
+              return this.castAllyHeal(caster, casterContainer, config);
+            } else {
+              return this.castHeal(caster, casterContainer, config);
+            }
+          default:
+            // 处理 buff 类型和其他未知类型
+            if (config.type === 'buff') {
+              return this.castShield(caster, casterContainer, config);
+            }
+            console.warn(`[BattleScene] 未实现的技能: ${config.id}, type: ${config.type}`);
+            return false;
+        }
     }
   }
 
@@ -1317,6 +1548,203 @@ export default class BattleScene extends Phaser.Scene {
           targets: casterContainer,
           alpha: 1,
           duration: 100,
+        });
+      },
+    });
+
+    return true;
+  }
+
+  // 通用伤害技能
+  private castGenericDamage(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    const distance = Phaser.Math.Distance.Between(
+      casterContainer.x, casterContainer.y,
+      targetContainer.x, targetContainer.y
+    );
+
+    if (distance > config.range) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff6600);
+
+    // 创建投射物特效
+    const projectile = this.add.circle(casterContainer.x, casterContainer.y, 8, 0xff6600);
+    
+    this.tweens.add({
+      targets: projectile,
+      x: targetContainer.x,
+      y: targetContainer.y,
+      duration: 400,
+      onComplete: () => {
+        projectile.destroy();
+        
+        if (!target.isAlive || !targetContainer.active) return;
+        
+        this.dealDamage(target, config.damage || 30, targetContainer);
+        
+        // 命中特效
+        const hitEffect = this.add.circle(targetContainer.x, targetContainer.y, 20, 0xff8800, 0.6);
+        this.tweens.add({
+          targets: hitEffect,
+          scaleX: 2,
+          scaleY: 2,
+          alpha: 0,
+          duration: 300,
+          onComplete: () => hitEffect.destroy(),
+        });
+      },
+    });
+
+    return true;
+  }
+
+  // 友军治疗技能
+  private castAllyHeal(
+    caster: BattleUnit,
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    // 获取所有友方单位
+    const allies: BattleUnit[] = [];
+    this.allUnits.forEach((_container, id) => {
+      const unit = [...this.playerUnits, ...this.enemyUnits].find(u => u.character.id === id);
+      if (unit && unit.isAlive && unit.team === caster.team && unit !== caster) {
+        allies.push(unit);
+      }
+    });
+
+    if (allies.length === 0) return false;
+
+    // 找到血量最低的友军
+    let lowestHpPercent = 1;
+    let lowestHpAlly: BattleUnit | undefined = undefined;
+    
+    allies.forEach(ally => {
+      const hpPercent = ally.currentHp / ally.character.maxHp;
+      if (hpPercent < lowestHpPercent) {
+        lowestHpPercent = hpPercent;
+        lowestHpAlly = ally;
+      }
+    });
+
+    if (!lowestHpAlly) return false;
+
+    const allyContainer = this.allUnits.get(lowestHpAlly.character.id);
+    if (!allyContainer) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0x00ff88);
+
+    // 使用配置中的 heal 值，如果是百分比则转换，否则直接使用
+    const healAmount = config.heal || 80;
+    lowestHpAlly.currentHp = Math.min(lowestHpAlly.character.maxHp, lowestHpAlly.currentHp + healAmount);
+
+    this.updateHealthBar(lowestHpAlly);
+
+    // 治疗特效
+    const healEffect = this.add.circle(allyContainer.x, allyContainer.y, 30, 0x00ff88, 0.4);
+    this.tweens.add({
+      targets: healEffect,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => healEffect.destroy()
+    });
+
+    // 显示治疗数字
+    const healText = this.add.text(allyContainer.x, allyContainer.y - 30, `+${Math.ceil(healAmount)}`, {
+      fontSize: '18px',
+      color: '#00ff88',
+      fontStyle: 'bold',
+    });
+    this.tweens.add({
+      targets: healText,
+      y: allyContainer.y - 60,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => healText.destroy(),
+    });
+
+    return true;
+  }
+
+  // 冲锋攻击技能
+  private castChargeAttack(
+    caster: BattleUnit,
+    targets: BattleUnit[],
+    casterContainer: Phaser.GameObjects.Container,
+    config: any
+  ): boolean {
+    const target = this.findClosestTarget(caster, targets);
+    if (!target) return false;
+
+    const targetContainer = this.allUnits.get(target.character.id);
+    if (!targetContainer || !targetContainer.active) return false;
+
+    this.showSkillCast(casterContainer, config.name, 0xff4400);
+
+    // 计算冲锋目标位置（接近敌人）
+    const direction = caster.team === 'player' ? 1 : -1;
+    const chargeDistance = config.teleportDistance || 200;
+    let newX = casterContainer.x + chargeDistance * direction;
+    let newY = casterContainer.y;
+
+    // 如果有目标，朝目标位置冲锋
+    if (targetContainer) {
+      const dx = targetContainer.x - casterContainer.x;
+      const dy = targetContainer.y - casterContainer.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > 0) {
+        const moveDistance = Math.min(chargeDistance, distance - 50); // 停在目标附近
+        newX = casterContainer.x + (dx / distance) * moveDistance;
+        newY = casterContainer.y + (dy / distance) * moveDistance;
+      }
+    }
+
+    // 边界检查
+    newX = Math.max(100, Math.min(1100, newX));
+    newY = Math.max(100, Math.min(600, newY));
+
+    // 冲锋动画
+    this.tweens.add({
+      targets: casterContainer,
+      x: newX,
+      y: newY,
+      duration: 300,
+      ease: 'Power2',
+      onUpdate: () => {
+        // 更新位置数据
+        caster.position.x = casterContainer.x;
+        caster.position.y = casterContainer.y;
+      },
+      onComplete: () => {
+        // 检查施法者和目标是否仍然存活
+        if (!caster.isAlive || !casterContainer.active) return;
+        if (!target.isAlive || !targetContainer.active) return;
+
+        // 造成伤害
+        this.dealDamage(target, config.damage || 45, targetContainer);
+
+        // 冲击波特效
+        const shockwave = this.add.circle(casterContainer.x, casterContainer.y, 30, 0xff4400, 0.5);
+        this.tweens.add({
+          targets: shockwave,
+          scaleX: 2,
+          scaleY: 2,
+          alpha: 0,
+          duration: 400,
+          onComplete: () => shockwave.destroy(),
         });
       },
     });
@@ -1486,7 +1914,7 @@ export default class BattleScene extends Phaser.Scene {
       if (distance <= radius) {
         // 造成伤害
         const damage = config.damage || 30;
-        target.currentHp = Math.max(0, target.currentHp - damage);
+        this.dealDamage(target, damage, targetContainer, caster);
         hitCount++;
 
         // 雷电特效
@@ -1576,15 +2004,12 @@ export default class BattleScene extends Phaser.Scene {
 
           if (dist <= (config.areaRadius || 150)) {
             const damage = config.damage || 40;
-            t.currentHp = Math.max(0, t.currentHp - damage);
+            this.dealDamage(t, damage, tc, caster);
             hitCount++;
-
-            this.showDamageNumber(tc, damage);
-
+            
+            // 死亡检查由 dealDamage 后的统一流程处理
             if (t.currentHp <= 0 && t.isAlive) {
-              t.isAlive = false;
-              this.showDeathAnimation(tc);
-              this.allUnits.delete(t.character.id);
+              this.handleUnitDeath(t, caster.character.name);
             }
           }
         });
@@ -1783,15 +2208,12 @@ export default class BattleScene extends Phaser.Scene {
         
         if (angleDiff <= coneAngle / 2) {
           const damage = config.damage || 25;
-          target.currentHp = Math.max(0, target.currentHp - damage);
+          this.dealDamage(target, damage, targetContainer, caster);
           hitCount++;
-
-          this.showDamageNumber(targetContainer, damage);
-
+          
+          // 死亡检查由统一流程处理
           if (target.currentHp <= 0 && target.isAlive) {
-            target.isAlive = false;
-            this.showDeathAnimation(targetContainer);
-            this.allUnits.delete(target.character.id);
+            this.handleUnitDeath(target, caster.character.name);
           }
         }
       }
@@ -1988,9 +2410,7 @@ export default class BattleScene extends Phaser.Scene {
 
         // 造成伤害
         const damage = config.damage || 15;
-        target.currentHp = Math.max(0, target.currentHp - damage);
-
-        this.showDamageNumber(targetContainer, damage);
+        this.dealDamage(target, damage, targetContainer, caster);
 
         // 添加中毒BUFF
         const buffId = config.buffId || 'buff_poison';
@@ -2704,6 +3124,14 @@ export default class BattleScene extends Phaser.Scene {
     const causeText = cause ? ` (${cause})` : '';
     console.log(`💀 [角色死亡] ${teamEmoji} ${unit.character.name} 已阵亡${causeText} 当前HP:${unit.currentHp.toFixed(1)} 位置:(${unit.position.x.toFixed(0)}, ${unit.position.y.toFixed(0)})`);
     
+    // 触发羁绊死亡事件（暂时注释）
+    // if (unit.team === 'player') {
+    //   const aliveTeammates = this.playerUnits
+    //     .filter(u => u.isAlive)
+    //     .map(u => u.character);
+    //   this.bondManager.onCharacterDeath(unit.character, aliveTeammates);
+    // }
+    
     if (container && container.active) {
       console.log(`   └─ 容器有效，开始死亡动画并从Map中移除`);
       this.showDeathAnimation(container);
@@ -2890,7 +3318,17 @@ export default class BattleScene extends Phaser.Scene {
       // 如果伤害为0（火系免疫），跳过
       if (finalBurnDamage === 0) return;
 
-      // 应用伤害
+      // 记录伤害来源（环境伤害）- 在扣除HP之前调用
+      if (unit.team === 'player') {
+        this.recordDamageSource('火焰燃烧', 'environment', finalBurnDamage, unit);
+      }
+      
+      // 记录统计
+      if (unit.stats) {
+        unit.stats.totalDamageTaken += finalBurnDamage;
+      }
+
+      // 应用伤害（在记录之后）
       unit.currentHp = Math.max(0, unit.currentHp - finalBurnDamage);
 
       // 显示燃烧伤害数字（橙色）
@@ -3129,7 +3567,17 @@ export default class BattleScene extends Phaser.Scene {
         // 计算岩浆伤害（考虑大地系抗性）
         const finalDamage = calculateLavaDamage(this.lavaDamage, unit.character.element);
 
-        // 应用伤害
+        // 记录伤害来源（环境伤害）- 在扣除HP之前调用
+        if (unit.team === 'player') {
+          this.recordDamageSource('岩浆喷发', 'environment', finalDamage, unit);
+        }
+        
+        // 记录统计
+        if (unit.stats) {
+          unit.stats.totalDamageTaken += finalDamage;
+        }
+
+        // 应用伤害（在记录之后）
         unit.currentHp = Math.max(0, unit.currentHp - finalDamage);
 
         // 显示伤害数字（红色）

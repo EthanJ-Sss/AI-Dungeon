@@ -10,6 +10,7 @@ export default function HomePage() {
   const prisoners = usePlayerStore((state) => state.prisoners);
   const clearAll = usePlayerStore((state) => state.clearAll);
   const addPrisoner = usePlayerStore((state) => state.addPrisoner);
+  const recruitTickets = usePlayerStore((state) => state.getItemCount('item_recruit_ticket'));
   
   const setScene = useGameStore((state) => state.setScene);
   const battleResult = useGameStore((state) => state.battleResult);
@@ -71,19 +72,33 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
-      <div className="max-w-4xl w-full p-8">
-        {/* 标题和设置按钮 */}
-        <div className="relative mb-12">
-          <h1 className="text-6xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-            AstroCade
-          </h1>
+      {/* 顶部状态栏 */}
+      <div className="fixed top-0 left-0 right-0 bg-slate-800/90 backdrop-blur-sm p-4 flex justify-between items-center z-50 border-b border-slate-700">
+        <div className="text-2xl font-bold text-white">AstroCade</div>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 bg-slate-700 rounded-lg px-4 py-2">
+            <span className="text-3xl">🎫</span>
+            <div>
+              <div className="text-xs text-slate-400">招募券</div>
+              <div className="text-xl font-bold text-blue-300">x{recruitTickets}</div>
+            </div>
+          </div>
           <button
             onClick={() => setScene('settings')}
-            className="absolute top-0 right-0 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition"
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition"
             title="设置"
           >
             ⚙️ 设置
           </button>
+        </div>
+      </div>
+
+      <div className="max-w-4xl w-full p-8 pt-24">
+        {/* 标题 */}
+        <div className="relative mb-12">
+          <h1 className="text-6xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+            主页
+          </h1>
         </div>
 
         {/* 警告提示 */}

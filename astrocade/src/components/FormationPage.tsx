@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { usePlayerStore } from '../store/playerStore';
@@ -7,6 +7,8 @@ import type { Character, Formation, Position } from '../types';
 import levelsData from '../config/levels.json';
 import { loadAllCharacters } from '../utils/characterLoader';
 import { CharacterDetailSidebar } from './CharacterDetailSidebar';
+// import { BondDisplay } from './BondDisplay';
+// import { bondSystem } from '../game/BondSystem';
 
 const allCharactersData = loadAllCharacters();
 
@@ -390,6 +392,20 @@ function FormationPageContent() {
 
   const placedIds = getPlacedCharacterIds();
 
+  // 计算当前阵容的激活羁绊（暂时注释）
+  // const { placedTeam, activatedBonds } = useMemo(() => {
+  //   const team: Character[] = [];
+  //   battlefield.forEach((row, r) => {
+  //     row.forEach((cell, c) => {
+  //       if (cell && isPlayerZone(c) && !cell.id.startsWith('enemy_')) {
+  //         team.push(cell);
+  //       }
+  //     });
+  //   });
+  //   const bonds = team.length > 0 ? bondSystem.checkAndActivateBonds(team) : [];
+  //   return { placedTeam: team, activatedBonds: bonds };
+  // }, [battlefield]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4">
       <div className="max-w-7xl mx-auto">
@@ -476,14 +492,14 @@ function FormationPageContent() {
           </div>
         </div>
 
-        {/* 下方两列：可用角色 + 关卡信息 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        {/* 下方三列：可用角色 + 关卡信息 + 羁绊系统 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           {/* 可用角色 */}
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <h2 className="text-lg font-bold text-white mb-3 text-center">
               📦 可用角色 ({playerCharacters.length})
             </h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
               {playerCharacters.map((char) => (
                 <CharacterCard
                   key={char.id}
@@ -565,6 +581,9 @@ function FormationPageContent() {
               )}
             </div>
           </div>
+
+          {/* 羁绊系统（暂时注释） */}
+          {/* <BondDisplay team={placedTeam} activatedBonds={activatedBonds} /> */}
         </div>
 
         {/* 操作按钮 */}

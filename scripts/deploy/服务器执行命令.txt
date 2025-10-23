@@ -1,0 +1,33 @@
+# ========================================
+# 在服务器上依次执行以下命令
+# ========================================
+
+# 1. 先验证文件是否存在
+ls -la /home/ubuntu/ | grep -E 'dist|部署'
+
+# 2. 赋予脚本执行权限
+chmod +x /home/ubuntu/部署脚本.sh
+
+# 3. 执行部署脚本
+sudo bash /home/ubuntu/部署脚本.sh
+
+# 4. 如果上面的脚本执行成功，检查防火墙状态
+sudo ufw status
+
+# 5. 开放 8888 端口（如果防火墙启用）
+sudo ufw allow 8888/tcp
+sudo ufw reload
+
+# 6. 验证 Nginx 状态
+sudo systemctl status nginx
+
+# 7. 检查端口监听
+sudo netstat -tlnp | grep :8888
+
+# 8. 测试本地访问
+curl -I http://localhost:8888
+
+# ========================================
+# 完成后访问: http://43.173.170.5:8888
+# ========================================
+

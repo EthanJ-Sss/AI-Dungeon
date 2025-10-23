@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "id": "item_recruit_ticket",
+      "name": "招募券",
+      "type": "consumable",
+      "icon": "🎫",
+      "description": "用于招募新英雄，每次招募消耗1张",
+      "stackable": true,
+      "maxStack": 99,
+      "rarity": "common"
+    }
+  ]
+}
+

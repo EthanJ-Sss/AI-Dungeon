@@ -18,6 +18,69 @@ export interface Position {
   y: number;
 }
 
+// ============= 羁绊系统基础类型（需在 Character 之前定义） =============
+
+/** 羁绊类型 */
+export type BondType = 'element' | 'class' | 'faction' | 'rarity' | 'story';
+
+/** 羁绊效果类型 */
+export enum BondEffectType {
+  // 基础属性
+  HP_PERCENT = 'hp_percent',
+  ATTACK_PERCENT = 'attack_percent',
+  DEFENSE_PERCENT = 'defense_percent',
+  
+  // 伤害相关
+  DAMAGE_PERCENT = 'damage_percent',
+  ELEMENT_DAMAGE = 'element_damage',
+  CRIT_RATE = 'crit_rate',
+  CRIT_DAMAGE = 'crit_damage',
+  
+  // 技能相关
+  SKILL_DAMAGE = 'skill_damage',
+  SKILL_CD_REDUCTION = 'skill_cd_reduction',
+  SKILL_RANGE = 'skill_range',
+  
+  // 防御相关
+  DAMAGE_REDUCTION = 'damage_reduction',
+  SHIELD = 'shield',
+  HEAL_EFFECT = 'heal_effect',
+  
+  // 特殊效果
+  MOVE_SPEED = 'move_speed',
+  ATTACK_SPEED = 'attack_speed',
+  DODGE = 'dodge',
+  
+  // 战斗机制
+  REVIVE_CHANCE = 'revive_chance',
+  HP_REGEN = 'hp_regen',
+  COUNTER_ATTACK = 'counter_attack',
+  
+  // 养成向
+  EXP_BONUS = 'exp_bonus',
+  GOLD_BONUS = 'gold_bonus'
+}
+
+/** 羁绊效果目标 */
+export type BondEffectTarget = 'all' | 'tagged' | 'specific';
+
+/** 羁绊Buff（角色身上的） */
+export interface BondBuff {
+  bondId: string;
+  bondName: string;
+  effectType: BondEffectType;
+  value: number;
+  description: string;
+}
+
+/** 故事羁绊关系 */
+export interface StoryBond {
+  bondName: string;
+  relatedCharacters: string[];
+}
+
+// ============= 角色类型定义 =============
+
 /** 角色基础数据 */
 export interface Character {
   id: string;
@@ -35,6 +98,11 @@ export interface Character {
   level?: number;
   exp?: number; // 当前经验值
   expToNext?: number; // 升级所需经验
+  
+  // 羁绊系统（暂时注释，待修复）
+  // bondTags?: string[]; // 羁绊标签列表
+  // storyBonds?: StoryBond[]; // 故事羁绊关系
+  // bondBuffs?: BondBuff[]; // 当前激活的羁绊buff
 }
 
 /** 技能类型 */
@@ -126,6 +194,16 @@ export interface PresetCharacter {
   skillId?: number;
   skills?: string[]; // ✅ 添加：技能ID列表
   passiveSkills?: string[]; // 被动技能ID列表
+  rarity?: CharacterRarity; // 新增：稀有度
+  rarityBonus?: {
+    hpMultiplier: number;
+    attackMultiplier: number;
+    specialBonus?: string;
+  };
+  
+  // 羁绊系统
+  bondTags?: string[]; // 羁绊标签列表
+  storyBonds?: string[]; // 故事羁绊ID列表（简化格式）
 }
 
 /** Debuff实例 */
@@ -177,8 +255,19 @@ export interface BattleUnit {
   debuffs?: DebuffInstance[]; // Debuff列表
   buffs?: BuffInstance[]; // BUFF列表
   shield?: number; // 护盾值（土系被动等）
-  damageDealt?: number; // 本场战斗造成的总伤害
-  damageReceived?: number; // 本场战斗受到的总伤害
+  damageDealt?: number; // 本场战斗造成的总伤害（旧版，保留兼容）
+  damageReceived?: number; // 本场战斗受到的总伤害（旧版，保留兼容）
+  
+  // 新增：详细战斗统计
+  stats?: {
+    totalDamageDealt: number;
+    totalDamageTaken: number;
+    totalHealDone: number;
+    killCount: number;
+    skillUsedCount: number;
+    surviveTime: number;
+    deathTime?: number;
+  };
 }
 
 /** 阵型数据 */
@@ -196,17 +285,182 @@ export interface CharacterLevelConfig {
   damageBonus: number;
 }
 
-// 显式导出所有类型（解决 Vite HMR 缓存问题）
-export type {
-  AttackType,
-  RoleType,
-  ElementType,
-  TeamType,
-  SkillType,
-  TargetType,
-  DebuffType,
-  BuffType,
-};
+// ============= 新增：道具系统类型 =============
+
+/** 角色稀有度 */
+export type CharacterRarity = 'common' | 'rare' | 'epic';
+
+/** 道具类型 */
+export interface Item {
+  id: string;
+  name: string;
+  type: 'consumable' | 'currency' | 'material';
+  icon: string;
+  description: string;
+  stackable: boolean;
+  maxStack: number;
+  rarity: CharacterRarity;
+}
+
+// ============= 新增：招募系统类型 =============
+
+/** 招募概率配置 */
+export interface RarityProbability {
+  common: number;
+  rare: number;
+  epic: number;
+}
+
+/** 保底系统 */
+export interface PitySystem {
+  rareCounter: number;
+  epicCounter: number;
+  lastRareAt: number;
+  lastEpicAt: number;
+}
+
+/** 招募记录 */
+export interface RecruitRecord {
+  timestamp: number;
+  characterId: string;
+  rarity: CharacterRarity;
+  isPity: boolean;
+}
+
+// ============= 新增：战斗统计类型 =============
+
+/** 战斗统计 */
+export interface CharacterBattleStats {
+  characterId: string;
+  characterName: string;
+  element: ElementType;
+  role: RoleType;
+  totalDamageDealt: number;
+  damagePercent: number;
+  killCount: number;
+  skillUsedCount: number;
+  surviveTime: number;
+  totalHealDone?: number;
+  totalDamageTaken?: number;
+}
+
+/** 伤害来源统计 */
+export interface DamageSource {
+  sourceId: string;
+  sourceName: string;
+  sourceType: 'enemy' | 'environment' | 'skill' | 'boss_skill';
+  totalDamageDealt: number;
+  damagePercent: number;
+  killCount: number;
+  killedCharacters: string[];
+  element?: ElementType;
+}
+
+/** 战斗结果数据 */
+export interface BattleResultData {
+  battleResult: 'victory' | 'defeat';
+  battleTime: number;
+  levelId: number;
+  
+  // 胜利数据
+  playerStats?: {
+    characters: CharacterBattleStats[];
+    mvp: CharacterBattleStats;
+    totalDamage: number;
+    teamHpPercent: number;
+  };
+  
+  // 失败数据
+  defeatStats?: {
+    damageSources: DamageSource[];
+    primaryCause: DamageSource;
+    suggestions: string[];
+    surviveTime: number;
+    remainingEnemies: number;
+  };
+  
+  // 奖励
+  rewards: {
+    recruitTickets: number;
+    exp: number;
+  };
+}
+
+// ============= 羁绊系统复杂类型（依赖 Character） =============
+
+/** 羁绊效果 */
+export interface BondEffect {
+  type: BondEffectType;
+  target: BondEffectTarget;
+  value: number;
+  description: string;
+  condition?: string;
+}
+
+/** 羁绊等级配置 */
+export interface BondLevel {
+  level: number;
+  requiredCount: number;
+  effects: BondEffect[];
+}
+
+/** 羁绊配置 */
+export interface BondConfig {
+  id: string;
+  name: string;
+  type: BondType;
+  description: string;
+  
+  // 激活条件
+  activation: {
+    requiredTags: string[];
+    minCount: number;
+    maxCount?: number;
+    exactCharacters?: string[];
+  };
+  
+  // 等级效果
+  levels: BondLevel[];
+  
+  // UI相关
+  ui: {
+    icon: string;
+    color: string;
+    priority: number;
+  };
+}
+
+/** 应用的羁绊效果 */
+export interface AppliedBondEffect {
+  effect: BondEffect;
+  targets: Character[];
+  value: number;
+}
+
+/** 激活的羁绊 */
+export interface ActivatedBond {
+  bond: BondConfig;
+  level: number;
+  triggeredCharacters: Character[];
+  effects: AppliedBondEffect[];
+}
+
+/** 羁绊系统状态 */
+export interface BondSystemState {
+  activatedBonds: ActivatedBond[];
+  bondHistory: {
+    bondId: string;
+    activationCount: number;
+    firstActivated: number;
+  }[];
+  bondAchievements: {
+    allElementBonds: boolean;
+    allClassBonds: boolean;
+    legendary4Element: boolean;
+  };
+}
+
+// 所有羁绊类型已通过 export interface/type/enum 声明时导出，无需重复导出
  
  
  

@@ -159,8 +159,8 @@ npm run build
 ## 📂 项目结构
 
 ```
-AI-Dungeon/
-├── astrocade/                      # 主项目目录
+circletest/
+├── astrocade/                      # 💻 源代码目录
 │   ├── src/
 │   │   ├── components/            # React 组件
 │   │   │   ├── HomePage.tsx       # 主页
@@ -179,8 +179,8 @@ AI-Dungeon/
 │   │   │   ├── gameStore.ts       # 游戏状态
 │   │   │   └── playerStore.ts     # 玩家状态
 │   │   ├── config/                # 游戏配置
-│   │   │   ├── characters.json    # 角色配置
-│   │   │   ├── skills.json        # 技能配置
+│   │   │   ├── characters/        # 角色配置
+│   │   │   ├── skills/            # 技能配置
 │   │   │   ├── levels.json        # 关卡配置
 │   │   │   ├── buffs.json         # Buff 配置
 │   │   │   └── ...
@@ -188,11 +188,56 @@ AI-Dungeon/
 │   │   └── utils/                 # 工具函数
 │   ├── package.json
 │   └── vite.config.ts
-├── volcano-level-design.md        # 火山关卡设计文档
-├── volcano-skill-design.md        # 火山技能设计文档
-├── TodoList.md                    # 开发待办清单
-└── README.md                      # 本文件
+│
+├── docs/                          # 📚 文档中心
+│   ├── design/                    # 设计文档
+│   ├── development/               # 开发文档
+│   ├── completed/                 # 已完成功能文档
+│   ├── testing/                   # 测试文档
+│   ├── guides/                    # 使用指南
+│   ├── archive/                   # 归档文档
+│   └── 📚文档索引.md               # 文档导航
+│
+├── scripts/                       # 🔧 脚本工具
+│   ├── deploy/                    # 部署脚本
+│   ├── dev/                       # 开发脚本
+│   └── maintenance/               # 维护脚本
+│       └── 整理项目目录.ps1       # 目录整理工具
+│
+├── .cursor/                       # Cursor 配置
+│   └── rules/                     # Cursor 规则
+│
+├── 📋项目目录管理规范.md           # 目录管理规范
+└── README.md                      # 本文件（项目主文档）
 ```
+
+### 📚 文档说明
+
+所有文档已按类型整理到 `docs/` 目录：
+
+- **[docs/📚文档索引.md](docs/📚文档索引.md)** - 完整文档导航
+- **[docs/design/](docs/design/)** - 系统设计、功能设计
+- **[docs/development/](docs/development/)** - 开发计划、进度追踪
+- **[docs/completed/](docs/completed/)** - 已完成功能总结
+- **[docs/testing/](docs/testing/)** - 测试指南、测试用例
+- **[docs/guides/](docs/guides/)** - 使用指南、快速入门
+
+### 🔧 脚本工具
+
+所有脚本已整理到 `scripts/` 目录：
+
+- **[scripts/dev/](scripts/dev/)** - 开发相关脚本（启动、构建等）
+- **[scripts/deploy/](scripts/deploy/)** - 部署脚本
+- **[scripts/maintenance/](scripts/maintenance/)** - 维护工具
+
+**目录整理工具**: 运行 `scripts/maintenance/整理项目目录.ps1` 可自动整理项目结构。
+
+### 📋 目录规范
+
+查看 [📋项目目录管理规范.md](📋项目目录管理规范.md) 了解：
+- 文件命名规范
+- 文档分类规则
+- 目录维护指南
 
 ---
 
@@ -329,8 +374,52 @@ AI-Dungeon/
 ## 🐛 已知问题与修复
 
 所有已知 Bug 均已修复，详见：
-- [Bug 修复记录](./Bug修复记录.md)
-- [✅Bug修复总结.md](./✅Bug修复总结.md)
+- [Bug 修复记录](docs/completed/Bug修复记录.md)
+- [✅Bug修复总结.md](docs/completed/✅Bug修复总结.md)
+
+---
+
+## 📂 项目目录管理
+
+本项目使用规范化的目录结构管理文档和脚本。
+
+### 目录结构
+
+```
+📁 circletest/
+├── 🔧一键整理项目目录.bat   ← 一键整理工具
+├── README.md
+├── astrocade/                ← 游戏源码
+├── docs/                     ← 📚 所有文档
+│   ├── completed/            ← ✅ 已完成功能总结
+│   ├── testing/              ← 🎯 测试指南
+│   ├── guides/               ← ⭐ 使用指南
+│   ├── design/               ← 📊 设计文档
+│   └── development/          ← 📝 开发文档
+└── scripts/                  ← 🔧 所有脚本
+    ├── deploy/               ← 部署脚本
+    ├── dev/                  ← 开发脚本
+    └── maintenance/          ← 维护脚本
+```
+
+### 🔧 一键整理工具
+
+如果根目录出现文档混乱，运行：
+
+```bash
+# 双击根目录的批处理文件
+🔧一键整理项目目录.bat
+
+# 或在终端运行
+.\🔧一键整理项目目录.bat
+```
+
+**功能：**
+- ✅ 自动识别文件类型
+- ✅ 移动到正确目录
+- ✅ 安全可靠，可重复运行
+
+**详细说明：** 查看 [📋项目目录管理规范](docs/design/📋项目目录管理规范.md)
 
 ---
 
@@ -344,6 +433,8 @@ AI-Dungeon/
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 打开 Pull Request
 
+**注意：** 请遵循[目录管理规范](docs/design/📋项目目录管理规范.md)，在正确位置创建文档。
+
 ---
 
 ## 📝 更新日志
@@ -356,7 +447,7 @@ AI-Dungeon/
 - 📚 技能训练系统
 - 🎯 新手教程
 
-详细更新日志见 [更新日志.md](./更新日志.md)
+详细更新日志见 [更新日志.md](docs/guides/更新日志.md)
 
 ---
 

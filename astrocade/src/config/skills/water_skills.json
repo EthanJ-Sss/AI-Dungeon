@@ -70,5 +70,44 @@
     "damage": 25,
     "hitCount": 3,
     "element": "water"
+  },
+  {
+    "id": "skill_water_assault",
+    "name": "水流突袭",
+    "description": "快速冲向敌人造成45伤害并减速30%，持续2秒",
+    "cd": 6,
+    "range": 250,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 45,
+    "teleportDistance": 250,
+    "debuffType": "slow",
+    "debuffValue": 30,
+    "debuffDuration": 2,
+    "element": "water"
+  },
+  {
+    "id": "skill_tidal_power",
+    "name": "潮汐之力",
+    "description": "提升自身30%攻击力，持续5秒",
+    "cd": 8,
+    "range": 0,
+    "type": "buff",
+    "targetType": "self",
+    "attackBonus": 1.3,
+    "duration": 5,
+    "element": "water"
+  },
+  {
+    "id": "skill_tsunami_strike",
+    "name": "海啸一击",
+    "description": "强力攻击造成70伤害并击退敌人",
+    "cd": 9,
+    "range": 200,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 70,
+    "knockback": true,
+    "element": "water"
   }
 ]

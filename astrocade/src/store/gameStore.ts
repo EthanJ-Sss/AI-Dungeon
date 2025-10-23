@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Formation, LevelConfig, Character } from '../types';
+import type { Formation, LevelConfig, Character, RarityProbability, PitySystem, RecruitRecord, BattleResultData } from '../types';
 
-type GameScene = 'home' | 'recruit' | 'formation' | 'battle' | 'train' | 'result' | 'levelSelect' | 'start' | 'settings' | 'victory';
+type GameScene = 'home' | 'recruit' | 'formation' | 'battle' | 'train' | 'result' | 'levelSelect' | 'start' | 'settings' | 'victory' | 'battleResult';
 
 interface GameState {
   // 当前场景
@@ -13,6 +13,8 @@ interface GameState {
   playerFormation: Formation[];
   // 战斗结果
   battleResult: 'win' | 'lose' | null;
+  // 战斗结果数据
+  battleResultData: BattleResultData | null;
   // 被击败的敌人（用于俘虏选择）
   defeatedEnemies: Character[];
   // 已解锁的关卡ID
@@ -26,11 +28,25 @@ interface GameState {
   // 新手引导
   tutorialStep: number;
   
+  // 招募系统
+  recruitSystem: {
+    currentProbabilities: RarityProbability;
+    pitySystem: PitySystem;
+    recruitHistory: RecruitRecord[];
+    statistics: {
+      totalRecruits: number;
+      commonCount: number;
+      rareCount: number;
+      epicCount: number;
+    };
+  };
+  
   // Actions
   setScene: (scene: GameScene) => void;
   setLevel: (level: LevelConfig) => void;
   setFormation: (formation: Formation[]) => void;
   setBattleResult: (result: 'win' | 'lose' | null) => void;
+  setBattleResultData: (data: BattleResultData) => void;
   setDefeatedEnemies: (enemies: Character[]) => void;
   unlockLevel: (levelId: number) => void;
   isLevelUnlocked: (levelId: number) => boolean;
@@ -39,6 +55,12 @@ interface GameState {
   incrementStat: (stat: 'battleCount' | 'recruitCount' | 'skillLearnCount') => void;
   completeTutorial: (step: number) => void;
   resetBattle: () => void;
+  
+  // 招募系统Actions
+  updateRecruitProbabilities: () => void;
+  recordRecruit: (characterId: string, rarity: string, isPity: boolean) => void;
+  incrementPityCounter: () => void;
+  resetPityCounter: (rarity: string) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -48,6 +70,7 @@ export const useGameStore = create<GameState>()(
       currentLevel: null,
       playerFormation: [],
       battleResult: null,
+      battleResultData: null,
       defeatedEnemies: [],
       unlockedLevels: [1], // 默认解锁第1关
       completedLevels: [], // 已完成的关卡
@@ -55,6 +78,28 @@ export const useGameStore = create<GameState>()(
       recruitCount: 0,
       skillLearnCount: 0,
       tutorialStep: 0, // 0=未开始, 1=招募, 2=战斗, 3=训练, 4=完成
+      
+      // 招募系统初始状态
+      recruitSystem: {
+        currentProbabilities: {
+          common: 80,
+          rare: 15,
+          epic: 5,
+        },
+        pitySystem: {
+          rareCounter: 0,
+          epicCounter: 0,
+          lastRareAt: 0,
+          lastEpicAt: 0,
+        },
+        recruitHistory: [],
+        statistics: {
+          totalRecruits: 0,
+          commonCount: 0,
+          rareCount: 0,
+          epicCount: 0,
+        },
+      },
 
       setScene: (scene) => set({ currentScene: scene }),
       
@@ -66,6 +111,8 @@ export const useGameStore = create<GameState>()(
       setFormation: (formation) => set({ playerFormation: formation }),
       
       setBattleResult: (result) => set({ battleResult: result }),
+      
+      setBattleResultData: (data) => set({ battleResultData: data }),
       
       setDefeatedEnemies: (enemies) => set({ defeatedEnemies: enemies }),
       
@@ -107,8 +154,99 @@ export const useGameStore = create<GameState>()(
         currentLevel: null,
         playerFormation: [],
         battleResult: null,
+        battleResultData: null,
         defeatedEnemies: [],
       }),
+      
+      // 招募系统方法
+      updateRecruitProbabilities: () => {
+        const state = get();
+        const levelProgress = state.completedLevels.length;
+        
+        // 基础概率
+        const baseCommon = 80;
+        const baseRare = 15;
+        const baseEpic = 5;
+        
+        // 根据关卡进度调整（每通过1关）
+        const levelBonus = Math.min(levelProgress, 10); // 最多10关的加成
+        
+        const common = Math.max(baseCommon - (levelBonus * 4), 25);
+        const rare = Math.min(baseRare + (levelBonus * 2.5), 45);
+        const epic = Math.min(baseEpic + (levelBonus * 1.5), 30);
+        
+        // 归一化
+        const total = common + rare + epic;
+        
+        set((state) => ({
+          recruitSystem: {
+            ...state.recruitSystem,
+            currentProbabilities: {
+              common: (common / total) * 100,
+              rare: (rare / total) * 100,
+              epic: (epic / total) * 100,
+            },
+          },
+        }));
+      },
+      
+      recordRecruit: (characterId, rarity, isPity) => {
+        const state = get();
+        const record: RecruitRecord = {
+          timestamp: Date.now(),
+          characterId,
+          rarity: rarity as any,
+          isPity,
+        };
+        
+        set((state) => ({
+          recruitSystem: {
+            ...state.recruitSystem,
+            recruitHistory: [...state.recruitSystem.recruitHistory, record],
+            statistics: {
+              totalRecruits: state.recruitSystem.statistics.totalRecruits + 1,
+              commonCount: state.recruitSystem.statistics.commonCount + (rarity === 'common' ? 1 : 0),
+              rareCount: state.recruitSystem.statistics.rareCount + (rarity === 'rare' ? 1 : 0),
+              epicCount: state.recruitSystem.statistics.epicCount + (rarity === 'epic' ? 1 : 0),
+            },
+          },
+        }));
+      },
+      
+      incrementPityCounter: () => {
+        set((state) => ({
+          recruitSystem: {
+            ...state.recruitSystem,
+            pitySystem: {
+              ...state.recruitSystem.pitySystem,
+              rareCounter: state.recruitSystem.pitySystem.rareCounter + 1,
+              epicCounter: state.recruitSystem.pitySystem.epicCounter + 1,
+            },
+          },
+        }));
+      },
+      
+      resetPityCounter: (rarity) => {
+        set((state) => {
+          const newPity = { ...state.recruitSystem.pitySystem };
+          
+          if (rarity === 'epic') {
+            newPity.epicCounter = 0;
+            newPity.rareCounter = 0; // 精英也重置稀有计数
+            newPity.lastEpicAt = state.recruitSystem.statistics.totalRecruits;
+          } else if (rarity === 'rare') {
+            newPity.rareCounter = 0;
+            newPity.lastRareAt = state.recruitSystem.statistics.totalRecruits;
+          }
+          
+          return {
+            recruitSystem: {
+              ...state.recruitSystem,
+              pitySystem: newPity,
+            },
+          };
+        });
+      },
     }),
     {
       name: 'game-storage',
@@ -119,6 +257,7 @@ export const useGameStore = create<GameState>()(
         recruitCount: state.recruitCount,
         skillLearnCount: state.skillLearnCount,
         tutorialStep: state.tutorialStep,
+        recruitSystem: state.recruitSystem,
       }),
     }
   )
