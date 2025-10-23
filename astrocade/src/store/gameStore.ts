@@ -4,7 +4,7 @@ import type { Formation, LevelConfig, Character, RarityProbability, PitySystem, 
 import { recruitSystem } from '../utils/recruitSystem';
 import { usePlayerStore } from './playerStore';
 
-type GameScene = 'home' | 'recruit' | 'formation' | 'battle' | 'train' | 'result' | 'levelSelect' | 'start' | 'settings' | 'victory' | 'battleResult';
+type GameScene = 'home' | 'recruit' | 'formation' | 'battle' | 'train' | 'result' | 'levelSelect' | 'start' | 'settings' | 'victory' | 'battleResult' | 'ladderResult' | 'defenseFormation' | 'ladder';
 
 interface GameState {
   // 当前场景

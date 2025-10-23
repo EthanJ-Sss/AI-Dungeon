@@ -1,8 +1,8 @@
 [
   {
     "id": 1,
-    "name": "火山入口",
-    "description": "初入火山，遭遇三只幼年爬行者。它们非常弱小，任意队伍都能轻松获胜！环境燃烧每秒造成3点伤害",
+    "name": "火山入口·训练场",
+    "description": "遭遇训练假人！三个不同类型的假人展示不同技能：攻击型（输出）、防御型（护盾）、突袭型（控制）。击败它们学习基础战术！环境燃烧每秒造成3点伤害",
     "difficulty": "新手",
     "scene": "volcano",
     "unlocked": true,
@@ -11,15 +11,15 @@
     "lavaBlocks": [],
     "enemies": [
       {
-        "characterId": "monster_weak_crawler",
+        "characterId": "monster_training_dummy_attack",
         "position": { "x": 0, "y": 0 }
       },
       {
-        "characterId": "monster_weak_crawler",
+        "characterId": "monster_training_dummy_defense",
         "position": { "x": 1, "y": 1 }
       },
       {
-        "characterId": "monster_weak_crawler",
+        "characterId": "monster_training_dummy_control",
         "position": { "x": 2, "y": 2 }
       }
     ]
@@ -110,12 +110,12 @@
   {
     "id": 5,
     "name": "火山领主的挑战",
-    "description": "👑终极Boss战👑 火山领主·伊格尼斯拥有炼狱波动和熔岩柱两大毁灭技能！带上最强队伍，击败他！环境燃烧每秒造成20点伤害",
+    "description": "👑终极Boss战👑 火山领主·伊格尼斯拥有炼狱波动和熔岩柱两大毁灭技能！带上最强队伍，击败他！环境燃烧每秒造成15点伤害",
     "difficulty": "Boss",
     "scene": "volcano",
     "unlocked": false,
-    "duration": 90,
-    "burnDamage": 20,
+    "duration": 70,
+    "burnDamage": 15,
     "lavaBlocks": [
       { "row": 1, "col": 5 },
       { "row": 2, "col": 4 },

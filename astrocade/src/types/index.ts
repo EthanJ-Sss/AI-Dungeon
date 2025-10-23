@@ -461,24 +461,58 @@ export interface BondSystemState {
 }
 
 // 所有羁绊类型已通过 export interface/type/enum 声明时导出，无需重复导出
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+
+// ============= 异步对战擂台系统类型 =============
+
+/** 阵容快照中的角色单位 */
+export interface SnapshotUnit {
+  position: { col: number; row: number };
+  characterId: string;
+  characterName: string;
+  element: ElementType;
+  role: RoleType;
+  level: number;
+  maxHp: number;
+  currentAtk: number;
+}
+
+/** 阵容快照 */
+export interface FormationSnapshot {
+  snapshotId: string;
+  playerId: string;
+  createTime: string;
+  totalPower: number;
+  units: SnapshotUnit[];
+}
+
+/** 玩家擂台数据 */
+export interface PlayerLadderData {
+  playerId: string;
+  playerName: string;
+  currentRank: number | null; // 1-30或null表示未上榜
+  highestRank: number | null;
+  totalChallenges: number;
+  totalWins: number;
+  totalLosses: number;
+  totalDefenses: number;
+  defenseWins: number;
+  defenseLosses: number;
+  dailyChallengesUsed: number;
+  dailyChallengesMax: number;
+  lastChallengeResetTime: string;
+  defenseFormationSnapshot: FormationSnapshot | null;
+  lastActiveTime: string;
+}
+
+/** 挑战记录 */
+export interface ChallengeRecord {
+  recordId: string;
+  challengeTime: string;
+  attackerId: string;
+  defenderId: string;
+  attackerRankBefore: number | null;
+  defenderRankBefore: number;
+  result: 'attacker_win' | 'defender_win';
+  battleDuration: number;
+}
+

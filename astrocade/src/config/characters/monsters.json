@@ -13,6 +13,45 @@
     "description": "刚孵化不久的幼年爬行生物，战斗力很弱"
   },
   {
+    "id": "monster_training_dummy_attack",
+    "name": "训练假人·攻击型",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "neutral",
+    "hp": 160,
+    "damage": 16,
+    "moveSpeed": 26,
+    "skills": ["monster_skill_weak_claw"],
+    "passiveSkills": [],
+    "description": "专注于攻击的训练假人，教导玩家基础攻击技能"
+  },
+  {
+    "id": "monster_training_dummy_defense",
+    "name": "训练假人·防御型",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "earth",
+    "hp": 200,
+    "damage": 12,
+    "moveSpeed": 22,
+    "skills": ["monster_skill_magma_shield"],
+    "passiveSkills": [],
+    "description": "擅长防御的训练假人，教导玩家防御技能的重要性"
+  },
+  {
+    "id": "monster_training_dummy_control",
+    "name": "训练假人·突袭型",
+    "role": "warrior",
+    "attackType": "melee",
+    "element": "fire",
+    "hp": 170,
+    "damage": 14,
+    "moveSpeed": 28,
+    "skills": ["monster_skill_lava_jump"],
+    "passiveSkills": [],
+    "description": "具有突袭能力的训练假人，教导玩家控制技能的价值"
+  },
+  {
     "id": "monster_lava_crawler_001",
     "name": "火山爬行者·甲",
     "role": "warrior",
@@ -161,7 +200,7 @@
     "role": "boss",
     "attackType": "melee",
     "element": "fire",
-    "hp": 1000,
+    "hp": 950,
     "damage": 48,
     "moveSpeed": 32,
     "skills": [
