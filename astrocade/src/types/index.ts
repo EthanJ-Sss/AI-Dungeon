@@ -99,10 +99,10 @@ export interface Character {
   exp?: number; // 当前经验值
   expToNext?: number; // 升级所需经验
   
-  // 羁绊系统（暂时注释，待修复）
-  // bondTags?: string[]; // 羁绊标签列表
-  // storyBonds?: StoryBond[]; // 故事羁绊关系
-  // bondBuffs?: BondBuff[]; // 当前激活的羁绊buff
+  // 羁绊系统
+  bondTags?: string[]; // 羁绊标签列表
+  storyBonds?: StoryBond[]; // 故事羁绊关系
+  bondBuffs?: BondBuff[]; // 当前激活的羁绊buff
 }
 
 /** 技能类型 */

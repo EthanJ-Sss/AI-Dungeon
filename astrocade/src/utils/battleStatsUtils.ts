@@ -159,3 +159,4 @@ function generateSuggestions(sources: DamageSource[], battleTime: number): strin
   return suggestions.slice(0, 3);
 }
 
+

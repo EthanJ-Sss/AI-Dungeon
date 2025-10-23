@@ -24,3 +24,4 @@ export function getItemIcon(itemId: string): string {
   return item ? item.icon : '📦';
 }
 
+

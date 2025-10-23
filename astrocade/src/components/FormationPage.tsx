@@ -215,7 +215,7 @@ function CharacterCard({ character, isPlaced }: CharacterCardProps) {
 
   return (
     <div
-      ref={drag}
+      ref={drag as any}
       className={`
         bg-slate-700 rounded-lg p-2 border-2 border-slate-600
         ${!isPlaced && 'cursor-move hover:border-blue-500 hover:scale-105'}

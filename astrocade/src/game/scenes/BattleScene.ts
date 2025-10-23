@@ -340,7 +340,7 @@ export default class BattleScene extends Phaser.Scene {
     if (gameState.currentLevel) {
       gameState.currentLevel.enemies.forEach((enemy, index) => {
         // 从新的角色配置文件读取敌人角色数据
-        const presetChar = allCharactersData.find(c => c.id === enemy.characterId) as PresetCharacter;
+        const presetChar = allCharactersData.find(c => c.id === (enemy.characterId as any)) as PresetCharacter;
         
         if (!presetChar) {
           console.warn(`[BattleScene] 找不到角色配置 ID: ${enemy.characterId}`);
@@ -1387,7 +1387,7 @@ export default class BattleScene extends Phaser.Scene {
             }
           default:
             // 处理 buff 类型和其他未知类型
-            if (config.type === 'buff') {
+            if ((config.type as any) === 'buff') {
               return this.castShield(caster, casterContainer, config);
             }
             console.warn(`[BattleScene] 未实现的技能: ${config.id}, type: ${config.type}`);

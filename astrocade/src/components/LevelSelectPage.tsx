@@ -10,7 +10,7 @@ export default function LevelSelectPage() {
   const isLevelCompleted = useGameStore((state) => state.isLevelCompleted);
   const characters = usePlayerStore((state) => state.characters);
 
-  const levels = levelsData as LevelConfig[];
+  const levels = levelsData as unknown as LevelConfig[];
 
   const handleSelectLevel = (level: LevelConfig) => {
     const unlocked = isLevelUnlocked(level.id);

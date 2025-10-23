@@ -178,3 +178,4 @@ export const BondTriggerNotification: React.FC<BondTriggerNotificationProps> = (
 
 export default BattleBondDisplay;
 
+
