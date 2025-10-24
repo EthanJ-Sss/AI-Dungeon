@@ -1,18 +1,15 @@
 import { useState } from 'react';
-import { checkPlayerNameAvailable, registerPlayer } from '../services/ladderApi';
-import { isSupabaseConfigured } from '../services/supabase';
 
 interface Props {
-  onRegisterSuccess: (playerName: string, playerId: string) => void;
+  onRegisterSuccess: (playerName: string) => void;
   onSkip?: () => void; // 允许跳过，使用本地模式
+  isOnlineMode?: boolean; // 是否在线模式
 }
 
-export default function PlayerRegisterModal({ onRegisterSuccess, onSkip }: Props) {
+export default function PlayerRegisterModal({ onRegisterSuccess, onSkip, isOnlineMode = false }: Props) {
   const [playerName, setPlayerName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const isOnlineMode = isSupabaseConfigured();
   
   const handleSubmit = async () => {
     // 验证昵称
@@ -37,29 +34,13 @@ export default function PlayerRegisterModal({ onRegisterSuccess, onSkip }: Props
     setError('');
     
     try {
-      if (isOnlineMode) {
-        // 在线模式：注册到 Supabase
-        console.log('[注册] 检查昵称可用性:', playerName);
-        
-        const available = await checkPlayerNameAvailable(playerName);
-        if (!available) {
-          setError('昵称已被占用，请换一个');
-          setLoading(false);
-          return;
-        }
-        
-        console.log('[注册] 注册新玩家:', playerName);
-        const player = await registerPlayer(playerName);
-        
-        console.log('[注册] 注册成功:', player);
-        onRegisterSuccess(player.playerName, player.playerId);
-      } else {
-        // 本地模式：直接使用昵称
-        console.log('[注册] 本地模式，使用昵称:', playerName);
-        // 生成一个本地 ID
-        const localId = `local_${Date.now()}`;
-        onRegisterSuccess(playerName, localId);
-      }
+      // 统一处理：保存昵称到本地，由 Store 决定是否同步到服务器
+      console.log('[注册] 使用昵称:', playerName, isOnlineMode ? '(在线模式)' : '(本地模式)');
+      
+      // 模拟网络延迟
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      onRegisterSuccess(playerName);
     } catch (err: any) {
       console.error('[注册] 注册失败:', err);
       setError(err.message || '注册失败，请稍后重试');

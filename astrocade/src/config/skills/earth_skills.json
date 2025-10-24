@@ -127,5 +127,89 @@
     "debuffType": "stun",
     "debuffDuration": 0.8,
     "element": "earth"
+  },
+  {
+    "id": "skill_rock_shield",
+    "name": "岩石之盾",
+    "description": "召唤岩石之盾获得150点护盾",
+    "cd": 9,
+    "range": 0,
+    "type": "buff",
+    "targetType": "self",
+    "shield": 150,
+    "duration": 5,
+    "element": "earth"
+  },
+  {
+    "id": "skill_earth_spike",
+    "name": "大地尖刺",
+    "description": "从地面召唤尖刺造成58伤害",
+    "cd": 6,
+    "range": 300,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 58,
+    "element": "earth"
+  },
+  {
+    "id": "skill_rock_shot",
+    "name": "岩石射击",
+    "description": "射出岩石造成52伤害",
+    "cd": 6,
+    "range": 350,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 52,
+    "element": "earth"
+  },
+  {
+    "id": "skill_earth_shatter",
+    "name": "大地粉碎",
+    "description": "粉碎大地造成范围伤害",
+    "cd": 10,
+    "range": 200,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 70,
+    "areaRadius": 180,
+    "element": "earth"
+  },
+  {
+    "id": "skill_rock_barrier",
+    "name": "岩石壁垒",
+    "description": "召唤岩石壁垒保护自己",
+    "cd": 10,
+    "range": 0,
+    "type": "buff",
+    "targetType": "self",
+    "shield": 130,
+    "duration": 6,
+    "element": "earth"
+  },
+  {
+    "id": "skill_thorn_entangle",
+    "name": "荆棘缠绕",
+    "description": "用荆棘缠绕敌人造成伤害和减速",
+    "cd": 8,
+    "range": 250,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 60,
+    "debuffType": "slow",
+    "debuffValue": 50,
+    "debuffDuration": 3,
+    "element": "earth"
+  },
+  {
+    "id": "skill_nature_wrath",
+    "name": "自然之怒",
+    "description": "释放自然之怒造成范围伤害",
+    "cd": 11,
+    "range": 300,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 75,
+    "areaRadius": 200,
+    "element": "earth"
   }
 ]

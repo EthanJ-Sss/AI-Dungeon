@@ -163,5 +163,58 @@
     "debuffValue": 40,
     "debuffDuration": 2,
     "element": "ice"
+  },
+  {
+    "id": "skill_frost_strike",
+    "name": "冰霜打击",
+    "description": "冰霜打击敌人造成55伤害并减速",
+    "cd": 6,
+    "range": 150,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 55,
+    "debuffType": "slow",
+    "debuffValue": 40,
+    "debuffDuration": 2,
+    "element": "ice"
+  },
+  {
+    "id": "skill_absolute_zero",
+    "name": "绝对零度",
+    "description": "释放绝对零度冻结范围内所有敌人",
+    "cd": 12,
+    "range": 250,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 70,
+    "areaRadius": 200,
+    "debuffType": "stun",
+    "debuffDuration": 2,
+    "element": "ice"
+  },
+  {
+    "id": "skill_frozen_strike",
+    "name": "冰冻打击",
+    "description": "强力冰冻打击造成65伤害并冻结",
+    "cd": 8,
+    "range": 150,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 65,
+    "debuffType": "stun",
+    "debuffDuration": 1.5,
+    "element": "ice"
+  },
+  {
+    "id": "skill_ice_barrier",
+    "name": "冰霜壁垒",
+    "description": "召唤冰霜壁垒获得护盾",
+    "cd": 9,
+    "range": 0,
+    "type": "buff",
+    "targetType": "self",
+    "shield": 120,
+    "duration": 5,
+    "element": "ice"
   }
 ]

@@ -109,5 +109,62 @@
     "damage": 70,
     "knockback": true,
     "element": "water"
+  },
+  {
+    "id": "skill_water_surge",
+    "name": "水流冲击",
+    "description": "释放水流冲击敌人造成55伤害",
+    "cd": 6,
+    "range": 250,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 55,
+    "element": "water"
+  },
+  {
+    "id": "skill_healing_spring",
+    "name": "治疗之泉",
+    "description": "召唤治疗之泉恢复友军38%最大生命值",
+    "cd": 8,
+    "range": 350,
+    "type": "heal",
+    "targetType": "ally",
+    "heal": 38,
+    "element": "water"
+  },
+  {
+    "id": "skill_water_burst",
+    "name": "水流爆发",
+    "description": "水元素爆发造成60伤害",
+    "cd": 7,
+    "range": 300,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 60,
+    "element": "water"
+  },
+  {
+    "id": "skill_ocean_blessing",
+    "name": "海洋祝福",
+    "description": "给予友军海洋祝福，提升防御",
+    "cd": 10,
+    "range": 300,
+    "type": "buff",
+    "targetType": "ally",
+    "shield": 80,
+    "duration": 5,
+    "element": "water"
+  },
+  {
+    "id": "skill_water_tornado",
+    "name": "水龙卷",
+    "description": "召唤水龙卷造成范围伤害",
+    "cd": 11,
+    "range": 300,
+    "type": "damage",
+    "targetType": "enemy",
+    "damage": 70,
+    "areaRadius": 180,
+    "element": "water"
   }
 ]

@@ -7,8 +7,7 @@ import commonChars from '../config/characters/common.json';
 import monsterChars from '../config/characters/monsters.json';
 
 /**
- * 加载所有角色配置
- * 从各个元素的配置文件中合并所有角色（包括普通角色和怪物）
+ * 加载所有角色配置（包括怪物，用于战斗系统）
  */
 export function loadAllCharacters() {
   return [
@@ -19,6 +18,20 @@ export function loadAllCharacters() {
     ...earthChars,
     ...neutralChars,
     ...monsterChars
+  ];
+}
+
+/**
+ * 加载可招募角色配置（不包括怪物，用于招募系统）
+ */
+export function loadRecruitableCharacters() {
+  return [
+    ...commonChars,
+    ...fireChars,
+    ...waterChars,
+    ...iceChars,
+    ...earthChars,
+    ...neutralChars
   ];
 }
 

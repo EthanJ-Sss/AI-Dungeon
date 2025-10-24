@@ -70,6 +70,19 @@ export const useLadderStore = create<LadderState>()(
         // 生成模拟玩家数据
         const mockPlayers = generateMockLadderPlayers();
         
+        // 🔒 验证每个玩家的角色数（不超过3个）
+        mockPlayers.forEach((player, idx) => {
+          const unitCount = player.defenseFormationSnapshot?.units.length || 0;
+          if (unitCount > 3) {
+            console.error(`❌ 错误：排名${idx+1}的玩家有${unitCount}个角色！应该最多3个`);
+            // 强制截取前3个
+            if (player.defenseFormationSnapshot) {
+              player.defenseFormationSnapshot.units = player.defenseFormationSnapshot.units.slice(0, 3);
+              console.log(`✂️ 已强制截取为3个角色`);
+            }
+          }
+        });
+        
         // 创建当前玩家数据（未上榜）
         const myData = generateMyInitialLadderData('我');
         
@@ -80,7 +93,7 @@ export const useLadderStore = create<LadderState>()(
           challengeHistory: []
         });
         
-        console.log('[擂台] 初始化完成，生成30名模拟玩家');
+        console.log('[擂台] 初始化完成，生成30名模拟玩家，已验证角色数');
       },
       
       checkDailyReset: () => {

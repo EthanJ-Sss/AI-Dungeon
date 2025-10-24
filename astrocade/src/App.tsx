@@ -10,7 +10,7 @@ import VictoryPage from './components/VictoryPage';
 import BattleResultPage from './components/BattleResultPage';
 import LadderPage from './components/LadderPage';
 import LadderResultPage from './components/LadderResultPage';
-// import DefenseFormationPage from './components/DefenseFormationPage'; // Removed - causing build errors
+import DefenseFormationPage from './components/DefenseFormationPage';
 import PhaserGame from './components/PhaserGame';
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
       {currentScene === 'battleResult' && <BattleResultPage />}
       {currentScene === 'ladder' && <LadderPage />}
       {currentScene === 'ladderResult' && <LadderResultPage />}
-      {/* {currentScene === 'defenseFormation' && <DefenseFormationPage />} */}
+      {currentScene === 'defenseFormation' && <DefenseFormationPage />}
       {currentScene === 'battle' && (
         <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center">
           <PhaserGame onGameEnd={handleBattleEnd} />

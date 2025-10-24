@@ -1,0 +1,21 @@
+{
+  "name": "astrocade-ladder-server",
+  "version": "1.0.0",
+  "description": "异步对战系统后端 API - 使用 JSON 文件存储",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["ladder", "pvp", "game"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
+

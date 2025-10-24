@@ -1,5 +1,5 @@
 import type { PresetCharacter, CharacterRarity, RarityProbability, PitySystem } from '../types';
-import { loadAllCharacters } from './characterLoader';
+import { loadRecruitableCharacters } from './characterLoader';
 import recruitProgressConfig from '../config/recruitProgressConfig.json';
 
 const RARE_PITY = recruitProgressConfig.pitySystem.rare.count;
@@ -9,7 +9,7 @@ export class RecruitSystem {
   private allCharacters: PresetCharacter[];
   
   constructor() {
-    this.allCharacters = loadAllCharacters() as PresetCharacter[];
+    this.allCharacters = loadRecruitableCharacters() as PresetCharacter[];
   }
   
   /**

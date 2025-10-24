@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>强制刷新擂台数据</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-align: center;
+        }
+        
+        .description {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info-box li {
+            padding: 8px 0;
+            color: #555;
+        }
+        
+        .info-box li::before {
+            content: "✅ ";
+            margin-right: 8px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 16px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            color: #856404;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 强制刷新擂台数据</h1>
+        
+        <div class="description">
+            点击下方按钮清除所有擂台缓存数据，<br>
+            重新生成<strong>极低难度</strong>的对手（绝对不超过3个角色）
+        </div>
+        
+        <div class="info-box">
+            <h3>📋 新配置特点</h3>
+            <ul>
+                <li>所有对手严格限制<strong>3个角色</strong></li>
+                <li>第1名战力：~700（原5000，降低86%）</li>
+                <li>第30名战力：~250（原2500，降低90%）</li>
+                <li>所有角色固定<strong>1级</strong></li>
+                <li>角色血量和攻击大幅降低</li>
+            </ul>
+        </div>
+        
+        <button onclick="clearAllData()">
+            🗑️ 清除所有缓存并刷新
+        </button>
+        
+        <button onclick="openGameInNewTab()" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            🎮 打开游戏
+        </button>
+        
+        <div id="result" class="result"></div>
+        
+        <div class="warning">
+            ⚠️ 注意：清除缓存后，你在本地的擂台进度会重置<br>
+            （包括排名、战绩等）
+        </div>
+    </div>
+    
+    <script>
+        function clearAllData() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // 清除所有 localStorage
+                localStorage.clear();
+                
+                // 清除所有 sessionStorage
+                sessionStorage.clear();
+                
+                // 尝试清除 IndexedDB（如果有的话）
+                if (window.indexedDB) {
+                    indexedDB.databases().then(databases => {
+                        databases.forEach(db => {
+                            if (db.name) {
+                                indexedDB.deleteDatabase(db.name);
+                            }
+                        });
+                    });
+                }
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                    <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">
+                        清除成功！
+                    </div>
+                    <div>
+                        已清除所有缓存数据<br>
+                        <strong>3秒后自动刷新页面...</strong>
+                    </div>
+                `;
+                
+                // 3秒后刷新页面
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
+                    <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">
+                        清除失败
+                    </div>
+                    <div>
+                        ${error.message}<br>
+                        请尝试手动清除浏览器缓存
+                    </div>
+                `;
+            }
+        }
+        
+        function openGameInNewTab() {
+            // 先清除缓存
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+            } catch (e) {
+                console.warn('清除缓存失败', e);
+            }
+            
+            // 在新标签页打开游戏
+            window.open('/', '_blank');
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 10px;">🎮</div>
+                <div style="font-size: 18px;">
+                    已清除缓存并在新标签页打开游戏！<br>
+                    现在可以看到最新的低难度配置了
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
+
