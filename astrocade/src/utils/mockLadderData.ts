@@ -95,7 +95,7 @@ function generateMockFormation(playerId: string, rank: number): FormationSnapsho
 export function generateMockLadderPlayers(): PlayerLadderData[] {
   return Array.from({ length: 30 }, (_, i) => {
     const rank = i + 1;
-    const playerId = `mock_player_${rank}`;
+    const playerId = `preset_npc_${rank}_${Date.now()}`; // 使用更明确的前缀避免冲突
     const playerName = MOCK_PLAYER_NAMES[i];
     
     // 基于排名生成战绩

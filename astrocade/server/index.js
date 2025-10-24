@@ -20,16 +20,121 @@ const CHALLENGES_FILE = path.join(DATA_DIR, 'challenges.json');
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// 🔧 生成预设NPC数据
+function generatePresetNPCs() {
+  const npcs = [];
+  for (let rank = 1; rank <= 30; rank++) {
+    // 根据排名计算战力
+    const basePower = 750 - (rank * 15);
+    const variance = 30;
+    const totalPower = Math.max(200, basePower + Math.floor(Math.random() * variance * 2) - variance);
+    
+    const npc = {
+      id: `preset_npc_${rank}`,
+      playerName: `擂主${rank}号`,
+      currentRank: rank,
+      highestRank: rank,
+      totalChallenges: 0,
+      totalWins: 0,
+      totalLosses: 0,
+      totalDefenses: 0,
+      defenseWins: 0,
+      defenseLosses: 0,
+      defenseFormation: {
+        timestamp: new Date().toISOString(),
+        totalPower: totalPower,
+        units: [
+          {
+            characterId: `npc_${rank}_char_1`,
+            name: `战士${rank}_1`,
+            level: 1,
+            position: { col: 0, row: 1 },
+            maxHp: Math.floor(totalPower * 0.4),
+            currentHp: Math.floor(totalPower * 0.4),
+            attack: Math.floor(totalPower * 0.25),
+            defense: 50,
+            speed: 100,
+            role: 'warrior',
+            rarity: 'common',
+            moveSpeed: 2,
+            attackType: 'melee',
+            skills: [],
+            passiveSkills: []
+          },
+          {
+            characterId: `npc_${rank}_char_2`,
+            name: `射手${rank}_2`,
+            level: 1,
+            position: { col: 2, row: 1 },
+            maxHp: Math.floor(totalPower * 0.3),
+            currentHp: Math.floor(totalPower * 0.3),
+            attack: Math.floor(totalPower * 0.3),
+            defense: 30,
+            speed: 120,
+            role: 'archer',
+            rarity: 'common',
+            moveSpeed: 2,
+            attackType: 'ranged',
+            skills: [],
+            passiveSkills: []
+          },
+          {
+            characterId: `npc_${rank}_char_3`,
+            name: `法师${rank}_3`,
+            level: 1,
+            position: { col: 1, row: 2 },
+            maxHp: Math.floor(totalPower * 0.25),
+            currentHp: Math.floor(totalPower * 0.25),
+            attack: Math.floor(totalPower * 0.35),
+            defense: 20,
+            speed: 90,
+            role: 'mage',
+            rarity: 'common',
+            moveSpeed: 1.5,
+            attackType: 'ranged',
+            skills: [],
+            passiveSkills: []
+          }
+        ]
+      },
+      createdAt: new Date().toISOString(),
+      lastActiveTime: new Date().toISOString(),
+    };
+    npcs.push(npc);
+  }
+  return npcs;
+}
+
 // 确保数据目录和文件存在
 async function initDataFiles() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
     
     // 初始化玩家文件
+    let needInitNPCs = false;
     try {
       await fs.access(PLAYERS_FILE);
+      // 检查是否需要添加预设NPC
+      const data = await fs.readFile(PLAYERS_FILE, 'utf-8');
+      const players = JSON.parse(data);
+      const npcCount = players.filter(p => p.id.startsWith('preset_npc_')).length;
+      if (npcCount === 0) {
+        needInitNPCs = true;
+        console.log('⚠️ 检测到没有预设NPC，将添加30个预设NPC');
+      }
     } catch {
+      needInitNPCs = true;
       await fs.writeFile(PLAYERS_FILE, JSON.stringify([], null, 2));
+    }
+    
+    // 如果需要，添加预设NPC
+    if (needInitNPCs) {
+      const data = await fs.readFile(PLAYERS_FILE, 'utf-8');
+      const players = JSON.parse(data);
+      const npcs = generatePresetNPCs();
+      const allPlayers = [...npcs, ...players];
+      await fs.writeFile(PLAYERS_FILE, JSON.stringify(allPlayers, null, 2));
+      console.log('✅ 已添加30个预设NPC到排行榜');
     }
     
     // 初始化挑战记录文件
@@ -220,24 +325,50 @@ app.post('/api/challenge', async (req, res) => {
       attacker.totalWins += 1;
       defender.defenseLosses += 1;
       
-      // 更新排名：挑战者取代防守者
+      // 🔧 修复排名更新逻辑
       attackerNewRank = defenderRankBefore;
       
-      // 防守者及其后的玩家排名+1
-      players.forEach((p, idx) => {
-        if (idx !== attackerIndex && p.currentRank !== null && p.currentRank >= defenderRankBefore) {
-          if (p.currentRank < 30) {
+      // 场景1：榜外玩家挑战上榜
+      if (attackerRankBefore === null) {
+        // 挑战者取代防守者排名
+        attacker.currentRank = defenderRankBefore;
+        
+        // 防守者及其后所有玩家排名+1
+        players.forEach((p, idx) => {
+          if (idx !== attackerIndex && p.currentRank !== null && p.currentRank >= defenderRankBefore) {
             p.currentRank += 1;
             affectedCount++;
-          } else if (p.currentRank === 30) {
-            p.currentRank = null; // 挤出榜单
+            // 第31名被挤出榜单
+            if (p.currentRank > 30) {
+              p.currentRank = null;
+            }
           }
-        }
-      });
-      
-      defenderNewRank = defenderRankBefore + 1;
-      attacker.currentRank = attackerNewRank;
-      defender.currentRank = defenderNewRank;
+        });
+        
+        defenderNewRank = defenderRankBefore + 1;
+      }
+      // 场景2：榜内玩家向上挑战
+      else if (attackerRankBefore > defenderRankBefore) {
+        // 挑战者取代防守者排名
+        attacker.currentRank = defenderRankBefore;
+        
+        // 原排名在[defenderRankBefore, attackerRankBefore)之间的玩家排名+1
+        players.forEach((p, idx) => {
+          if (idx !== attackerIndex && p.currentRank !== null && 
+              p.currentRank >= defenderRankBefore && p.currentRank < attackerRankBefore) {
+            p.currentRank += 1;
+            affectedCount++;
+          }
+        });
+        
+        defenderNewRank = defenderRankBefore + 1;
+      }
+      // 场景3：不允许向下挑战
+      else {
+        console.warn('[Challenge] 不允许向下挑战');
+        attacker.currentRank = attackerRankBefore; // 保持不变
+        defenderNewRank = defenderRankBefore;
+      }
       
       // 更新最高排名
       if (attacker.highestRank === null || attackerNewRank < attacker.highestRank) {

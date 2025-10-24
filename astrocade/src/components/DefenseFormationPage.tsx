@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { useLadderStore } from '../store/ladderStore';
+import { useLadderStore } from '../store/ladderStoreSimple'; // 🔧 使用 ladderStoreSimple
 import { usePlayerStore } from '../store/playerStore';
 import type { Character, FormationSnapshot, SnapshotUnit } from '../types';
 import { calculateTeamPower } from '../utils/teamPowerCalculator';
@@ -75,7 +75,7 @@ export default function DefenseFormationPage() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selectedCharacters.length === 0) {
       alert('请至少选择一个角色！');
       return;
@@ -119,11 +119,15 @@ export default function DefenseFormationPage() {
       }),
     };
 
-    // 保存到 Store
-    updateDefenseFormation(snapshot);
-    
-    alert('防守阵容已保存！');
-    setScene('ladder');
+    // 🔧 保存到 Store（异步）
+    try {
+      await updateDefenseFormation(snapshot);
+      alert('防守阵容已保存！');
+      setScene('ladder');
+    } catch (error) {
+      console.error('[DefenseFormation] 保存失败:', error);
+      alert('保存失败，请重试');
+    }
   };
 
   const handleCancel = () => {

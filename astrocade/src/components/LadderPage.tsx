@@ -27,20 +27,22 @@ export default function LadderPage() {
     const init = async () => {
       setIsInitializing(true);
       await initializeLadder();
-      setIsInitializing(false);
       
       // 检查是否需要注册
       const savedPlayerName = localStorage.getItem('ladder_player_name');
-      if (!savedPlayerName) {
+      if (!savedPlayerName || !myLadderData) {
+        // 没有保存的昵称，或者没有玩家数据，显示注册弹窗
         setShowRegisterModal(true);
       }
+      
+      setIsInitializing(false);
     };
     
     init();
     
     // 🔧 修复：每次进入页面时滚动到顶部
     window.scrollTo({ top: 0, behavior: 'auto' });
-  }, [initializeLadder]);
+  }, []); // 移除依赖，只在首次加载时初始化
   
   const handleRegisterSuccess = async (playerName: string) => {
     console.log('[LadderPage] 玩家注册成功:', playerName);
@@ -52,6 +54,13 @@ export default function LadderPage() {
     try {
       await checkOrRegisterPlayer(playerName);
       setShowRegisterModal(false);
+      
+      // 🎯 注册成功后，引导玩家设置防守阵容
+      setTimeout(() => {
+        if (confirm('注册成功！\n\n是否立即设置防守阵容？\n（设置后才能挑战其他玩家）')) {
+          setScene('defenseFormation');
+        }
+      }, 500);
     } catch (error) {
       console.error('[LadderPage] 注册失败:', error);
       alert('注册失败，请重试');
@@ -152,7 +161,7 @@ export default function LadderPage() {
   // 无限挑战模式 - 不再限制次数
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="fixed inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white overflow-y-auto">
       {/* 顶部返回按钮 */}
       <div className="fixed top-4 left-4 z-50">
         <button
@@ -163,7 +172,7 @@ export default function LadderPage() {
         </button>
       </div>
       
-      <div className="container mx-auto px-4 py-8 pt-24 pb-16">
+      <div className="container mx-auto px-4 py-8 pt-20 pb-24">
         {/* 标题 */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-2">⚔️ 擂台竞技 ⚔️</h1>
@@ -223,8 +232,17 @@ export default function LadderPage() {
             </button>
           </div>
           {!myLadderData.defenseFormationSnapshot && (
-            <div className="mt-4 text-yellow-400 text-sm">
-              ⚠️ 您还未设置防守阵容，请先设置后再挑战！
+            <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+              <div className="text-yellow-400 font-bold mb-1">⚠️ 重要提示</div>
+              <div className="text-yellow-300 text-sm mb-2">
+                您还未设置防守阵容！设置后才能挑战其他玩家。
+              </div>
+              <button
+                onClick={handleSetDefenseFormation}
+                className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold transition-colors"
+              >
+                🛡️ 立即设置防守阵容
+              </button>
             </div>
           )}
           {myRank === null && (

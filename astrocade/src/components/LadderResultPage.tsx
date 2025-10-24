@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { useLadderStore } from '../store/ladderStore';
+import { useLadderStore } from '../store/ladderStoreSimple'; // 🔧 使用正确的Store
 import type { PlayerLadderData } from '../types';
 
 export default function LadderResultPage() {
   const { setScene, clearLadderBattle, ladderOpponent } = useGameStore();
-  const { executeChallenge } = useLadderStore();
+  const { executeChallenge, myLadderData, selectOpponent } = useLadderStore();
   const [resultData, setResultData] = useState<{
     result: 'attacker_win' | 'defender_win';
     oldRank: number | null;
@@ -17,22 +17,44 @@ export default function LadderResultPage() {
     // 从BattleScene传递的战斗结果
     const battleResult = (window as any).__ladderBattleResult;
     
-    if (battleResult && ladderOpponent) {
-      // 执行挑战，更新排名
-      const challengeResult = executeChallenge(
-        ladderOpponent.playerId,
-        battleResult.result,
-        battleResult.battleTime
-      );
+    if (battleResult && ladderOpponent && myLadderData) {
+      // 🔧 修复：设置选择的对手
+      selectOpponent(ladderOpponent);
       
-      if (challengeResult.success) {
+      // 记录战前排名
+      const oldRank = myLadderData.currentRank;
+      
+      // 🔧 执行挑战，更新排名（异步）
+      executeChallenge(
+        battleResult.result,
+        battleResult.battleTime || 0
+      ).then(() => {
+        // 获取更新后的排名
+        const { myLadderData: updatedMyData } = useLadderStore.getState();
+        const newRank = updatedMyData?.currentRank || null;
+        
         setResultData({
           result: battleResult.result,
-          oldRank: challengeResult.oldRank,
-          newRank: challengeResult.newRank,
+          oldRank: oldRank,
+          newRank: newRank,
           opponent: ladderOpponent
         });
-      }
+        
+        console.log('[LadderResult] 排名更新:', {
+          oldRank,
+          newRank,
+          result: battleResult.result
+        });
+      }).catch(error => {
+        console.error('[LadderResult] 执行挑战失败:', error);
+        // 即使失败也显示结果
+        setResultData({
+          result: battleResult.result,
+          oldRank: oldRank,
+          newRank: oldRank, // 保持原排名
+          opponent: ladderOpponent
+        });
+      });
       
       // 清理临时数据
       delete (window as any).__ladderBattleResult;
@@ -45,7 +67,7 @@ export default function LadderResultPage() {
       console.warn('[LadderResultPage] 缺少战斗结果数据，返回擂台页面');
       setScene('ladder');
     }
-  }, [setScene, clearLadderBattle, ladderOpponent, executeChallenge]);
+  }, [setScene, clearLadderBattle, ladderOpponent, myLadderData, executeChallenge, selectOpponent]);
   
   const handleBackToLadder = () => {
     setScene('ladder');

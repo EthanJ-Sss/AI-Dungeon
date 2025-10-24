@@ -13,5 +13,81 @@
     "defenseFormation": null,
     "createdAt": "2025-10-24T07:33:24.512Z",
     "lastActiveTime": "2025-10-24T07:33:24.512Z"
+  },
+  {
+    "id": "player_1761291568609_uhym78z1k",
+    "playerName": "ez",
+    "currentRank": null,
+    "highestRank": null,
+    "totalChallenges": 0,
+    "totalWins": 0,
+    "totalLosses": 0,
+    "totalDefenses": 0,
+    "defenseWins": 0,
+    "defenseLosses": 0,
+    "defenseFormation": {
+      "timestamp": "2025-10-24T08:03:05.668Z",
+      "totalPower": null,
+      "units": [
+        {
+          "characterId": "char_1761292131908",
+          "name": "极寒射手",
+          "level": 1,
+          "position": {
+            "col": 1,
+            "row": 2
+          },
+          "maxHp": 400,
+          "currentHp": 400,
+          "role": "archer",
+          "moveSpeed": 34,
+          "attackType": "ranged",
+          "skills": [
+            "skill_ice_spear",
+            "skill_frost_rain"
+          ],
+          "passiveSkills": []
+        },
+        {
+          "characterId": "char_1761292148895",
+          "name": "火焰射手",
+          "level": 1,
+          "position": {
+            "col": 2,
+            "row": 2
+          },
+          "maxHp": 280,
+          "currentHp": 280,
+          "role": "archer",
+          "moveSpeed": 34,
+          "attackType": "ranged",
+          "skills": [
+            "skill_fire_volley",
+            "monster_skill_fire_heal"
+          ],
+          "passiveSkills": []
+        },
+        {
+          "characterId": "char_1761291563168",
+          "name": "游侠",
+          "level": 2,
+          "position": {
+            "col": 0,
+            "row": 2
+          },
+          "maxHp": 230,
+          "currentHp": 230,
+          "role": "assassin",
+          "moveSpeed": 35,
+          "attackType": "melee",
+          "skills": [
+            "skill_quick_assault"
+          ],
+          "passiveSkills": []
+        }
+      ]
+    },
+    "createdAt": "2025-10-24T07:39:28.609Z",
+    "lastActiveTime": "2025-10-24T08:03:05.681Z"
   }
 ]

@@ -58,15 +58,8 @@ export const useLadderStore = create<LadderState>((set, get) => ({
         console.log('[天梯Store] ✅ 后端连接成功，使用在线模式');
         set({ isOnlineMode: true });
         
-        // 尝试从 localStorage 获取已登录的玩家
-        const savedPlayerName = localStorage.getItem('ladder_player_name');
-        if (savedPlayerName) {
-          const player = await simpleApi.getPlayerByName(savedPlayerName);
-          if (player) {
-            set({ myLadderData: player });
-            console.log('[天梯Store] 已恢复玩家数据:', savedPlayerName);
-          }
-        }
+        // ⚠️ 注意：不在这里获取玩家数据，由注册流程处理
+        // 只加载排行榜
         
         // 加载排行榜
         const leaderboard = await simpleApi.getLeaderboard();
@@ -156,27 +149,55 @@ export const useLadderStore = create<LadderState>((set, get) => ({
     try {
       const { isOnlineMode } = get();
       
-      if (!isOnlineMode) {
-        throw new Error('当前为本地模式，无法注册');
-      }
+      console.log('[天梯Store] 注册/登录玩家:', playerName, '在线模式:', isOnlineMode);
       
-      // 先尝试获取已存在的玩家
-      let player = await simpleApi.getPlayerByName(playerName);
-      
-      if (!player) {
-        // 玩家不存在，注册新玩家
-        console.log('[天梯Store] 注册新玩家:', playerName);
-        player = await simpleApi.registerPlayer(playerName, defenseFormation);
+      if (isOnlineMode) {
+        // 在线模式：使用后端
+        try {
+          // 先尝试获取已存在的玩家
+          let player = await simpleApi.getPlayerByName(playerName);
+          
+          if (!player) {
+            // 玩家不存在，注册新玩家
+            console.log('[天梯Store] 注册新玩家到服务器:', playerName);
+            player = await simpleApi.registerPlayer(playerName, defenseFormation);
+          } else {
+            console.log('[天梯Store] 玩家已存在，使用现有数据');
+          }
+          
+          // 保存玩家信息
+          set({ myLadderData: player });
+          localStorage.setItem('ladder_player_name', playerName);
+          
+          // 刷新排行榜
+          await get().refreshLeaderboard();
+        } catch (error) {
+          console.error('[天梯Store] 在线注册失败，降级到本地模式:', error);
+          // 降级到本地模式
+          const mockData = generateMockLadderData();
+          const localPlayer = {
+            ...mockData.myLadderData,
+            playerName: playerName,
+            playerId: `local_${Date.now()}`,
+          };
+          set({ 
+            myLadderData: localPlayer,
+            isOnlineMode: false,
+          });
+          localStorage.setItem('ladder_player_name', playerName);
+        }
       } else {
-        console.log('[天梯Store] 玩家已存在，登录:', playerName);
+        // 本地模式：使用模拟数据
+        console.log('[天梯Store] 本地模式注册:', playerName);
+        const mockData = generateMockLadderData();
+        const localPlayer = {
+          ...mockData.myLadderData,
+          playerName: playerName,
+          playerId: `local_${Date.now()}`,
+        };
+        set({ myLadderData: localPlayer });
+        localStorage.setItem('ladder_player_name', playerName);
       }
-      
-      // 保存玩家信息
-      set({ myLadderData: player });
-      localStorage.setItem('ladder_player_name', playerName);
-      
-      // 刷新排行榜
-      await get().refreshLeaderboard();
       
     } catch (error: any) {
       console.error('[天梯Store] 注册/登录失败:', error);
@@ -276,21 +297,75 @@ export const useLadderStore = create<LadderState>((set, get) => ({
           set({ myLadderData: updatedMyData });
         }
       } else {
-        // 本地模式：模拟更新
-        console.log('[天梯Store] 本地模式：模拟挑战结果');
+        // 本地模式：使用正确的排名更新逻辑
+        console.log('[天梯Store] 本地模式：更新排名');
+        
+        const { leaderboard } = get();
         
         if (result === 'attacker_win' && selectedOpponent.currentRank) {
-          const newMyData = {
-            ...myLadderData,
-            currentRank: selectedOpponent.currentRank,
-            totalChallenges: myLadderData.totalChallenges + 1,
-            totalWins: myLadderData.totalWins + 1,
-            highestRank: myLadderData.highestRank === null || selectedOpponent.currentRank < myLadderData.highestRank
-              ? selectedOpponent.currentRank
-              : myLadderData.highestRank,
-          };
-          set({ myLadderData: newMyData });
+          const defenderRank = selectedOpponent.currentRank;
+          const attackerRankBefore = myLadderData.currentRank;
+          
+          // 🔧 场景1：榜外玩家挑战上榜
+          if (attackerRankBefore === null) {
+            // 更新挑战者排名
+            const newMyData = {
+              ...myLadderData,
+              currentRank: defenderRank,
+              totalChallenges: myLadderData.totalChallenges + 1,
+              totalWins: myLadderData.totalWins + 1,
+              highestRank: myLadderData.highestRank === null || defenderRank < myLadderData.highestRank
+                ? defenderRank
+                : myLadderData.highestRank,
+            };
+            
+            // 更新排行榜：防守者及其后所有人+1
+            const updatedLeaderboard = leaderboard.map(player => {
+              if (player.playerId === myLadderData.playerId) {
+                return newMyData;
+              } else if (player.currentRank !== null && player.currentRank >= defenderRank) {
+                return {
+                  ...player,
+                  currentRank: player.currentRank + 1 > 30 ? null : player.currentRank + 1
+                };
+              }
+              return player;
+            });
+            
+            set({ myLadderData: newMyData, leaderboard: updatedLeaderboard });
+          }
+          // 🔧 场景2：榜内玩家向上挑战
+          else if (attackerRankBefore > defenderRank) {
+            // 更新挑战者排名
+            const newMyData = {
+              ...myLadderData,
+              currentRank: defenderRank,
+              totalChallenges: myLadderData.totalChallenges + 1,
+              totalWins: myLadderData.totalWins + 1,
+              highestRank: myLadderData.highestRank === null || defenderRank < myLadderData.highestRank
+                ? defenderRank
+                : myLadderData.highestRank,
+            };
+            
+            // 更新排行榜：[defenderRank, attackerRankBefore)之间的玩家+1
+            const updatedLeaderboard = leaderboard.map(player => {
+              if (player.playerId === myLadderData.playerId) {
+                return newMyData;
+              } else if (player.currentRank !== null && 
+                         player.currentRank >= defenderRank && 
+                         player.currentRank < attackerRankBefore) {
+                return {
+                  ...player,
+                  currentRank: player.currentRank + 1
+                };
+              }
+              return player;
+            });
+            
+            set({ myLadderData: newMyData, leaderboard: updatedLeaderboard });
+          }
         } else {
+          // 挑战失败
           const newMyData = {
             ...myLadderData,
             totalChallenges: myLadderData.totalChallenges + 1,
