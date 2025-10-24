@@ -188,11 +188,9 @@ export default function HomePage() {
                     #{myLadderData.currentRank}
                   </span>
                 )}
-                {myLadderData.dailyChallengesUsed < myLadderData.dailyChallengesMax && (
-                  <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold shadow-lg">
-                    {myLadderData.dailyChallengesMax - myLadderData.dailyChallengesUsed}次
-                  </span>
-                )}
+                <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold shadow-lg">
+                  ∞
+                </span>
               </div>
             )}
           </button>

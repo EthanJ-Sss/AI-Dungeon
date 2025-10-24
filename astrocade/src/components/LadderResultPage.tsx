@@ -72,8 +72,8 @@ export default function LadderResultPage() {
     const isFirstOnBoard = oldRank === null;
     
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-900 via-slate-900 to-slate-900 text-white flex items-center justify-center p-4">
-        <div className="max-w-3xl w-full">
+      <div className="min-h-screen bg-gradient-to-b from-green-900 via-slate-900 to-slate-900 text-white overflow-y-auto py-8 px-4">
+        <div className="max-w-3xl w-full mx-auto">
           {/* 庆祝标题 */}
           <div className="text-center mb-8 animate-in zoom-in duration-500">
             <div className="text-7xl mb-4">🎉</div>
@@ -192,8 +192,8 @@ export default function LadderResultPage() {
   
   // 失败界面
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-900 via-slate-900 to-slate-900 text-white flex items-center justify-center p-4">
-      <div className="max-w-3xl w-full">
+    <div className="min-h-screen bg-gradient-to-b from-red-900 via-slate-900 to-slate-900 text-white overflow-y-auto py-8 px-4">
+      <div className="max-w-3xl w-full mx-auto">
         {/* 失败标题 */}
         <div className="text-center mb-8 animate-in zoom-in duration-500">
           <div className="text-7xl mb-4">❌</div>

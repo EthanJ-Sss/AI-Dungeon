@@ -91,7 +91,7 @@
     "attackType": "melee",
     "element": "water",
     "hp": 270,
-    "damage": 52,
+    "damage": 48,
     "moveSpeed": 40,
     "skills": ["skill_water_assault"],
     "passiveSkills": [],

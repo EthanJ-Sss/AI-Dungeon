@@ -107,16 +107,16 @@ export default function ChallengeConfirmModal({ opponent, myData, onConfirm, onC
             </div>
           </div>
           
-          {/* 挑战消耗 */}
-          <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-4 mb-6">
+          {/* 无限挑战模式 */}
+          <div className="bg-green-900/30 border border-green-500/50 rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-white font-bold mb-1">消耗挑战次数</div>
-                <div className="text-sm text-slate-300">
-                  {myData.dailyChallengesUsed}/{myData.dailyChallengesMax} → {myData.dailyChallengesUsed + 1}/{myData.dailyChallengesMax}
+                <div className="text-white font-bold mb-1">无限挑战模式</div>
+                <div className="text-sm text-green-300">
+                  无需消耗挑战次数，尽情挑战！
                 </div>
               </div>
-              <div className="text-4xl">🎫</div>
+              <div className="text-4xl">♾️</div>
             </div>
           </div>
           

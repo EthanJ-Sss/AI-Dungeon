@@ -118,13 +118,7 @@ export function validateChallenge(
   valid: boolean;
   reason?: string;
 } {
-  // 检查挑战次数
-  if (challenger.dailyChallengesUsed >= challenger.dailyChallengesMax) {
-    return {
-      valid: false,
-      reason: '今日挑战次数已用完'
-    };
-  }
+  // 无限挑战模式 - 不再检查挑战次数
   
   // 检查是否挑战自己
   if (challenger.playerId === defender.playerId) {

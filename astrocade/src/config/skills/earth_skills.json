@@ -91,13 +91,13 @@
   {
     "id": "skill_earth_renewal",
     "name": "大地复苏",
-    "description": "治疗目标友军38%最大生命值并提供护盾",
+    "description": "治疗目标友军35%最大生命值并提供护盾",
     "cd": 8,
     "range": 350,
     "type": "heal",
     "targetType": "ally",
-    "heal": 38,
-    "shield": 40,
+    "heal": 35,
+    "shield": 35,
     "element": "earth"
   },
   {

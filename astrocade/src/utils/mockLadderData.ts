@@ -24,8 +24,8 @@ function generatePowerByRank(rank: number): number {
 function generateMockFormation(playerId: string, rank: number): FormationSnapshot {
   const power = generatePowerByRank(rank);
   
-  // 生成3-6个角色
-  const unitCount = Math.floor(Math.random() * 4) + 3;
+  // 固定生成3个角色
+  const unitCount = 3;
   const units: SnapshotUnit[] = [];
   
   const elements: ElementType[] = ['fire', 'ice', 'earth', 'water', 'neutral'];

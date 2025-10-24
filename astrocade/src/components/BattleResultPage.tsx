@@ -21,8 +21,8 @@ export default function BattleResultPage() {
 
   if (!battleResultData) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
-        <div className="text-center">
+      <div className="min-h-screen bg-slate-900 overflow-y-auto py-8 px-4 text-white">
+        <div className="text-center max-w-2xl mx-auto mt-20">
           <p className="text-xl">正在加载结算数据...</p>
           <button
             onClick={() => setScene('home')}
@@ -99,8 +99,8 @@ export default function BattleResultPage() {
     const { rewards, battleTime } = battleResultData;
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-900 to-slate-900 flex items-center justify-center p-8">
-        <div className="max-w-5xl w-full">
+      <div className="min-h-screen bg-gradient-to-b from-green-900 to-slate-900 overflow-y-auto py-8 px-8">
+        <div className="max-w-5xl w-full mx-auto">
           {/* 标题 */}
           <div className="text-center mb-8">
             <h1 className="text-6xl font-bold text-green-400 mb-4 animate-bounce">
@@ -270,8 +270,8 @@ export default function BattleResultPage() {
     };
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-red-900 to-slate-900 flex items-center justify-center p-8">
-        <div className="max-w-5xl w-full">
+      <div className="min-h-screen bg-gradient-to-b from-red-900 to-slate-900 overflow-y-auto py-8 px-8">
+        <div className="max-w-5xl w-full mx-auto">
           {/* 标题 */}
           <div className="text-center mb-8">
             <h1 className="text-6xl font-bold text-red-400 mb-4">

@@ -10,7 +10,7 @@ import VictoryPage from './components/VictoryPage';
 import BattleResultPage from './components/BattleResultPage';
 import LadderPage from './components/LadderPage';
 import LadderResultPage from './components/LadderResultPage';
-// import DefenseFormationPage from './components/DefenseFormationPage';
+// import DefenseFormationPage from './components/DefenseFormationPage'; // Removed - causing build errors
 import PhaserGame from './components/PhaserGame';
 
 function App() {

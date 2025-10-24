@@ -49,13 +49,7 @@ export default function LadderPage() {
       return;
     }
     
-    // 消耗挑战次数
-    const consumed = consumeChallenge();
-    if (!consumed) {
-      alert('挑战次数不足！');
-      return;
-    }
-    
+    // 无限挑战模式 - 不消耗次数
     setShowConfirmModal(false);
     
     // 保存我的擂台数据到window对象（供BattleScene使用）
@@ -92,21 +86,21 @@ export default function LadderPage() {
   }
   
   const myRank = myLadderData.currentRank;
-  const remainingChallenges = myLadderData.dailyChallengesMax - myLadderData.dailyChallengesUsed;
+  // 无限挑战模式 - 不再限制次数
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white overflow-y-auto">
       {/* 顶部返回按钮 */}
       <div className="fixed top-4 left-4 z-50">
         <button
           onClick={handleBackToHome}
-          className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+          className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors shadow-lg"
         >
           ← 返回主页
         </button>
       </div>
       
-      <div className="container mx-auto px-4 py-8 pt-20">
+      <div className="container mx-auto px-4 py-8 pt-24 pb-16">
         {/* 标题 */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-2">⚔️ 擂台竞技 ⚔️</h1>
@@ -135,8 +129,8 @@ export default function LadderPage() {
                 {myRank !== null && (
                   <div>防守: {myLadderData.defenseWins}胜{myLadderData.defenseLosses}负</div>
                 )}
-                <div className={remainingChallenges > 0 ? 'text-green-400' : 'text-red-400'}>
-                  剩余挑战: {remainingChallenges}/{myLadderData.dailyChallengesMax}
+                <div className="text-green-400">
+                  挑战次数: ∞ 无限
                 </div>
               </div>
             </div>
@@ -204,7 +198,6 @@ export default function LadderPage() {
                   player={player}
                   isMyself={player.playerId === myLadderData.playerId}
                   canChallenge={
-                    remainingChallenges > 0 &&
                     !!myLadderData.defenseFormationSnapshot &&
                     (myRank === null || (myRank > player.currentRank!))
                   }

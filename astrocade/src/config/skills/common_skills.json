@@ -225,12 +225,12 @@
   {
     "id": "skill_battle_prayer",
     "name": "战斗祷告",
-    "description": "治疗目标友军36%最大生命值并提升20%攻击力",
+    "description": "治疗目标友军32%最大生命值并提升20%攻击力",
     "cd": 8,
     "range": 350,
     "type": "heal",
     "targetType": "ally",
-    "heal": 36,
+    "heal": 32,
     "attackBonus": 1.2,
     "duration": 4,
     "element": "neutral"

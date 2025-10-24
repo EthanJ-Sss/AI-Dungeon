@@ -24,8 +24,8 @@ export default function VictoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-yellow-900 via-purple-900 to-slate-900 flex items-center justify-center p-8">
-      <div className="max-w-3xl w-full">
+    <div className="min-h-screen bg-gradient-to-b from-yellow-900 via-purple-900 to-slate-900 overflow-y-auto py-8 px-8">
+      <div className="max-w-3xl w-full mx-auto">
         {/* 通关标题 */}
         <div className="text-center mb-12">
           <h1 className="text-8xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 animate-pulse">
