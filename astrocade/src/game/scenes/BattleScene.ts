@@ -306,40 +306,127 @@ export default class BattleScene extends Phaser.Scene {
     }).setOrigin(0.5);
   }
 
+  /**
+   * 将阵容快照中的单位转换为Character
+   */
+  private convertSnapshotUnitToCharacter(snapshotUnit: any, index: number): Character | null {
+    // 尝试从角色配置中查找基础数据（用于获取技能和默认值）
+    const presetChar = allCharactersData.find(c => c.id === snapshotUnit.characterId);
+    
+    // 根据职业确定默认攻击类型和移动速度
+    let defaultAttackType: 'melee' | 'ranged' = 'melee';
+    let defaultMoveSpeed = 100;
+    
+    switch (snapshotUnit.role) {
+      case 'warrior':
+        defaultAttackType = 'melee';
+        defaultMoveSpeed = 80;
+        break;
+      case 'archer':
+        defaultAttackType = 'ranged';
+        defaultMoveSpeed = 100;
+        break;
+      case 'assassin':
+        defaultAttackType = 'melee';
+        defaultMoveSpeed = 150;
+        break;
+      case 'healer':
+        defaultAttackType = 'ranged';
+        defaultMoveSpeed = 90;
+        break;
+    }
+
+    // 创建Character对象（优先使用快照数据，其次使用预设数据，最后使用默认值）
+    const character: Character = {
+      id: `ladder_${snapshotUnit.characterId}_${Date.now()}_${index}`,
+      name: snapshotUnit.characterName || presetChar?.name || `角色${index + 1}`,
+      hp: snapshotUnit.maxHp || 300,
+      maxHp: snapshotUnit.maxHp || 300,
+      damage: snapshotUnit.currentAtk || 50,
+      moveSpeed: snapshotUnit.moveSpeed || presetChar?.moveSpeed || defaultMoveSpeed,
+      attackType: (presetChar?.attackType || defaultAttackType) as any,
+      role: snapshotUnit.role,
+      element: snapshotUnit.element,
+      skills: snapshotUnit.skills || presetChar?.skills || [],
+      passiveSkills: snapshotUnit.passiveSkills || presetChar?.passiveSkills || [],
+    };
+
+    return character;
+  }
+
   private generateBattleUnits() {
     const gameState = useGameStore.getState();
     const playerState = usePlayerStore.getState();
     const currentLevel = gameState.currentLevel;
+    const isLadderBattle = gameState.isLadderBattle;
+    const ladderOpponent = gameState.ladderOpponent;
 
     console.log(`\n⚔️ ========== 战斗开始 ==========`);
-    console.log(`📍 关卡: ${currentLevel?.name || '未知'}`);
+    if (isLadderBattle && ladderOpponent) {
+      console.log(`🏆 模式: 天梯竞技`);
+      console.log(`⚔️ 对手: ${ladderOpponent.playerName}`);
+    } else {
+      console.log(`📍 关卡: ${currentLevel?.name || '未知'}`);
+    }
     console.log(`⏱️ 时长: ${this.battleTimer}秒`);
     console.log(`\n🛡️ 我方阵容:`);
-    console.log(`   [调试] playerFormation长度: ${gameState.playerFormation.length}`);
-    console.log(`   [调试] playerState.characters长度: ${playerState.characters.length}`);
 
-    // 生成玩家单位
-    gameState.playerFormation.forEach((formation, index) => {
-      console.log(`   [调试] 阵型${index}: characterId=${formation.characterId}, position=(${formation.position.x}, ${formation.position.y})`);
-      const character = playerState.characters.find(c => c.id === formation.characterId);
-      if (character) {
-        const elementIcon = this.getElementIcon(character.element);
-        const roleEmoji = this.getRoleEmoji(character.role);
-        console.log(`   ${roleEmoji}${elementIcon} ${character.name} (HP: ${character.hp})`);
-        const unit = this.createBattleUnit(character, formation.position, 'player');
-        this.playerUnits.push(unit);
-      } else {
-        console.warn(`   ⚠️ [角色丢失] 找不到角色ID: ${formation.characterId}`);
-        console.warn(`   [调试] 可用角色IDs: ${playerState.characters.map(c => c.id).join(', ')}`);
+    // 生成玩家单位（天梯模式使用防守阵容，关卡模式使用playerFormation）
+    if (isLadderBattle && ladderOpponent) {
+      // 天梯模式：从我的防守阵容加载
+      const myLadderData = (window as any).__ladderMyData; // 临时方案，后续优化
+      if (myLadderData?.defenseFormationSnapshot) {
+        myLadderData.defenseFormationSnapshot.units.forEach((snapshotUnit: any, index: number) => {
+          const character = this.convertSnapshotUnitToCharacter(snapshotUnit, index);
+          if (character) {
+            const elementIcon = this.getElementIcon(character.element);
+            const roleEmoji = this.getRoleEmoji(character.role);
+            console.log(`   ${roleEmoji}${elementIcon} ${character.name} (HP: ${character.hp})`);
+            // 转换坐标格式：{col, row} → {x, y}
+            const position = { x: snapshotUnit.position.col, y: snapshotUnit.position.row };
+            const unit = this.createBattleUnit(character, position, 'player');
+            this.playerUnits.push(unit);
+          }
+        });
       }
-    });
+    } else {
+      // 关卡模式：从playerFormation加载
+      console.log(`   [调试] playerFormation长度: ${gameState.playerFormation.length}`);
+      gameState.playerFormation.forEach((formation, index) => {
+        console.log(`   [调试] 阵型${index}: characterId=${formation.characterId}, position=(${formation.position.x}, ${formation.position.y})`);
+        const character = playerState.characters.find(c => c.id === formation.characterId);
+        if (character) {
+          const elementIcon = this.getElementIcon(character.element);
+          const roleEmoji = this.getRoleEmoji(character.role);
+          console.log(`   ${roleEmoji}${elementIcon} ${character.name} (HP: ${character.hp})`);
+          const unit = this.createBattleUnit(character, formation.position, 'player');
+          this.playerUnits.push(unit);
+        } else {
+          console.warn(`   ⚠️ [角色丢失] 找不到角色ID: ${formation.characterId}`);
+        }
+      });
+    }
 
     console.log(`\n⚔️ 敌方阵容:`);
 
-    // 生成敌方单位
-    if (gameState.currentLevel) {
+    // 生成敌方单位（天梯模式使用对手阵容，关卡模式使用关卡敌人）
+    if (isLadderBattle && ladderOpponent?.defenseFormationSnapshot) {
+      // 天梯模式：从对手防守阵容加载
+      ladderOpponent.defenseFormationSnapshot.units.forEach((snapshotUnit: any, index: number) => {
+        const character = this.convertSnapshotUnitToCharacter(snapshotUnit, index);
+        if (character) {
+          const elementIcon = this.getElementIcon(character.element);
+          const roleEmoji = this.getRoleEmoji(character.role);
+          console.log(`   ${roleEmoji}${elementIcon} ${character.name} (HP: ${character.hp})`);
+          // 转换坐标格式：{col, row} → {x, y}
+          const position = { x: snapshotUnit.position.col, y: snapshotUnit.position.row };
+          const unit = this.createBattleUnit(character, position, 'enemy');
+          this.enemyUnits.push(unit);
+        }
+      });
+    } else if (gameState.currentLevel) {
+      // 关卡模式：从关卡配置加载敌人
       gameState.currentLevel.enemies.forEach((enemy, index) => {
-        // 从新的角色配置文件读取敌人角色数据
         const presetChar = allCharactersData.find(c => c.id === (enemy.characterId as any)) as PresetCharacter;
         
         if (!presetChar) {
@@ -347,7 +434,6 @@ export default class BattleScene extends Phaser.Scene {
           return;
         }
 
-        // 创建敌人角色（使用配置的技能）
         const enemyChar: Character = {
           id: `enemy_${enemy.characterId}_${Date.now()}_${index}`,
           name: `敌方-${presetChar.name}`,
@@ -357,9 +443,9 @@ export default class BattleScene extends Phaser.Scene {
           moveSpeed: presetChar.moveSpeed,
           attackType: presetChar.attackType,
           role: presetChar.role,
-          element: presetChar.element, // ✅ 添加元素属性
-          skills: presetChar.skills || [], // ✅ 使用配置中的技能
-          passiveSkills: presetChar.passiveSkills || [], // ✅ 添加被动技能
+          element: presetChar.element,
+          skills: presetChar.skills || [],
+          passiveSkills: presetChar.passiveSkills || [],
         };
         
         const elementIcon = this.getElementIcon(enemyChar.element);
@@ -992,7 +1078,9 @@ export default class BattleScene extends Phaser.Scene {
     // 停止所有事件
     this.time.removeAllEvents();
 
-    const currentLevel = useGameStore.getState().currentLevel;
+    const gameState = useGameStore.getState();
+    const isLadderBattle = gameState.isLadderBattle;
+    const currentLevel = gameState.currentLevel;
     const battleTime = currentLevel ? (currentLevel.duration || 30) - this.battleTimer : 0;
 
     // 如果胜利，保存被击败的敌人数据（用于俘虏选择）并给予经验值
@@ -1091,12 +1179,29 @@ export default class BattleScene extends Phaser.Scene {
     // 触发游戏结束事件
     this.game.events.emit('battle-end', result);
     
-    // 延迟跳转到新的战斗结算界面
-    console.log(`[BattleScene] 准备跳转到战斗结算界面，结果: ${result}`);
-    this.time.delayedCall(1500, () => {
-      console.log(`[BattleScene] 跳转到 battleResult 场景`);
-      useGameStore.getState().setScene('battleResult');
-    });
+    // 延迟跳转到结算界面
+    if (isLadderBattle) {
+      // 天梯模式：跳转到天梯结算界面
+      console.log(`[BattleScene] 准备跳转到天梯结算界面，结果: ${result}`);
+      this.time.delayedCall(1500, () => {
+        console.log(`[BattleScene] 跳转到 ladderResult 场景`);
+        
+        // 保存天梯战斗结果到window对象（供LadderResultPage使用）
+        (window as any).__ladderBattleResult = {
+          result: result === 'win' ? 'attacker_win' : 'defender_win',
+          battleTime: battleTime
+        };
+        
+        useGameStore.getState().setScene('ladderResult');
+      });
+    } else {
+      // 关卡模式：跳转到战斗结算界面
+      console.log(`[BattleScene] 准备跳转到战斗结算界面，结果: ${result}`);
+      this.time.delayedCall(1500, () => {
+        console.log(`[BattleScene] 跳转到 battleResult 场景`);
+        useGameStore.getState().setScene('battleResult');
+      });
+    }
   }
 
   private updateSkillCD() {

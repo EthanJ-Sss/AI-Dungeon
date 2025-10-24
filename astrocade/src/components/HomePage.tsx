@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePlayerStore } from '../store/playerStore';
 import { useGameStore } from '../store/gameStore';
+import { useLadderStore } from '../store/ladderStore';
 import { getSkillsInfo, getSkillTypeIcon } from '../utils/skillUtils';
 import CapturePrisonerModal from './CapturePrisonerModal';
 import type { Prisoner } from '../types';
@@ -22,6 +23,8 @@ export default function HomePage() {
   const completeLevel = useGameStore((state) => state.completeLevel);
   const tutorialStep = useGameStore((state) => state.tutorialStep);
   const completeTutorial = useGameStore((state) => state.completeTutorial);
+  
+  const { myLadderData, checkDailyReset } = useLadderStore();
   
   const [expandedCharId, setExpandedCharId] = useState<string | null>(null);
   const [showPrisonerModal, setShowPrisonerModal] = useState(false);
@@ -123,7 +126,7 @@ export default function HomePage() {
         )}
 
         {/* 功能按钮 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 justify-center mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-center mb-12">
           <button
             onClick={() => setScene('recruit')}
             className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xl font-semibold rounded-lg shadow-lg transform transition hover:scale-105"
@@ -166,6 +169,32 @@ export default function HomePage() {
             disabled={characters.length === 0}
           >
             ⚔️ 出发冒险
+          </button>
+          
+          <button
+            onClick={() => {
+              checkDailyReset();
+              setScene('ladder');
+            }}
+            className="px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white text-xl font-semibold rounded-lg shadow-lg transform transition hover:scale-105 relative"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span>⚔️ 擂台竞技</span>
+            </div>
+            {myLadderData && (
+              <div className="absolute -top-2 -right-2 flex flex-col gap-1">
+                {myLadderData.currentRank !== null && (
+                  <span className="px-2 py-1 bg-yellow-500 text-white text-xs rounded-full font-bold shadow-lg">
+                    #{myLadderData.currentRank}
+                  </span>
+                )}
+                {myLadderData.dailyChallengesUsed < myLadderData.dailyChallengesMax && (
+                  <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold shadow-lg">
+                    {myLadderData.dailyChallengesMax - myLadderData.dailyChallengesUsed}次
+                  </span>
+                )}
+              </div>
+            )}
           </button>
         </div>
 

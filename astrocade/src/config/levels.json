@@ -54,23 +54,23 @@
   {
     "id": 3,
     "name": "火山通道",
-    "description": "🔥全火元素队伍🔥 烈焰卫士（肉盾）保护着火焰祭司（治疗）和火焰法师（AOE）。他们会互相配合！环境燃烧每秒造成12点伤害",
+    "description": "🔥全火元素队伍🔥 火焰祭司（治疗）在前排支援，烈焰卫士（肉盾）和火焰法师（AOE）在后排配合！环境燃烧每秒造成20点伤害",
     "difficulty": "中等",
     "scene": "volcano",
     "unlocked": false,
     "duration": 70,
-    "burnDamage": 12,
+    "burnDamage": 20,
     "lavaBlocks": [
       { "row": 1, "col": 4 },
       { "row": 3, "col": 6 }
     ],
     "enemies": [
       {
-        "characterId": "monster_fire_tank",
+        "characterId": "monster_fire_healer",
         "position": { "x": 1, "y": 0 }
       },
       {
-        "characterId": "monster_fire_healer",
+        "characterId": "monster_fire_tank",
         "position": { "x": 0, "y": 1 }
       },
       {
@@ -82,12 +82,12 @@
   {
     "id": 4,
     "name": "熔岩核心",
-    "description": "⚡突袭关卡⚡ 三个烈焰冲锋者会快速突进到你的后排！必须做好防御准备，保护脆皮！环境燃烧每秒造成15点伤害",
+    "description": "⚡突袭关卡⚡ 三个烈焰冲锋者会快速突进到你的后排！必须做好防御准备，保护脆皮！环境燃烧每秒造成25点伤害",
     "difficulty": "困难",
     "scene": "volcano",
     "unlocked": false,
     "duration": 70,
-    "burnDamage": 15,
+    "burnDamage": 25,
     "lavaBlocks": [
       { "row": 1, "col": 4 },
       { "row": 3, "col": 6 }
@@ -110,12 +110,12 @@
   {
     "id": 5,
     "name": "火山领主的挑战",
-    "description": "👑终极Boss战👑 火山领主·伊格尼斯拥有炼狱波动和熔岩柱两大毁灭技能！带上最强队伍，击败他！环境燃烧每秒造成15点伤害",
+    "description": "👑终极Boss战👑 火山领主·伊格尼斯拥有炼狱波动和熔岩柱两大毁灭技能！带上最强队伍，击败他！环境燃烧每秒造成25点伤害",
     "difficulty": "Boss",
     "scene": "volcano",
     "unlocked": false,
     "duration": 70,
-    "burnDamage": 15,
+    "burnDamage": 25,
     "lavaBlocks": [
       { "row": 1, "col": 5 },
       { "row": 2, "col": 4 },

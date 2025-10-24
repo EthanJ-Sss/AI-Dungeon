@@ -160,3 +160,4 @@ function generateSuggestions(sources: DamageSource[], battleTime: number): strin
 }
 
 
+

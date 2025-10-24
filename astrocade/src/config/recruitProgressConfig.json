@@ -2,7 +2,7 @@
   "rarityUnlockRequirements": {
     "common": 0,
     "rare": 1,
-    "epic": 1
+    "epic": 2
   },
   "pitySystem": {
     "rare": {
@@ -11,7 +11,7 @@
     },
     "epic": {
       "count": 30,
-      "unlockLevel": 1
+      "unlockLevel": 2
     }
   },
   "probabilityByProgress": [
@@ -23,9 +23,9 @@
     },
     {
       "maxClearedLevel": 1,
-      "common": 84,
+      "common": 85,
       "rare": 15,
-      "epic": 1
+      "epic": 0
     },
     {
       "maxClearedLevel": 2,

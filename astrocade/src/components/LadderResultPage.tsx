@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { useLadderStore } from '../store/ladderStore';
 import type { PlayerLadderData } from '../types';
 
 export default function LadderResultPage() {
-  const { setScene } = useGameStore();
+  const { setScene, clearLadderBattle, ladderOpponent } = useGameStore();
+  const { executeChallenge } = useLadderStore();
   const [resultData, setResultData] = useState<{
     result: 'attacker_win' | 'defender_win';
     oldRank: number | null;
@@ -12,17 +14,38 @@ export default function LadderResultPage() {
   } | null>(null);
   
   useEffect(() => {
-    // 从临时存储获取结果数据
-    const data = (window as any).__ladderChallengeResult;
-    if (data) {
-      setResultData(data);
+    // 从BattleScene传递的战斗结果
+    const battleResult = (window as any).__ladderBattleResult;
+    
+    if (battleResult && ladderOpponent) {
+      // 执行挑战，更新排名
+      const challengeResult = executeChallenge(
+        ladderOpponent.playerId,
+        battleResult.result,
+        battleResult.battleTime
+      );
+      
+      if (challengeResult.success) {
+        setResultData({
+          result: battleResult.result,
+          oldRank: challengeResult.oldRank,
+          newRank: challengeResult.newRank,
+          opponent: ladderOpponent
+        });
+      }
+      
       // 清理临时数据
-      delete (window as any).__ladderChallengeResult;
+      delete (window as any).__ladderBattleResult;
+      delete (window as any).__ladderMyData;
+      
+      // 清除天梯战斗状态
+      clearLadderBattle();
     } else {
       // 如果没有数据，返回擂台页面
+      console.warn('[LadderResultPage] 缺少战斗结果数据，返回擂台页面');
       setScene('ladder');
     }
-  }, [setScene]);
+  }, [setScene, clearLadderBattle, ladderOpponent, executeChallenge]);
   
   const handleBackToLadder = () => {
     setScene('ladder');
@@ -266,4 +289,5 @@ export default function LadderResultPage() {
     </div>
   );
 }
+
 

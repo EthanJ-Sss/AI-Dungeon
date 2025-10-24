@@ -474,6 +474,10 @@ export interface SnapshotUnit {
   level: number;
   maxHp: number;
   currentAtk: number;
+  moveSpeed?: number;
+  attackType?: 'melee' | 'ranged';
+  skills?: string[];
+  passiveSkills?: string[];
 }
 
 /** 阵容快照 */

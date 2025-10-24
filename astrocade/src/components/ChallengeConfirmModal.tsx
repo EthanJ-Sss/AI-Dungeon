@@ -178,3 +178,4 @@ export default function ChallengeConfirmModal({ opponent, myData, onConfirm, onC
   );
 }
 
+

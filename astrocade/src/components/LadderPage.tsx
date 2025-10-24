@@ -5,20 +5,13 @@ import type { PlayerLadderData } from '../types';
 import LeaderboardEntry from './LeaderboardEntry';
 import ChallengeConfirmModal from './ChallengeConfirmModal';
 import { validateChallenge } from '../utils/rankUpdateLogic';
-import { simulateLadderBattle } from '../utils/ladderBattleSimulator';
 
 export default function LadderPage() {
-  const { leaderboard, myLadderData, initializeLadder, checkDailyReset, executeChallenge } = useLadderStore();
-  const { setScene } = useGameStore();
+  const { leaderboard, myLadderData, initializeLadder, checkDailyReset, consumeChallenge } = useLadderStore();
+  const { setScene, startLadderBattle } = useGameStore();
   
   const [selectedOpponent, setSelectedOpponent] = useState<PlayerLadderData | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [challengeResult, setChallengeResult] = useState<{
-    result: 'attacker_win' | 'defender_win';
-    oldRank: number | null;
-    newRank: number | null;
-    opponent: PlayerLadderData;
-  } | null>(null);
   
   useEffect(() => {
     // 初始化擂台系统
@@ -26,15 +19,6 @@ export default function LadderPage() {
     // 检查每日重置
     checkDailyReset();
   }, [initializeLadder, checkDailyReset]);
-  
-  useEffect(() => {
-    // 如果有挑战结果，跳转到结算页面
-    if (challengeResult) {
-      // 将结果保存到gameStore中传递给结算页面
-      (window as any).__ladderChallengeResult = challengeResult;
-      setScene('ladderResult');
-    }
-  }, [challengeResult, setScene]);
   
   const handleChallenge = (opponent: PlayerLadderData) => {
     setSelectedOpponent(opponent);
@@ -51,9 +35,7 @@ export default function LadderPage() {
       return;
     }
     
-    setShowConfirmModal(false);
-    
-    // 模拟战斗
+    // 检查防守阵容
     const attackerFormation = myLadderData.defenseFormationSnapshot;
     const defenderFormation = selectedOpponent.defenseFormationSnapshot;
     
@@ -67,24 +49,24 @@ export default function LadderPage() {
       return;
     }
     
-    const battleResult = simulateLadderBattle(attackerFormation, defenderFormation);
-    
-    // 执行挑战
-    const result = executeChallenge(
-      selectedOpponent.playerId,
-      battleResult.result,
-      battleResult.duration
-    );
-    
-    if (result.success) {
-      // 设置挑战结果
-      setChallengeResult({
-        result: battleResult.result,
-        oldRank: result.oldRank,
-        newRank: result.newRank,
-        opponent: selectedOpponent
-      });
+    // 消耗挑战次数
+    const consumed = consumeChallenge();
+    if (!consumed) {
+      alert('挑战次数不足！');
+      return;
     }
+    
+    setShowConfirmModal(false);
+    
+    // 保存我的擂台数据到window对象（供BattleScene使用）
+    (window as any).__ladderMyData = myLadderData;
+    
+    // 启动天梯战斗模式
+    console.log('[LadderPage] 启动天梯战斗:', selectedOpponent.playerName);
+    startLadderBattle(selectedOpponent);
+    
+    // 跳转到战斗场景
+    setScene('battle');
   };
   
   const handleViewDetails = (opponent: PlayerLadderData) => {
@@ -249,4 +231,5 @@ export default function LadderPage() {
     </div>
   );
 }
+
 

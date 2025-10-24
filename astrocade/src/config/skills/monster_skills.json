@@ -169,12 +169,12 @@
   {
     "id": "boss_skill_inferno_wave",
     "name": "炼狱波动",
-    "description": "释放强大火焰波动，造成90伤害并击退",
+    "description": "释放强大火焰波动，造成120伤害并击退",
     "cd": 9,
     "range": 350,
     "type": "damage",
     "targetType": "enemy",
-    "damage": 90,
+    "damage": 120,
     "areaRadius": 220,
     "knockback": true,
     "element": "fire"
@@ -242,12 +242,12 @@
   {
     "id": "monster_skill_flame_charge",
     "name": "烈焰冲锋",
-    "description": "向前冲锋并造成45伤害，快速接近敌人",
+    "description": "向前冲锋并造成80伤害，快速接近敌人",
     "cd": 6,
     "range": 250,
     "type": "damage",
     "targetType": "enemy",
-    "damage": 45,
+    "damage": 80,
     "teleportDistance": 200,
     "element": "fire"
   }

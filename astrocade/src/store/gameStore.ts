@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Formation, LevelConfig, Character, RarityProbability, PitySystem, RecruitRecord, BattleResultData } from '../types';
+import type { Formation, LevelConfig, Character, RarityProbability, PitySystem, RecruitRecord, BattleResultData, FormationSnapshot, PlayerLadderData } from '../types';
 import { recruitSystem } from '../utils/recruitSystem';
 import { usePlayerStore } from './playerStore';
 
@@ -30,6 +30,11 @@ interface GameState {
   // 新手引导
   tutorialStep: number;
   
+  // 天梯战斗模式
+  isLadderBattle: boolean;
+  ladderOpponent: PlayerLadderData | null;
+  ladderBattleStartTime: number;
+  
   // 招募系统
   recruitSystem: {
     currentProbabilities: RarityProbability;
@@ -58,6 +63,10 @@ interface GameState {
   completeTutorial: (step: number) => void;
   resetBattle: () => void;
   
+  // 天梯战斗Actions
+  startLadderBattle: (opponent: PlayerLadderData) => void;
+  clearLadderBattle: () => void;
+  
   // 招募系统Actions
   updateRecruitProbabilities: () => void;
   recordRecruit: (characterId: string, rarity: string, isPity: boolean) => void;
@@ -80,6 +89,11 @@ export const useGameStore = create<GameState>()(
       recruitCount: 0,
       skillLearnCount: 0,
       tutorialStep: 0, // 0=未开始, 1=招募, 2=战斗, 3=训练, 4=完成
+      
+      // 天梯战斗初始状态
+      isLadderBattle: false,
+      ladderOpponent: null,
+      ladderBattleStartTime: 0,
       
       // 招募系统初始状态
       recruitSystem: {
@@ -159,6 +173,27 @@ export const useGameStore = create<GameState>()(
         battleResultData: null,
         defeatedEnemies: [],
       }),
+      
+      // 天梯战斗方法
+      startLadderBattle: (opponent) => {
+        console.log('[GameStore] 启动天梯战斗，对手:', opponent.playerName);
+        set({
+          isLadderBattle: true,
+          ladderOpponent: opponent,
+          ladderBattleStartTime: Date.now(),
+          battleResult: null,
+          battleResultData: null,
+        });
+      },
+      
+      clearLadderBattle: () => {
+        console.log('[GameStore] 清除天梯战斗状态');
+        set({
+          isLadderBattle: false,
+          ladderOpponent: null,
+          ladderBattleStartTime: 0,
+        });
+      },
       
       // 招募系统方法
       updateRecruitProbabilities: () => {

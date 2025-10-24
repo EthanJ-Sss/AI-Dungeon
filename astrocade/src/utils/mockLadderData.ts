@@ -34,16 +34,44 @@ function generateMockFormation(playerId: string, rank: number): FormationSnapsho
   for (let i = 0; i < unitCount; i++) {
     const col = i % 3;
     const row = Math.floor(i / 3);
+    const role = roles[Math.floor(Math.random() * roles.length)];
+    
+    // 根据职业确定攻击类型和移动速度
+    let attackType: 'melee' | 'ranged' = 'melee';
+    let moveSpeed = 100;
+    
+    switch (role) {
+      case 'warrior':
+        attackType = 'melee';
+        moveSpeed = 80;
+        break;
+      case 'archer':
+        attackType = 'ranged';
+        moveSpeed = 100;
+        break;
+      case 'assassin':
+        attackType = 'melee';
+        moveSpeed = 150;
+        break;
+      case 'healer':
+        attackType = 'ranged';
+        moveSpeed = 90;
+        break;
+    }
     
     units.push({
       position: { col, row },
       characterId: `char_${playerId}_${i}`,
       characterName: `角色${i + 1}`,
       element: elements[Math.floor(Math.random() * elements.length)],
-      role: roles[Math.floor(Math.random() * roles.length)],
+      role: role,
       level: Math.floor(Math.random() * 10) + 5, // 5-14级
       maxHp: Math.floor(power / unitCount * 0.5),
-      currentAtk: Math.floor(power / unitCount * 0.3)
+      currentAtk: Math.floor(power / unitCount * 0.3),
+      moveSpeed: moveSpeed,
+      attackType: attackType,
+      skills: [], // 模拟数据暂不配置技能
+      passiveSkills: []
     });
   }
   
@@ -114,4 +142,5 @@ export function generateMyInitialLadderData(playerName: string = '我'): PlayerL
     lastActiveTime: new Date().toISOString()
   };
 }
+
 
